@@ -3,6 +3,7 @@ fitting_polynomials_2d.py
 =========================
 """
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -55,6 +56,9 @@ tstmp =  pd.Timestamp.now().isoformat().replace(":", "")
 outdir = os.path.join(".", "plots", tstmp)
 os.mkdir(outdir)
 
+# Output dict - will be pickled
+output = {}
+
 # Define x, y grid coords for centroids of a unit square spanning square grid
 # centred on the origin
 xvals = np.linspace(-.5 + 1./(2. * nx), .5 - 1./(2. * nx), num=nx, endpoint=True)
@@ -71,6 +75,9 @@ features_fit_hi = polynomial_design_matrix(X=X, degree=fit_degree_hi)
 # Build the true 2D contour and plot
 ctrue = np.random.randn(features_true.shape[-1]) * coeff_signal_to_noise
 ztrue = (np.matmul(features_true, ctrue)).reshape((nx, nx))
+output["ctrue"] = ctrue
+output["ztrue"] = ztrue
+
 plt.title("Ideal model curve")
 plt.pcolor(ztrue, cmap="Greys"); plt.colorbar()
 plt.savefig(os.path.join(outdir, "ideal_"+tstmp+".png"))
@@ -78,6 +85,8 @@ plt.show()
 
 # Add the random noise to generate the dataset, and plot
 zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
+output["zdata"] = zdata
+
 plt.title("Data")
 plt.pcolor(zdata, cmap="Greys"); plt.colorbar()
 plt.savefig(os.path.join(outdir, "data_"+tstmp+".png"))
@@ -93,6 +102,9 @@ for features in (features_fit_lo, features_true, features_fit_hi):
 	predictions.append(regr.predict(features).reshape((nx, nx)))
 
 pred_lo, pred_true, pred_hi = tuple(predictions)
+output["pred_lo"] = pred_lo
+output["pred_true"] = pred_true
+output["pred_hi"] = pred_hi
 
 # Plot residuals
 plt.pcolor(zdata - pred_lo, cmap="Greys"); plt.colorbar(); plt.clim([-2.5, 2.5])
@@ -100,15 +112,23 @@ plt.title("Low order polynomial fit residuals")
 plt.savefig(os.path.join(outdir, "lo_"+tstmp+".png"))
 plt.show()
 rlo = zdata - pred_lo
+output["rlo"] = rlo
 
 plt.pcolor(zdata - pred_true, cmap="Greys"); plt.colorbar(); plt.clim([-2.5, 2.5])
 plt.title("Matching order polynomial fit residuals")
 plt.savefig(os.path.join(outdir, "matching_"+tstmp+".png"))
 plt.show()
 rtrue = zdata - pred_true
+output["rtrue"] = rtrue
 
 plt.pcolor(zdata - pred_hi, cmap="Greys"); plt.colorbar(); plt.clim([-2.5, 2.5])
 plt.title("High order polynomial fit residuals")
 plt.savefig(os.path.join(outdir, "hi_"+tstmp+".png"))
 plt.show()
 rhi = zdata - pred_hi
+output["rhi"] = rhi
+
+outfile = os.path.join(outdir, "output_"+tstmp+".pickle")
+print("Saving to "+outfile)
+with open(outfile, "wb") as fout:
+    pickle.dump(output, fout)
