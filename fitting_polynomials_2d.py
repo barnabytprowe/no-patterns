@@ -66,7 +66,7 @@ Xxgrid, Xygrid = np.meshgrid(xvals, xvals)
 
 # Use sklearn PolynomialFeatures to model simple polynomials in 2D
 # x, y coordinates
-X = np.stack([Xxgrid.flatten(), Xygrid.flatten()], axis=1)
+X = np.stack([Xxgrid.flatten(order="C"), Xygrid.flatten(order="C")], axis=1)
 # Design matrices for the true, too low and too high cases
 features_true = polynomial_design_matrix(X=X, degree=fit_degree_true)
 features_fit_lo = polynomial_design_matrix(X=X, degree=fit_degree_lo)
@@ -74,7 +74,7 @@ features_fit_hi = polynomial_design_matrix(X=X, degree=fit_degree_hi)
 
 # Build the true 2D contour and plot
 ctrue = np.random.randn(features_true.shape[-1]) * coeff_signal_to_noise
-ztrue = (np.matmul(features_true, ctrue)).reshape((nx, nx))
+ztrue = (np.matmul(features_true, ctrue)).reshape((nx, nx), order="C")
 output["ctrue"] = ctrue
 output["ztrue"] = ztrue
 
@@ -94,12 +94,12 @@ plt.show()
 
 # Perform too low order, true and too high order regressions
 predictions = []
-zflat = zdata.flatten()
+zflat = zdata.flatten(order="C")
 for features in (features_fit_lo, features_true, features_fit_hi):
 
 	regr = sklearn.linear_model.LinearRegression()
 	regr.fit(features, zflat)
-	predictions.append(regr.predict(features).reshape((nx, nx)))
+	predictions.append(regr.predict(features).reshape((nx, nx), order="C"))
 
 pred_lo, pred_true, pred_hi = tuple(predictions)
 output["pred_lo"] = pred_lo
