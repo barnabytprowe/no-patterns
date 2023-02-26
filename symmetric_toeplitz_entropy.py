@@ -1,15 +1,19 @@
 """
-banded_circulant_entropy.py
-===========================
+symmetric_toeplitz_entropy.py
+=============================
+Basic functions and charts for exploring the differential entropy of
+multivariate Gaussian distributions with Toeplitz and Circulant covariance
+matrices.
 """
 
 import numpy as np
 import scipy.linalg
 
 
-def lagged_correlation(ndim, decay_factor=0., circular=False):
-    """Returns 1D float array of length ndim containing values that decrease by a
-    constant factor with index, where array[0]=1, with optional circular symmetry.
+def exponential_decay(ndim, decay_factor=0., circular=False):
+    """Returns 1D float array of length ndim containing values that decrease by
+    a constant decay_factor with each increasing index i, where array[0] = 1,
+    with optional circular symmetry.
     """
     if not circular:
         
