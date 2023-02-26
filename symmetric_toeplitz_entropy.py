@@ -30,3 +30,19 @@ def exponential_decay(ndim, decay_factor=0., circular=False, oscillatory=False):
         _rarr[(1 + ndim//2):] = _first_half[1:(1 + ndim)//2][::-1]
 
     return _rarr
+
+def exponential_toeplitz_corr(ndim, decay_factor=0., circulant=False, oscillatory=False):
+    """Returns Toeplitz correlation matrix as a 2D float array of shape
+    (ndim, ndim) with the specified exponential decay in band structure.
+    """
+    if circulant:
+        return scipy.linalg.circulant(
+            exponential_decay(
+                ndim, decay_factor=decay_factor, circular=True, oscillatory=oscillatory)
+        )
+
+    else:
+        return scipy.linalg.toeplitz(
+            exponential_decay(
+                ndim, decay_factor=decay_factor, circular=False, oscillatory=oscillatory)
+        )
