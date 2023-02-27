@@ -11,6 +11,15 @@ import numpy as np
 import scipy.linalg
 
 
+# Params for main script & plotting
+# ---------------------------------
+NDIM = 100
+DECAY_FACTORS = np.linspace(0., 0.95, num=50)
+
+
+# Functions
+# ---------
+
 def exponential_decay(ndim, decay_factor=0., circular=False, oscillatory=False):
     """Returns 1D float array of length ndim containing values that decrease by
     a constant decay_factor with each increasing index i, where array[0] = 1,
@@ -46,3 +55,44 @@ def exponential_toeplitz_corr(ndim, decay_factor=0., circulant=False, oscillator
             exponential_decay(
                 ndim, decay_factor=decay_factor, circular=False, oscillatory=oscillatory)
         )
+
+
+if __name__ == "__main__":
+
+    # Calculate full Toeplitz and circulant approximation determinants via their eigenvalue products
+    dets_toeplitz = np.asarray(
+        [
+            np.product(
+                np.linalg.eigvalsh(
+                    exponential_toeplitz_corr(NDIM, _dfac, circulant=False, oscillatory=False)
+                )
+            )
+            for _dfac in DECAY_FACTORS
+        ],
+        dtype=float,
+    )
+    dets_circulant = np.asarray(
+        [
+            np.product(
+                np.linalg.eigvalsh(
+                    exponential_toeplitz_corr(NDIM, _dfac, circulant=True, oscillatory=False)
+                )
+            )
+            for _dfac in DECAY_FACTORS
+        ],
+        dtype=float,
+    )
+
+    # Plot versus decay factors
+    plt.plot(DECAY_FACTORS, dets_toeplitz, "k-")
+    plt.plot(DECAY_FACTORS, dets_circulant, "k--", label="Circulant approximation")
+    plt.yscale("log")
+    plt.yticks(10.**(-10. * np.arange(11)[::-1]))
+    plt.ylim(1.e-103, 1000.)
+    plt.minorticks_on()
+    plt.grid(True, which="both")
+    plt.title(r"$\det{\mathbf{P}}$")
+    plt.xlabel("Decay factor")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
