@@ -17,7 +17,7 @@ import sklearn.preprocessing
 # ==========
 
 # Side of unit square
-nx = 32
+nx = 10
 
 # Sigma of iid pixel noise
 noise_sigma = 1.
@@ -25,7 +25,7 @@ noise_sigma = 1.
 # True, low (insufficient) and high (overfitting) polynomial order to use when fitting
 fit_degree_true = 8  # the real signal in the simulations will be a 2D polnoymial of this order
 fit_degree_lo = 2
-fit_degree_hi = 32
+fit_degree_hi = 16
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
