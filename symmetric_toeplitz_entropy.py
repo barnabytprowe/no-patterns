@@ -14,8 +14,8 @@ import scipy.linalg
 # Params for main script & plotting
 # ---------------------------------
 NDIM = 100
-DECAY_FACTORS = np.linspace(0., 0.95, num=50)
-
+DECAY_FACTORS = np.linspace(0., 0.30, num=301)
+DECAY_FACTORS_EXTENDED = np.linspace(0., 0.90, num=901)
 
 # Functions
 # ---------
@@ -87,9 +87,9 @@ if __name__ == "__main__":
     plt.plot(DECAY_FACTORS, dets_toeplitz, "k-")
     plt.plot(DECAY_FACTORS, dets_circulant, "k--", label="Circulant approximation")
     plt.yscale("log")
-    plt.yticks(10.**(-10. * np.arange(11)[::-1]))
-    plt.ylim(1.e-103, 1000.)
-    plt.minorticks_on()
+    #plt.yticks(10.**(-10. * np.arange(9)[::-1]))  # uncomment for extended plots
+    #plt.ylim(1.e-103, 1000.)
+    #plt.minorticks_on()
     plt.grid(True, which="both")
     plt.title(r"$\det{\mathbf{P}}$")
     plt.xlabel("Decay factor")
