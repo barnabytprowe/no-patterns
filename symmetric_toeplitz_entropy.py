@@ -21,15 +21,20 @@ DECAY_FACTORS = np.linspace(0., 0.30, num=301)
 DECAY_FACTORS_EXTENDED = np.linspace(0., 0.95, num=951)
 
 # Parameters for example matrix display using imshow
+EXAMPLE_DECAY_FACTOR = 0.3
 CMAP = "gray_r"
-VMIN = None
-VMAX = None
-INSET_NDIM = 10
+VMIN = -EXAMPLE_DECAY_FACTOR
+VMAX = 1.
+ZOOM_NDIM = 10
 
 # Output
 outdir = os.path.join(".", "plots")
-outfile = os.path.join(outdir, "determinants_toeplitz.png")
-outfile_extended = os.path.join(outdir, "determinants_toeplitz_extended.png")
+outfile = os.path.join(outdir, "determinants_toeplitz.pdf")
+outfile_extended = os.path.join(outdir, "determinants_toeplitz_extended.pdf")
+
+toeplitz_matrix_example_prefix = "toeplitz_example_"
+toeplitz_matrix_example_zoom_prefix = "toeplitz_example_zoom_"
+circulant_matrix_example_prefix = "circulant_example_"
 
 
 # Functions
@@ -49,7 +54,8 @@ def exponential_decay(ndim, decay_factor=0., circular=False, oscillatory=False):
             _rarr *= (-1.)**(np.arange(ndim) % 2)
 
     else:
-        _first_half = exponential_decay(1 + ndim//2, decay_factor=decay_factor, circular=False)
+        _first_half = exponential_decay(
+            1 + ndim//2, decay_factor=decay_factor, circular=False, oscillatory=oscillatory)
         _rarr[:(1 + ndim//2)] = _first_half
         _rarr[(1 + ndim//2):] = _first_half[1:(1 + ndim)//2][::-1]
 
@@ -73,7 +79,6 @@ def exponential_toeplitz_corr(ndim, decay_factor=0., circulant=False, oscillator
 
 
 if __name__ == "__main__":
-
 
     # Plot determinants of the correlation matrix (scales with entropy) as function of decay factor
     dets_toeplitz = {}
@@ -111,7 +116,7 @@ if __name__ == "__main__":
             plt.yticks(10.**(-10. * np.arange(11)[::-1]))  # uncomment for extended plots
         plt.grid(True, which="both")
         plt.title(r"$\det{\mathbf{P}}$")
-        plt.xlabel("Decay factor")
+        plt.xlabel(r"Decay factor $\lambda$")
         plt.legend()
         plt.tight_layout()
         if i == 1:
@@ -122,3 +127,68 @@ if __name__ == "__main__":
         plt.savefig(_outfile)
         #plt.show()
         plt.clf()
+        plt.close()
+
+    # Make plots of Toeplitz matrix, Toeplitz matrix inset, and circulant approximation
+    oscstr = {True: "oscillatory", False: "non-oscillatory"}
+    for _osc in (True, False):
+
+        toeplitz_example = exponential_toeplitz_corr(
+            NDIM, EXAMPLE_DECAY_FACTOR, circulant=False, oscillatory=_osc)
+        toeplitz_example_zoom = toeplitz_example[:ZOOM_NDIM, :ZOOM_NDIM]
+        circulant_example = exponential_toeplitz_corr(
+            NDIM, EXAMPLE_DECAY_FACTOR, circulant=True, oscillatory=_osc)
+
+        # First show the Toeplitz
+        fig, ax = plt.subplots(figsize=(16, 12))
+        im = ax.imshow(toeplitz_example, cmap=CMAP, vmin=VMIN, vmax=VMAX)
+        cbar = fig.colorbar(im)
+        ax.set_title(
+            r"$\mathbf{P}$ with decay factor $\lambda$ = "+str(EXAMPLE_DECAY_FACTOR)+
+            " ("+oscstr[_osc]+")",
+            size=20,
+        )
+        ax.tick_params(axis="both", labelsize=16)
+        cbar.ax.tick_params(axis="both", labelsize=16)
+        fig.tight_layout()
+        _outfile = os.path.join(
+            outdir,
+            toeplitz_matrix_example_prefix+oscstr[_osc]+f"_lambda_{EXAMPLE_DECAY_FACTOR}.pdf"
+        )
+        print(f"Saving figure to {_outfile}")
+        fig.savefig(_outfile)
+
+        # Then the circulant approximation to the Toeplitz
+        fig, ax = plt.subplots(figsize=(16, 12))
+        im = ax.imshow(circulant_example, cmap=CMAP, vmin=VMIN, vmax=VMAX)
+        cbar = fig.colorbar(im)
+        ax.set_title(
+            r"$\mathbf{P}$ with decay factor $\lambda$ = "+str(EXAMPLE_DECAY_FACTOR)+
+            " ("+oscstr[_osc]+", circulant approximation)",
+            size=20,
+        )
+        ax.tick_params(axis="both", labelsize=16)
+        cbar.ax.tick_params(axis="both", labelsize=16)
+        fig.tight_layout()
+        _outfile = os.path.join(
+            outdir,
+            circulant_matrix_example_prefix+oscstr[_osc]+f"_lambda_{EXAMPLE_DECAY_FACTOR}.pdf"
+        )
+        print(f"Saving figure to {_outfile}")
+        fig.savefig(_outfile)
+
+        # Now we generate the chart of the zoomed in diagonal region (only do for Toeplitz)
+        fig, ax = plt.subplots()
+        im = ax.imshow(toeplitz_example_zoom, cmap=CMAP, vmin=VMIN, vmax=VMAX)
+        cbar = fig.colorbar(im)
+        ax.set_title(
+            r"Diagonal block from $\mathbf{P}$ with decay factor $\lambda$ = "+
+            str(EXAMPLE_DECAY_FACTOR)+" ("+oscstr[_osc]+")",
+        )
+        fig.tight_layout()
+        _outfile = os.path.join(
+            outdir,
+            toeplitz_matrix_example_zoom_prefix+oscstr[_osc]+f"_lambda_{EXAMPLE_DECAY_FACTOR}.pdf"
+        )
+        print(f"Saving figure to {_outfile}")
+        fig.savefig(_outfile)
