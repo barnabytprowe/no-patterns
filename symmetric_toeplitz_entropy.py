@@ -80,55 +80,6 @@ def exponential_toeplitz_corr(ndim, decay_factor=0., circulant=False, oscillator
 
 if __name__ == "__main__":
 
-    # Plot determinants of the correlation matrix (scales with entropy) as function of decay factor
-    dets_toeplitz = {}
-    dets_circulant = {}
-    for i, _decay_factors in enumerate((DECAY_FACTORS, DECAY_FACTORS_EXTENDED)):
-
-        # Calculate Toeplitz and circulant approximation determinants via their eigenvalue products
-        dets_toeplitz[i] = np.asarray(
-            [
-                np.product(
-                    np.linalg.eigvalsh(
-                        exponential_toeplitz_corr(NDIM, _dfac, circulant=False, oscillatory=False)
-                    )
-                )
-                for _dfac in _decay_factors
-            ],
-            dtype=float,
-        )
-        dets_circulant[i] = np.asarray(
-            [
-                np.product(
-                    np.linalg.eigvalsh(
-                        exponential_toeplitz_corr(NDIM, _dfac, circulant=True, oscillatory=False)
-                    )
-                )
-                for _dfac in _decay_factors
-            ],
-            dtype=float,
-        )
-
-        plt.plot(_decay_factors, dets_toeplitz[i], "k-")
-        plt.plot(_decay_factors, dets_circulant[i], "k--", label="Circulant approximation")
-        plt.yscale("log")
-        if i == 1:  # extended decay factors case need to give pyplot help with ticks
-            plt.yticks(10.**(-10. * np.arange(11)[::-1]))  # uncomment for extended plots
-        plt.grid(True, which="both")
-        plt.title(r"$\det{\mathbf{P}}$")
-        plt.xlabel(r"Decay factor $\lambda$")
-        plt.legend()
-        plt.tight_layout()
-        if i == 1:
-            _outfile = outfile_extended
-        else:
-            _outfile = outfile
-        print(f"Saving figure to {_outfile}")
-        plt.savefig(_outfile)
-        #plt.show()
-        plt.clf()
-        plt.close()
-
     # Make plots of Toeplitz matrix, Toeplitz matrix inset, and circulant approximation
     oscstr = {True: "oscillatory", False: "non-oscillatory"}
     for _osc in (True, False):
@@ -190,5 +141,52 @@ if __name__ == "__main__":
             outdir,
             toeplitz_matrix_example_zoom_prefix+oscstr[_osc]+f"_lambda_{EXAMPLE_DECAY_FACTOR}.pdf"
         )
+        print(f"Saving figure to {_outfile}")
+        fig.savefig(_outfile)
+
+    # Plot determinants of the correlation matrix (scales with entropy) as function of decay factor
+    dets_toeplitz = {}
+    dets_circulant = {}
+    for i, _decay_factors in enumerate((DECAY_FACTORS, DECAY_FACTORS_EXTENDED)):
+
+        # Calculate Toeplitz and circulant approximation determinants via their eigenvalue products
+        dets_toeplitz[i] = np.asarray(
+            [
+                np.product(
+                    np.linalg.eigvalsh(
+                        exponential_toeplitz_corr(NDIM, _dfac, circulant=False, oscillatory=False)
+                    )
+                )
+                for _dfac in _decay_factors
+            ],
+            dtype=float,
+        )
+        dets_circulant[i] = np.asarray(
+            [
+                np.product(
+                    np.linalg.eigvalsh(
+                        exponential_toeplitz_corr(NDIM, _dfac, circulant=True, oscillatory=False)
+                    )
+                )
+                for _dfac in _decay_factors
+            ],
+            dtype=float,
+        )
+
+        fig, ax = plt.subplots()
+        ax.plot(_decay_factors, dets_toeplitz[i], "k-")
+        ax.plot(_decay_factors, dets_circulant[i], "k--", label="Circulant approximation")
+        ax.set_yscale("log")
+        if i == 1:  # extended decay factors case need to give pyplot help with ticks
+            ax.set_yticks(10.**(-10. * np.arange(11)[::-1]))  # uncomment for extended plots
+        ax.grid(True, which="both")
+        ax.set_title(r"$\det{\mathbf{P}}$")
+        ax.set_xlabel(r"Decay factor $\lambda$")
+        ax.legend()
+        fig.tight_layout()
+        if i == 1:
+            _outfile = outfile_extended
+        else:
+            _outfile = outfile
         print(f"Saving figure to {_outfile}")
         fig.savefig(_outfile)
