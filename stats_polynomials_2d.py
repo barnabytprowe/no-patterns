@@ -18,15 +18,11 @@ import pandas as pd
 # ------
 
 DEFAULT_ROOTDIR = os.path.join(".", "plots")
-_tstamps = ["2023-03-02T224853.137222", "2023-03-03T132122.559540"]
+TIMESTAMPS = [os.path.basename(_p) for _p in glob.glob(os.path.join(DEFAULT_ROOTDIR, "*-*-*T*"))]
 
 
 # Functions
 # ---------
-
-# def roll2d(arr, shift0, shift1=None):
-#   """
-#   """
 
 def pathfile(timestamp, rootdir=DEFAULT_ROOTDIR):
     _tfolder = os.path.join(rootdir, timestamp)
@@ -34,6 +30,7 @@ def pathfile(timestamp, rootdir=DEFAULT_ROOTDIR):
         raise FileNotFoundError(_tfolder)
 
     return _tfolder, os.path.join(_tfolder, f"output_{timestamp}.pickle")
+
 
 def get_stats(file):
     with open(file, "rb") as fin:
@@ -57,16 +54,23 @@ def get_stats(file):
     return tuple(rstats[_o] for _o in ("lo", "true", "hi"))
 
 
+def report_stats(timestamp):
+    _tfolder, _tsfile = pathfile(timestamp, rootdir=DEFAULT_ROOTDIR)
+    print(f"Building stats from {_tsfile}")
+    _lo, _true, _hi = get_stats(_tsfile)
+    stats = {"lo": _lo, "true": _true, "hi": _hi}
+    print("RSS (lo, true, hi):")
+    print(tuple(stats[_order]["RSS"] for _order in ("lo", "true", "hi")))
+    statfile = os.path.join(_tfolder, f"stats_{_ts}.yaml")
+    print(f"Writing to {statfile}")
+    with open(statfile, "w") as fout:
+        yaml.dump(stats, fout)
+    return
+
+
 if __name__ == "__main__":
 
-    # Loop through timestamps
-    for _ts in _tstamps:
+    # Loop through timestamps and report stats into folders
+    for _timestamp in TIMESTAMPS:
 
-        _tfolder, _tsfile = pathfile(_ts, rootdir=DEFAULT_ROOTDIR)
-        print(f"Building stats from {_tsfile}")
-        _lo, _true, _hi = get_stats(_tsfile)
-        stats = {"lo": _lo, "true": _true, "hi": _hi}
-        print("RSS (lo, true, hi):")
-        print(tuple(stats[_order]["RSS"] for _order in ("lo", "true", "hi")))
-        statfile = os.path.join(_tfolder, f"stats_{_ts}.pickle")
-        #import ipdb; ipdb.set_trace()
+        report_stats(_timestamp)
