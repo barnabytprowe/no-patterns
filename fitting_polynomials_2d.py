@@ -36,6 +36,11 @@ fit_degree_hi = 16
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 8.
 
+# Plotting settings
+FIGSIZE = (6, 4.85)
+CMAP = "Greys_r"
+TITLE_SIZE = "x-large"
+
 
 # Functions
 # =========
@@ -83,8 +88,10 @@ ztrue = (np.matmul(features_true, ctrue)).reshape((nx, nx), order="C")
 output["ctrue"] = ctrue
 output["ztrue"] = ztrue
 
-plt.title("Ideal model curve")
-plt.pcolor(ztrue, cmap="Greys"); plt.colorbar()
+fig = plt.figure(figsize=FIGSIZE)
+plt.title("Ideal model curve", size=TITLE_SIZE)
+plt.pcolor(ztrue, cmap=CMAP); plt.colorbar()
+plt.tight_layout()
 plt.savefig(os.path.join(outdir, "ideal_"+tstmp+".png"))
 plt.show()
 
@@ -92,8 +99,10 @@ plt.show()
 zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
 output["zdata"] = zdata
 
-plt.title("Data")
-plt.pcolor(zdata, cmap="Greys"); plt.colorbar()
+fig = plt.figure(figsize=FIGSIZE)
+plt.title("Data", size=TITLE_SIZE)
+plt.pcolor(zdata, cmap=CMAP); plt.colorbar()
+plt.tight_layout()
 plt.savefig(os.path.join(outdir, "data_"+tstmp+".png"))
 plt.show()
 
@@ -112,22 +121,28 @@ output["pred_true"] = pred_true
 output["pred_hi"] = pred_hi
 
 # Plot residuals
-plt.pcolor(zdata - pred_lo, cmap="Greys"); plt.colorbar(); plt.clim([-2.5, 2.5])
-plt.title("Low order polynomial fit residuals")
+fig = plt.figure(figsize=FIGSIZE)
+plt.pcolor(zdata - pred_lo, cmap=CMAP); plt.colorbar(); plt.clim([-2.5, 2.5])
+plt.title("Low order polynomial fit residuals", size=TITLE_SIZE)
+plt.tight_layout()
 plt.savefig(os.path.join(outdir, "lo_"+tstmp+".png"))
 plt.show()
 rlo = zdata - pred_lo
 output["rlo"] = rlo
 
-plt.pcolor(zdata - pred_true, cmap="Greys"); plt.colorbar(); plt.clim([-2.5, 2.5])
-plt.title("Matching order polynomial fit residuals")
+fig = plt.figure(figsize=FIGSIZE)
+plt.pcolor(zdata - pred_true, cmap=CMAP); plt.colorbar(); plt.clim([-2.5, 2.5])
+plt.title("Matching order polynomial fit residuals", size=TITLE_SIZE)
+plt.tight_layout()
 plt.savefig(os.path.join(outdir, "matching_"+tstmp+".png"))
 plt.show()
 rtrue = zdata - pred_true
 output["rtrue"] = rtrue
 
-plt.pcolor(zdata - pred_hi, cmap="Greys"); plt.colorbar(); plt.clim([-2.5, 2.5])
-plt.title("High order polynomial fit residuals")
+fig = plt.figure(figsize=FIGSIZE)
+plt.pcolor(zdata - pred_hi, cmap=CMAP); plt.colorbar(); plt.clim([-2.5, 2.5])
+plt.title("High order polynomial fit residuals", size=TITLE_SIZE)
+plt.tight_layout()
 plt.savefig(os.path.join(outdir, "hi_"+tstmp+".png"))
 plt.show()
 rhi = zdata - pred_hi
