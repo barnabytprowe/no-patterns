@@ -61,7 +61,7 @@ def report_stats(timestamp):
     stats = {"lo": _lo, "true": _true, "hi": _hi}
     print("RSS (lo, true, hi):")
     print(tuple(stats[_order]["RSS"] for _order in ("lo", "true", "hi")))
-    statfile = os.path.join(_tfolder, f"stats_{_ts}.yaml")
+    statfile = os.path.join(_tfolder, f"stats_{timestamp}.yaml")
     print(f"Writing to {statfile}")
     with open(statfile, "w") as fout:
         yaml.dump(stats, fout)
