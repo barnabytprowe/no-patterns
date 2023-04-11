@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import fitting_polynomials_2d
+from fitting_polynomials_2d import PROJDIR
 from fitting_polynomials_2d import FIGSIZE
 from fitting_polynomials_2d import CMAP
 from fitting_polynomials_2d import TITLE_SIZE
@@ -22,18 +24,17 @@ from fitting_polynomials_2d import TITLE_SIZE
 # Params
 # ------
 
-DEFAULT_ROOTDIR = os.path.join(".", "plots")
-TIMESTAMPS = [os.path.basename(_p) for _p in glob.glob(os.path.join(DEFAULT_ROOTDIR, "*-*-*T*"))]
+TIMESTAMPS = [os.path.basename(_p) for _p in glob.glob(os.path.join(PROJDIR, "*-*-*T*"))]
 
 
 # Functions
 # ---------
 
-def pathfile(timestamp, rootdir=DEFAULT_ROOTDIR):
+def pathfile(timestamp, projdir=PROJDIR):
     """Returns the folder and output pickle filename corresponding to a run
     of fitting_polynomials_2d.py for the given timestamp.
     """
-    _tfolder = os.path.join(rootdir, timestamp)
+    _tfolder = os.path.join(projdir, timestamp)
     if not os.path.isdir(_tfolder):
         raise FileNotFoundError(_tfolder)
 
@@ -51,7 +52,7 @@ def get_stats(timestamp, rng=None):
     if rng is None:
         rng = np.random.default_rng()
 
-    _tfolder, _tsfile = pathfile(timestamp, rootdir=DEFAULT_ROOTDIR)
+    _tfolder, _tsfile = pathfile(timestamp, projdir=PROJDIR)
     print(f"Building stats from {_tsfile}")
     with open(_tsfile, "rb") as fin:
         data = pickle.load(fin)
@@ -90,7 +91,7 @@ def report_stats(timestamp, rng=None):
     """Gets stats for a timestamp, generates additional plots, and stores all
     useful data to yaml format output in the timstamp folder.
     """
-    _tfolder, _tsfile = pathfile(timestamp, rootdir=DEFAULT_ROOTDIR)
+    _tfolder, _tsfile = pathfile(timestamp, projdir=PROJDIR)
     _lo, _true, _hi = get_stats(timestamp, rng=rng)
     stats = {"lo": _lo, "true": _true, "hi": _hi}
     print("RSS (lo, true, hi):")
