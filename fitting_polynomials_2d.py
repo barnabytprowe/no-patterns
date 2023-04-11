@@ -2,8 +2,8 @@
 fitting_polynomials_2d.py
 =========================
 Script that generates examples of 2D contour curve fitting scenarios with
-additive iid Gaussian noise, illustrating unfitting, correctly specified, and
-overfitting scenarios.
+additive iid Gaussian noise, illustrating underfitting, correctly specified,
+and overfitting scenarios.
 
 Saves output into a uniquely timestamped subfolder of ./plots/polynomials_2d/.
 """
