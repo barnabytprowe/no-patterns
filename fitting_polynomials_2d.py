@@ -42,8 +42,8 @@ CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
 # Output folder structure
-pltdir = os.path.join(".", "plots")
-projdir = os.path.join(".", "plots", "polynomials_2d")
+PLTDIR = os.path.join(".", "plots")
+PROJDIR = os.path.join(".", "plots", "polynomials_2d")
 
 
 # Functions
@@ -62,6 +62,22 @@ def polynomial_design_matrix(X, degree):
     return poly_features.fit_transform(X, y=None)
 
 
+def build_output_folder_structure(timestamp):
+    """Builds output folder structure using input timestamp and module scope
+    PLTDIR, PROJDIR constant variables.  Returns output folder name.
+    """
+    for _dir in (PLTDIR, PROJDIR):
+
+        if not os.path.isdir(_dir):
+            os.mkdir(_dir)
+
+    outdir = os.path.join(PROJDIR, timestamp)
+    if not os.path.isdir(outdir):
+        os.mkdir(outdir)
+
+    return outdir
+
+
 # Main script
 # ===========
 
@@ -69,16 +85,7 @@ if __name__ == "__main__":
 
     # Current timestamp, used in I/0
     tstmp =  pd.Timestamp.now().isoformat().replace(":", "")
-
-    # Build output folder structure
-    for _dir in (pltdir, projdir):
-
-        if not os.path.isdir(_dir):
-            os.mkdir(_dir)
-
-    outdir = os.path.join(projdir, tstmp)
-    if not os.path.isdir(outdir):
-        os.mkdir(outdir)
+    outdir = build_output_folder_structure(tstmp)
 
     # Output dict - will be pickled
     output = {}
