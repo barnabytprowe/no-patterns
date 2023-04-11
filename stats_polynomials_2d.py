@@ -44,6 +44,9 @@ def get_stats(timestamp, rng=None):
     """Retrieves, calculates and returns key stats from a
     fitting_polynomials_2d.py output pickle file for a given timestamp, and
     generates randomized (shuffled) versions of the residual plots.
+
+    Also generages a PNG image of a shuffled (by input rng if given) residual
+    grid.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -78,17 +81,17 @@ def get_stats(timestamp, rng=None):
         plt.title(_title_str, size=TITLE_SIZE)
         plt.tight_layout()
         plt.savefig(os.path.join(_tfolder, f"{_order}_shuffled_{timestamp}.png"))
+        plt.close(fig)
 
     return tuple(rstats[_o] for _o in ("lo", "true", "hi"))
 
 
-def report_stats(timestamp):
+def report_stats(timestamp, rng=None):
     """Gets stats for a timestamp, generates additional plots, and stores all
     useful data to yaml format output in the timstamp folder.
     """
     _tfolder, _tsfile = pathfile(timestamp, rootdir=DEFAULT_ROOTDIR)
-    print(f"Building stats from {_tsfile}")
-    _lo, _true, _hi = get_stats(timestamp)
+    _lo, _true, _hi = get_stats(timestamp, rng=rng)
     stats = {"lo": _lo, "true": _true, "hi": _hi}
     print("RSS (lo, true, hi):")
     print(tuple(stats[_order]["RSS"] for _order in ("lo", "true", "hi")))
@@ -102,6 +105,7 @@ def report_stats(timestamp):
 if __name__ == "__main__":
 
     # Loop through timestamps and report stats into folders
+    rng = np.random.default_rng()
     for _timestamp in TIMESTAMPS:
 
-        report_stats(_timestamp)
+        report_stats(_timestamp, rng=rng)
