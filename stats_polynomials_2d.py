@@ -81,7 +81,10 @@ def get_stats(timestamp, rng=None):
         _title_str = f"Shuffled {order_strs[_order]} order polynomial residuals"
         plt.title(_title_str, size=TITLE_SIZE)
         plt.tight_layout()
-        plt.savefig(os.path.join(_tfolder, f"{_order}_shuffled_{timestamp}.png"))
+        if _order == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
+            plt.savefig(os.path.join(_tfolder, f"matching_shuffled_{timestamp}.png"))
+        else:
+            plt.savefig(os.path.join(_tfolder, f"{_order}_shuffled_{timestamp}.png"))
         plt.close(fig)
 
     return tuple(rstats[_o] for _o in ("lo", "true", "hi"))
