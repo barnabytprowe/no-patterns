@@ -5,7 +5,8 @@ Script that generates examples of 1D curve fitting scenarios with additive iid
 Gaussian noise, illustrating underfitting, correctly specified, and overfitting
 scenarios.
 
-Saves output into a uniquely timestamped subfolder of ./plots/polynomials_1d/.
+Saves output into a uniquely timestamped subfolder of
+./plots/polynomials_sinusoids_1d/.
 """
 
 import os
