@@ -5,7 +5,7 @@ Script that generates examples of 2D contour curve fitting scenarios with
 additive iid Gaussian noise, illustrating unfitting, correctly specified, and
 overfitting scenarios.
 
-Saves output into a uniquely timestamped subfolder of ./plots/.
+Saves output into a uniquely timestamped subfolder of ./plots/polynomials_2d/.
 """
 import os
 import pickle
@@ -41,6 +41,10 @@ FIGSIZE = (6, 4.85)
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
+# Output folder structure
+pltdir = os.path.join(".", "plots")
+projdir = os.path.join(".", "plots", "polynomials_2d")
+
 
 # Functions
 # =========
@@ -65,8 +69,16 @@ if __name__ == "__main__":
 
     # Current timestamp, used in I/0
     tstmp =  pd.Timestamp.now().isoformat().replace(":", "")
-    outdir = os.path.join(".", "plots", tstmp)
-    os.mkdir(outdir)
+
+    # Build output folder structure
+    for _dir in (pltdir, projdir):
+
+        if not os.path.isdir(_dir):
+            os.mkdir(_dir)
+
+    outdir = os.path.join(projdir, tstmp)
+    if not os.path.isdir(outdir):
+        os.mkdir(outdir)
 
     # Output dict - will be pickled
     output = {}
