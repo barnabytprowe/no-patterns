@@ -63,16 +63,16 @@ def polynomial_design_matrix(X, degree):
     return poly_features.fit_transform(X, y=None)
 
 
-def build_output_folder_structure(timestamp):
+def build_output_folder_structure(timestamp, project_dir=PROJDIR):
     """Builds output folder structure using input timestamp and module scope
     PLTDIR, PROJDIR constant variables.  Returns output folder name.
     """
-    for _dir in (PLTDIR, PROJDIR):
+    for _dir in (PLTDIR, project_dir):
 
         if not os.path.isdir(_dir):
             os.mkdir(_dir)
 
-    outdir = os.path.join(PROJDIR, timestamp)
+    outdir = os.path.join(project_dir, timestamp)
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     # Current timestamp, used in I/0
     tstmp =  pd.Timestamp.now().isoformat().replace(":", "")
-    outdir = build_output_folder_structure(tstmp)
+    outdir = build_output_folder_structure(tstmp, project_dir=PROJDIR)
 
     # Output dict - will be pickled
     output = {}
