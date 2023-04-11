@@ -61,6 +61,7 @@ def exponential_decay(ndim, decay_factor=0., circular=False, oscillatory=False):
 
     return _rarr
 
+
 def exponential_toeplitz_corr(ndim, decay_factor=0., circulant=False, oscillatory=False):
     """Returns Toeplitz correlation matrix as a 2D float array of shape
     (ndim, ndim) with the specified exponential decay in band structure.

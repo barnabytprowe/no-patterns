@@ -7,6 +7,7 @@ and overfitting scenarios.
 
 Saves output into a uniquely timestamped subfolder of ./plots/polynomials_2d/.
 """
+
 import os
 import pickle
 
@@ -43,7 +44,7 @@ TITLE_SIZE = "x-large"
 
 # Output folder structure
 PLTDIR = os.path.join(".", "plots")
-PROJDIR = os.path.join(".", "plots", "polynomials_2d")
+PROJDIR = os.path.join(PLTDIR, "polynomials_2d")
 
 
 # Functions
