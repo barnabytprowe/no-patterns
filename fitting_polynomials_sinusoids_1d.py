@@ -39,6 +39,11 @@ fit_degree_hi = 16
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
 
+# Plotting settings
+FIGSIZE = (12, 4)
+CMAP = "Greys_r"
+TITLE_SIZE = "x-large"
+
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "polynomials_sinusoids_1d")
 
@@ -108,6 +113,7 @@ if __name__ == "__main__":
 
     # Fit the sinusoidal and polynomial features
     features_dict = {"lo": features_lo, "true": features_true, "hi": features_hi}
+    curve_family_display = {"sinu": "sinusoidal", "cheb": "Chebyshev polynomial"}
     for _curve_family in ("sinu", "cheb"):
 
         for _fit in ("lo", "true", "hi"):
@@ -117,4 +123,16 @@ if __name__ == "__main__":
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_curve_family}_{_fit}"] = _yfit
 
-    1/0
+            fig = plt.figure(figsize=FIGSIZE)
+            plt.title(
+                curve_family_display[_curve_family].title()+" curve fitting in one dimension",
+                size=TITLE_SIZE,
+            )
+            _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
+            plt.plot(_x, output[f"ytrue_{_curve_family}"], color="k", ls=":", label="Ideal model")
+            plt.plot(_x, output[f"y_{_curve_family}"], "k+", label="Data")
+            plt.tight_layout()
+            plt.savefig(os.path.join(outdir, "curves_"+tstmp+".pdf"))
+            plt.show()
+            plt.close(fig)
+            1/0
