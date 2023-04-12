@@ -13,6 +13,7 @@ import os
 import pickle
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import numpy.polynomial.chebyshev
 import pandas as pd
@@ -32,15 +33,17 @@ noise_sigma = 1.
 
 # True, low (insufficient) and high (overfitting) polynomial order to use when fitting
 fit_degree_true = 8  # the real signal in the simulations will be a 2D polnoymial of this order
-fit_degree_lo = 2
-fit_degree_hi = 16
+fit_degree_lo = 4
+fit_degree_hi = 32
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
 
 # Plotting settings
-FIGSIZE = (15, 3.25)
+FIGSIZE = (10, 3.5)
+FIGSIZE_RESIDUALS = (10, 1.25)
+CLIM = None #[-2.5, 2.5]
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
@@ -114,6 +117,7 @@ if __name__ == "__main__":
     # Fit the sinusoidal and polynomial features
     features_dict = {"lo": features_lo, "true": features_true, "hi": features_hi}
     curve_family_display = {"sinu": "sinusoidal", "cheb": "Chebyshev polynomial"}
+    fit_display = {"lo": "Low (underfitting)", "true": "Matching", "hi": "High (overfitting)"}
     for _curve_family in ("sinu", "cheb"):
 
         for _fit in ("lo", "true", "hi"):
@@ -123,6 +127,7 @@ if __name__ == "__main__":
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_curve_family}_{_fit}"] = _yfit
 
+        # First we plot the lines in a conventional x, y graph format
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.set_title(
             curve_family_display[_curve_family].title()+" curve fitting in one dimension",
@@ -131,19 +136,20 @@ if __name__ == "__main__":
         _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
         ax.plot(
             _x, output[f"ytrue_{_curve_family}"],
-            color="k", ls="-", linewidth=2, label="Ideal model")
+            color="k", ls="-", linewidth=2, label="Ideal model",
+        )
         ax.plot(_x, output[f"y_{_curve_family}"], "k+", markersize=15, label="Data")
         ax.plot(
             _x, output[f"ypred_{_curve_family}_lo"],
-            color="red", ls="--", linewidth=0.75, label="Low (underfitting)",
+            color="red", ls="--", linewidth=0.75, label=fit_display["lo"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_true"],
-            color="k", ls="-", linewidth=0.75, label="Matching",
+            color="k", ls="-", linewidth=0.75, label=fit_display["true"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_hi"],
-            color="blue", ls="-.", linewidth=0.75, label="High (overfitting)",
+            color="blue", ls="-.", linewidth=0.75, label=fit_display["hi"],
         )
         ax.set_xlabel(r"$x$")
         ax.grid()
@@ -154,3 +160,32 @@ if __name__ == "__main__":
         print(f"Saving to {outfile}")
         fig.savefig(outfile)
         plt.close(fig)
+
+        # Now we are going to look at the residuals, but imaging rather than plotting them
+        # Define and store the residuals
+        for _fit in ("lo", "true", "hi"):
+
+            # Residuals = data - model
+            _res = output[f"y_{_curve_family}"] - output[f"ypred_{_curve_family}_{_fit}"]
+            output[f"res_{_curve_family}_{_fit}"] = _res.copy()
+
+            # Image / map
+            fig, ax = plt.subplots(figsize=FIGSIZE_RESIDUALS)
+            im = ax.pcolor(_res.reshape((1, len(_res))), cmap=CMAP, clim=CLIM)
+            ax.set_yticklabels([])
+            {}
+            ax.set_title(
+                f"{fit_display[_fit]} {curve_family_display[_curve_family]} residual map",
+                size=TITLE_SIZE,
+            )
+
+            # See https://stackoverflow.com/a/39938019 for colormap handling
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='2%', pad=0.1)
+            fig.colorbar(im, cax=cax, orientation='vertical')
+            fig.tight_layout()
+            plt.show()
+            outfile = os.path.join(outdir, f"residuals_{_fit}_{_curve_family}_{tstmp}.pdf")
+            print(f"Saving to {outfile}")
+            fig.savefig(outfile)
+            plt.close(fig)
