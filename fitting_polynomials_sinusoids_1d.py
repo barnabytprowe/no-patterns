@@ -40,7 +40,7 @@ fit_degree_hi = 16
 coeff_signal_to_noise = 1.
 
 # Plotting settings
-FIGSIZE = (12, 4)
+FIGSIZE = (15, 3.25)
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
@@ -123,16 +123,34 @@ if __name__ == "__main__":
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_curve_family}_{_fit}"] = _yfit
 
-            fig = plt.figure(figsize=FIGSIZE)
-            plt.title(
-                curve_family_display[_curve_family].title()+" curve fitting in one dimension",
-                size=TITLE_SIZE,
-            )
-            _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
-            plt.plot(_x, output[f"ytrue_{_curve_family}"], color="k", ls=":", label="Ideal model")
-            plt.plot(_x, output[f"y_{_curve_family}"], "k+", label="Data")
-            plt.tight_layout()
-            plt.savefig(os.path.join(outdir, "curves_"+tstmp+".pdf"))
-            plt.show()
-            plt.close(fig)
-            1/0
+        fig, ax = plt.subplots(figsize=FIGSIZE)
+        ax.set_title(
+            curve_family_display[_curve_family].title()+" curve fitting in one dimension",
+            size=TITLE_SIZE,
+        )
+        _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
+        ax.plot(
+            _x, output[f"ytrue_{_curve_family}"],
+            color="k", ls="-", linewidth=2, label="Ideal model")
+        ax.plot(_x, output[f"y_{_curve_family}"], "k+", markersize=15, label="Data")
+        ax.plot(
+            _x, output[f"ypred_{_curve_family}_lo"],
+            color="red", ls="--", linewidth=0.75, label="Low (underfitting)",
+        )
+        ax.plot(
+            _x, output[f"ypred_{_curve_family}_true"],
+            color="k", ls="-", linewidth=0.75, label="Matching",
+        )
+        ax.plot(
+            _x, output[f"ypred_{_curve_family}_hi"],
+            color="blue", ls="-.", linewidth=0.75, label="High (overfitting)",
+        )
+        ax.set_xlabel(r"$x$")
+        ax.grid()
+        ax.legend()
+        fig.tight_layout()
+        plt.show()
+        outfile = os.path.join(outdir, f"curves_{_curve_family}_{tstmp}.pdf")
+        print(f"Saving to {outfile}")
+        fig.savefig(outfile)
+        plt.close(fig)
