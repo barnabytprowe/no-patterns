@@ -35,17 +35,22 @@ noise_sigma = 1.
 fit_degree_true = 8  # the real signal in the simulations will be a 2D polnoymial of this order
 fit_degree_lo = 2
 fit_degree_hi = 16
+fit_degree_vhi = 32
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
 
 # Plotting settings
-FIGSIZE = (10, 3.5)
+FIGSIZE = (10, 4)
 FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = None #[-2.5, 2.5]
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
+
+# Periodogram chart settings
+PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
+PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "polynomials_sinusoids_1d")
@@ -95,6 +100,10 @@ if __name__ == "__main__":
         "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_hi),
         "cheb": chebyshev_design_matrix(x=x_cheb, degree=(1 + fit_degree_hi)),
     }
+    features_vhi = {
+        "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_vhi),
+        "cheb": chebyshev_design_matrix(x=x_cheb, degree=(1 + fit_degree_vhi)),
+    }
 
     # Build the true 1d curve coefficients
     sinu_coeffs_true = np.random.randn(features_true["sinu"].shape[-1]) * coeff_signal_to_noise
@@ -115,12 +124,22 @@ if __name__ == "__main__":
     output["y_cheb"] = y_cheb
 
     # Fit the sinusoidal and polynomial features
-    features_dict = {"lo": features_lo, "true": features_true, "hi": features_hi}
+    features_dict = {
+        "lo": features_lo,
+        "true": features_true,
+        "hi": features_hi,
+        "vhi": features_vhi,
+    }
     curve_family_display = {"sinu": "sinusoidal", "cheb": "Chebyshev polynomial"}
-    fit_display = {"lo": "Low (underfitting)", "true": "Matching", "hi": "High (overfitting)"}
+    fit_display = {
+        "lo": "Low (underfitting)",
+        "true": "Matching",
+        "hi": "High (overfitting)",
+        "vhi": "Very high (very overfitting)",
+    }
     for _curve_family in ("sinu", "cheb"):
 
-        for _fit in ("lo", "true", "hi"):
+        for _fit in ("lo", "true", "hi", "vhi"):
 
             _design_matrix = features_dict[_fit][_curve_family]
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_curve_family}"], rcond=None)[0]
@@ -141,15 +160,19 @@ if __name__ == "__main__":
         ax.plot(_x, output[f"y_{_curve_family}"], "k+", markersize=15, label="Data")
         ax.plot(
             _x, output[f"ypred_{_curve_family}_lo"],
-            color="red", ls="--", linewidth=0.75, label=fit_display["lo"],
+            color="red", ls="--", linewidth=1, label=fit_display["lo"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_true"],
-            color="k", ls="-", linewidth=0.75, label=fit_display["true"],
+            color="k", ls="-", linewidth=1, label=fit_display["true"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_hi"],
-            color="blue", ls="-.", linewidth=0.75, label=fit_display["hi"],
+            color="blue", ls="-.", linewidth=1, label=fit_display["hi"],
+        )
+        ax.plot(
+            _x, output[f"ypred_{_curve_family}_vhi"],
+            color="purple", ls=":", linewidth=1.25, label=fit_display["vhi"],
         )
         ax.set_xlabel(r"$x$")
         ax.grid()
@@ -163,7 +186,7 @@ if __name__ == "__main__":
 
         # Now we are going to look at the residuals, but imaging rather than plotting them
         # Define and store the residuals
-        for _fit in ("lo", "true", "hi"):
+        for _fit in ("lo", "true", "hi", "vhi"):
 
             # Residuals = data - model
             _res = output[f"y_{_curve_family}"] - output[f"ypred_{_curve_family}_{_fit}"]
@@ -210,7 +233,13 @@ if __name__ == "__main__":
             output[f"rp_{_curve_family}_hi"],
             color="blue", ls="-.", linewidth=1.5, label=fit_display["hi"],
         )
+        ax.plot(
+            output[f"rp_{_curve_family}_vhi"],
+            color="purple", ls=":", linewidth=1.5, label=fit_display["vhi"],
+        )
         ax.set_yscale("log")
+        ax.set_yticks(PERIODOGRAM_YTICKS)
+        ax.set_ylim(PERIODOGRAM_YLIM)
         ax.grid()
         ax.legend()
         fig.tight_layout()
