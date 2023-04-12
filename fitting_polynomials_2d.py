@@ -39,6 +39,7 @@ coeff_signal_to_noise = 8.
 
 # Plotting settings
 FIGSIZE = (6, 4.85)
+CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
@@ -144,7 +145,9 @@ if __name__ == "__main__":
 
     # Plot residuals
     fig = plt.figure(figsize=FIGSIZE)
-    plt.pcolor(zdata - pred_lo, cmap=CMAP); plt.colorbar(); plt.clim([-2.5, 2.5])
+    plt.pcolor(zdata - pred_lo, cmap=CMAP)
+    plt.colorbar()
+    plt.clim(CLIM)
     plt.title("Low order polynomial fit residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "lo_"+tstmp+".png"))
@@ -153,7 +156,9 @@ if __name__ == "__main__":
     output["rlo"] = rlo
 
     fig = plt.figure(figsize=FIGSIZE)
-    plt.pcolor(zdata - pred_true, cmap=CMAP); plt.colorbar(); plt.clim([-2.5, 2.5])
+    plt.pcolor(zdata - pred_true, cmap=CMAP)
+    plt.colorbar()
+    plt.clim(CLIM)
     plt.title("Matching order polynomial fit residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "matching_"+tstmp+".png"))
@@ -162,7 +167,9 @@ if __name__ == "__main__":
     output["rtrue"] = rtrue
 
     fig = plt.figure(figsize=FIGSIZE)
-    plt.pcolor(zdata - pred_hi, cmap=CMAP); plt.colorbar(); plt.clim([-2.5, 2.5])
+    plt.pcolor(zdata - pred_hi, cmap=CMAP)
+    plt.colorbar()
+    plt.clim(CLIM)
     plt.title("High order polynomial fit residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "hi_"+tstmp+".png"))
