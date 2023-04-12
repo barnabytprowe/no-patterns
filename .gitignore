@@ -3,4 +3,5 @@ old code/*
 *.tmp.driveupload/
 *Shortcut.lnk
 __pycache__/*
-
+no_patterns_code.sublime-project
+no_patterns_code.sublime-workspace
