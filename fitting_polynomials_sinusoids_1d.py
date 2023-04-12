@@ -103,8 +103,8 @@ if __name__ == "__main__":
     # Add random noise to generate our simulation dataset y values
     y_sinu = ytrue_sinu + noise_sigma * np.random.randn(nx)
     y_cheb = ytrue_cheb + noise_sigma * np.random.randn(nx)
-    output["y_sinu"] = ytrue_sinu
-    output["y_cheb"] = ytrue_cheb
+    output["y_sinu"] = y_sinu
+    output["y_cheb"] = y_cheb
 
     # Fit the sinusoidal and polynomial features
     features_dict = {"lo": features_lo, "true": features_true, "hi": features_hi}
