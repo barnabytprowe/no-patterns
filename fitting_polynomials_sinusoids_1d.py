@@ -33,8 +33,8 @@ noise_sigma = 1.
 
 # True, low (insufficient) and high (overfitting) polynomial order to use when fitting
 fit_degree_true = 8  # the real signal in the simulations will be a 2D polnoymial of this order
-fit_degree_lo = 4
-fit_degree_hi = 32
+fit_degree_lo = 2
+fit_degree_hi = 16
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
@@ -168,6 +168,8 @@ if __name__ == "__main__":
             # Residuals = data - model
             _res = output[f"y_{_curve_family}"] - output[f"ypred_{_curve_family}_{_fit}"]
             output[f"res_{_curve_family}_{_fit}"] = _res.copy()
+            # Residual periodogram
+            output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
             # Image / map
             fig, ax = plt.subplots(figsize=FIGSIZE_RESIDUALS)
@@ -189,3 +191,27 @@ if __name__ == "__main__":
             print(f"Saving to {outfile}")
             fig.savefig(outfile)
             plt.close(fig)
+
+        # Now we're going to plot periodograms
+        fig, ax = plt.subplots(figsize=FIGSIZE)
+        ax.set_title(
+            curve_family_display[_curve_family].title()+" curve fitting residual periodograms",
+            size=TITLE_SIZE,
+        )
+        ax.plot(
+            output[f"rp_{_curve_family}_lo"],
+            color="red", ls="--", linewidth=1.5, label=fit_display["lo"],
+        )
+        ax.plot(
+            output[f"rp_{_curve_family}_true"],
+            color="k", ls="-", linewidth=1.5, label=fit_display["true"],
+        )
+        ax.plot(
+            output[f"rp_{_curve_family}_hi"],
+            color="blue", ls="-.", linewidth=1.5, label=fit_display["hi"],
+        )
+        ax.set_yscale("log")
+        ax.grid()
+        ax.legend()
+        fig.tight_layout()
+        plt.show()
