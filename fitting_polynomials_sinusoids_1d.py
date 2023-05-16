@@ -32,10 +32,11 @@ nx = 100
 noise_sigma = 1.
 
 # True, low (insufficient) and high (overfitting) polynomial order to use when fitting
-fit_degree_true = 8  # the real signal in the simulations will be a 2D polnoymial of this order
+fit_degree_true = 8  # the real signal in the simulations will be a 1D sinusoidal / polnoymial
+                     # series up to this order
 fit_degree_lo = 2
 fit_degree_hi = 16
-fit_degree_vhi = 32
+fit_degree_vhi = 32  # Added to illustrate the more extreme behaviour more clearly
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
@@ -54,6 +55,9 @@ PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "polynomials_sinusoids_1d")
+
+# Output file types
+OUTFILE_EXTENSIONS = (".png", ".pdf")
 
 
 # Functions
@@ -179,9 +183,12 @@ if __name__ == "__main__":
         ax.legend()
         fig.tight_layout()
         plt.show()
-        outfile = os.path.join(outdir, f"curves_{_curve_family}_{tstmp}.pdf")
-        print(f"Saving to {outfile}")
-        fig.savefig(outfile)
+        for _suffix in OUTFILE_EXTENSIONS:
+
+            outfile = os.path.join(outdir, f"curves_{_curve_family}_{tstmp}{_suffix}")
+            print(f"Saving to {outfile}")
+            fig.savefig(outfile)
+
         plt.close(fig)
 
         # Now we are going to look at the residuals, but imaging rather than plotting them
@@ -195,7 +202,8 @@ if __name__ == "__main__":
             output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
             # Image / map
-            fig, ax = plt.subplots(figsize=FIGSIZE_RESIDUALS)
+            fig = plt.figure(figsize=FIGSIZE_RESIDUALS)
+            ax = fig.add_axes([0.075, 0.3, 0.855, 0.45])
             im = ax.pcolor(_res.reshape((1, len(_res))), cmap=CMAP, clim=CLIM)
             ax.set_yticklabels([])
             {}
@@ -206,13 +214,15 @@ if __name__ == "__main__":
 
             # See https://stackoverflow.com/a/39938019 for colormap handling
             divider = make_axes_locatable(ax)
-            cax = divider.append_axes('right', size='2%', pad=0.1)
+            cax = fig.add_axes([0.945, 0.3, 0.01, 0.45])
             fig.colorbar(im, cax=cax, orientation='vertical')
-            fig.tight_layout()
+            for _suffix in OUTFILE_EXTENSIONS:
+
+                outfile = os.path.join(outdir, f"residuals_{_fit}_{_curve_family}_{tstmp}{_suffix}")
+                print(f"Saving to {outfile}")
+                fig.savefig(outfile)
+
             plt.show()
-            outfile = os.path.join(outdir, f"residuals_{_fit}_{_curve_family}_{tstmp}.pdf")
-            print(f"Saving to {outfile}")
-            fig.savefig(outfile)
             plt.close(fig)
 
         # Now we're going to plot periodograms
@@ -243,4 +253,10 @@ if __name__ == "__main__":
         ax.grid()
         ax.legend()
         fig.tight_layout()
-        plt.show()
+        for _suffix in OUTFILE_EXTENSIONS:
+
+            outfile = os.path.join(outdir, f"periodograms_{_curve_family}_{tstmp}{_suffix}")
+            print(f"Saving to {outfile}")
+            fig.savefig(outfile)
+
+        plt.close(fig)
