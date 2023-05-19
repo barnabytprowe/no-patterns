@@ -121,9 +121,13 @@ if __name__ == "__main__":
     output["ytrue_sinu"] = ytrue_sinu
     output["ytrue_cheb"] = ytrue_cheb
 
-    # Add random noise to generate our simulation dataset y values
-    y_sinu = ytrue_sinu + noise_sigma * np.random.randn(nx)
-    y_cheb = ytrue_cheb + noise_sigma * np.random.randn(nx)
+    # Add random Gaussian iid errors to generate our simulation dataset y values
+    e_sinu = noise_sigma * np.random.randn(nx)
+    e_cheb = noise_sigma * np.random.randn(nx)
+    y_sinu = ytrue_sinu + e_sinu
+    y_cheb = ytrue_cheb + e_cheb
+    output["e_sinu"] = e_sinu
+    output["e_cheb"] = e_cheb
     output["y_sinu"] = y_sinu
     output["y_cheb"] = y_cheb
 
@@ -143,6 +147,11 @@ if __name__ == "__main__":
     }
     for _curve_family in ("sinu", "cheb"):
 
+        # Calculate periodograms of just the errors; will be plotted later
+        output[f"ep_{_curve_family}"] = np.abs(
+            np.fft.rfft(output[f"e_{_curve_family}"]))**2 / len(output[f"e_{_curve_family}"])
+
+        # Perform regression at different degrees
         for _fit in ("lo", "true", "hi", "vhi"):
 
             _design_matrix = features_dict[_fit][_curve_family]
@@ -240,6 +249,10 @@ if __name__ == "__main__":
             color="k", ls="-", linewidth=1.5, label=fit_display["true"],
         )
         ax.plot(
+            output[f"ep_{_curve_family}"],
+            color="k", ls="--", linewidth=1, label="iid errors",
+        )
+        ax.plot(
             output[f"rp_{_curve_family}_hi"],
             color="blue", ls="-.", linewidth=1.5, label=fit_display["hi"],
         )
@@ -247,12 +260,14 @@ if __name__ == "__main__":
             output[f"rp_{_curve_family}_vhi"],
             color="purple", ls=":", linewidth=1.5, label=fit_display["vhi"],
         )
+        #ax.axhline(1., color="k", ls="-", linewidth=1)
         ax.set_yscale("log")
         ax.set_yticks(PERIODOGRAM_YTICKS)
         ax.set_ylim(PERIODOGRAM_YLIM)
         ax.grid()
         ax.legend()
         fig.tight_layout()
+        plt.show()
         for _suffix in OUTFILE_EXTENSIONS:
 
             outfile = os.path.join(outdir, f"periodograms_{_curve_family}_{tstmp}{_suffix}")
