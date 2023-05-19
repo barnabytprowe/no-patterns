@@ -159,10 +159,11 @@ if __name__ == "__main__":
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_curve_family}_{_fit}"] = _yfit
 
+        # Then plot data versus x and regression predictions as curves of y versus x
         # First we plot the lines in a conventional x, y graph format
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.set_title(
-            curve_family_display[_curve_family].title()+" curve fitting in one dimension",
+            curve_family_display[_curve_family].title()+" curve regression in one dimension",
             size=TITLE_SIZE,
         )
         _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
@@ -231,13 +232,13 @@ if __name__ == "__main__":
                 print(f"Saving to {outfile}")
                 fig.savefig(outfile)
 
-            plt.show()
+            #plt.show()
             plt.close(fig)
 
         # Now we're going to plot periodograms
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.set_title(
-            curve_family_display[_curve_family].title()+" curve fitting residual periodograms",
+            curve_family_display[_curve_family].title()+" curve regression residual periodograms",
             size=TITLE_SIZE,
         )
         ax.plot(
