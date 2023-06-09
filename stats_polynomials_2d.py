@@ -1,7 +1,10 @@
 """
-stats_polynomials_2d.py
-=======================
+further_analysis_polynomials_2d.py
+==================================
 
+A python script that performs further analysis and generates additional plots
+based on the results of the regressions performed by fitting_polynomials_2d.py,
+described in the paper "No patterns in regression residuals."
 """
 
 import collections
@@ -24,6 +27,8 @@ from fitting_polynomials_2d import TITLE_SIZE
 # Params
 # ------
 
+# Gather the timestamps of all results generated so far with the main script in
+# fitting_polynomials_2d.py
 TIMESTAMPS = [os.path.basename(_p) for _p in glob.glob(os.path.join(PROJDIR, "*-*-*T*"))]
 
 
