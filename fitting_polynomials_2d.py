@@ -42,7 +42,7 @@ fit_degree_hi = 16
 coeff_signal_to_noise = 8.
 
 # Plotting settings
-FIGSIZE = (6, 4.85)
+FIGSIZE = (6, 4.9)
 CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
