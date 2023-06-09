@@ -126,6 +126,21 @@ def plot_shuffled_residuals(stats, rng=None):
         plt.close(fig)
 
 
+def plot_histogram_residuals(stats):
+
+    for _degree in DEGREES:
+
+        plt.hist(stats[_degree]["residuals"].flatten(), bins=24, range=[-4, 4], color="Gray")
+        plt.ylim(0, 50)
+        plt.ylabel("Counts")
+        plt.xlabel("Residual value")
+        plt.grid()
+        title_str = f"Histogram of {DEGREE_STRS[_degree]} degree polynomial residuals"
+        plt.title(title_str, size=TITLE_SIZE)
+        plt.tight_layout()
+        plt.show()
+
+
 # Main script
 # ===========
 
@@ -137,3 +152,4 @@ if __name__ == "__main__":
 
         stats = report_stats(_timestamp)
         plot_shuffled_residuals(stats, rng=rng)
+        plot_histogram_residuals(stats)
