@@ -31,8 +31,9 @@ nx = 10
 # Sigma of iid pixel noise
 noise_sigma = 1.
 
-# True, low (insufficient) and high (overfitting) polynomial order to use when fitting
-fit_degree_true = 8  # the real signal in the simulations will be a 2D polnoymial of this order
+# True, low (underspecified) and high (overspecified) polynomial model set degree to use when
+# fitting
+fit_degree_true = 8  # the actual signal curve will be a 2D polynomial series of this degree
 fit_degree_lo = 2
 fit_degree_hi = 16
 
@@ -151,7 +152,7 @@ if __name__ == "__main__":
     plt.pcolor(zdata - pred_lo, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
-    plt.title("Low order polynomial fit residuals", size=TITLE_SIZE)
+    plt.title("Low degree polynomial regression residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "lo_"+tstmp+".png"))
     plt.show()
@@ -162,7 +163,7 @@ if __name__ == "__main__":
     plt.pcolor(zdata - pred_true, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
-    plt.title("Matching order polynomial fit residuals", size=TITLE_SIZE)
+    plt.title("Matching degree polynomial regression residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "matching_"+tstmp+".png"))
     plt.show()
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     plt.pcolor(zdata - pred_hi, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
-    plt.title("High order polynomial fit residuals", size=TITLE_SIZE)
+    plt.title("High degree polynomial regression residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "hi_"+tstmp+".png"))
     plt.show()
