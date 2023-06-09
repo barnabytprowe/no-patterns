@@ -1,11 +1,14 @@
 """
 fitting_polynomials_2d.py
 =========================
-Script that generates examples of 2D contour curve fitting scenarios with
-additive iid Gaussian noise, illustrating underspecified, correctly specified,
-and overspecified scenarios.
 
-Saves output into a uniquely timestamped subfolder of ./plots/polynomials_2d/.
+A python script that generates examples of regression of in two dimensions,
+described in the paper "No patterns in regression residuals," illustrating
+underspecified, correctly specified, and overspecified regression in
+randomly-generated surface fitting scenarios.
+
+Saves output from each simulated regression into a uniquely timestamped
+subfolder of ./plots/polynomials_2d/.
 """
 
 import os
