@@ -97,8 +97,8 @@ def report_stats(timestamp):
 
 
 def plot_shuffled_residuals(stats, rng=None):
-    """Generates a randomly-shuffled image of the all the residuals from an
-    input stats dict.
+    """Generates and saves (into the same folder as the stats) a randomly-shuffled
+    image of the all the residuals from an input stats dict.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -127,7 +127,9 @@ def plot_shuffled_residuals(stats, rng=None):
 
 
 def plot_histogram_residuals(stats):
-
+    """Generates and saves (into the same folder as the stats) a histogram of
+    residual values from an input stats dict.
+    """
     for _degree in DEGREES:
 
         plt.hist(stats[_degree]["residuals"].flatten(), bins=24, range=[-4, 4], color="Gray")
