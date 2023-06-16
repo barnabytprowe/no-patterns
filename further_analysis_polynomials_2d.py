@@ -36,6 +36,10 @@ TIMESTAMPS = [os.path.basename(_p) for _p in glob.glob(os.path.join(PROJDIR, "*-
 DEGREES = ("lo", "true", "hi")
 DEGREE_STRS = {"lo": "low", "true": "matching", "hi": "high"}  # used in display
 
+HIST_RANGE = [-4, 4]
+HIST_NBINS = 32
+HIST_YLIM = [0, 50]
+
 
 # Functions
 # =========
@@ -132,15 +136,23 @@ def plot_histogram_residuals(stats):
     """
     for _degree in DEGREES:
 
-        plt.hist(stats[_degree]["residuals"].flatten(), bins=24, range=[-4, 4], color="Gray")
-        plt.ylim(0, 50)
+        timestamp = stats[_degree]["timestamp"]
+        _tfolder, _ = pathfile(timestamp, projdir=PROJDIR)
+        fig = plt.figure(figsize=FIGSIZE)
+        plt.hist(
+            stats[_degree]["residuals"].flatten(), bins=HIST_NBINS, range=HIST_RANGE, color="Gray")
+        plt.ylim(*HIST_YLIM)
         plt.ylabel("Counts")
         plt.xlabel("Residual value")
         plt.grid()
         title_str = f"Histogram of {DEGREE_STRS[_degree]} degree polynomial residuals"
         plt.title(title_str, size=TITLE_SIZE)
         plt.tight_layout()
-        plt.show()
+        if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
+            plt.savefig(os.path.join(_tfolder, f"hist_matching_{timestamp}.png"))
+        else:
+            plt.savefig(os.path.join(_tfolder, f"hist_{_degree}_{timestamp}.png"))
+        plt.close(fig)
 
 
 # Main script
