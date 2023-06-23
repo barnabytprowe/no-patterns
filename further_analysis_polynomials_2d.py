@@ -155,6 +155,31 @@ def plot_histogram_residuals(stats):
         plt.close(fig)
 
 
+def plot_predictions(timestamp):
+    """
+    """
+    _tfolder, _tsfile = pathfile(timestamp, projdir=PROJDIR)
+    with open(_tsfile, "rb") as fin:
+        data = pickle.load(fin)
+
+    for _degree in DEGREES:
+
+        timestamp = stats[_degree]["timestamp"]
+        _tfolder, _ = pathfile(timestamp, projdir=PROJDIR)
+        pred = data["pred_"+_degree]
+        # plot
+        fig = plt.figure(figsize=FIGSIZE)
+        plt.pcolor(pred, cmap=CMAP); plt.colorbar()
+        title_str = f"{DEGREE_STRS[_degree].title()} degree polynomial prediction"
+        plt.title(title_str, size=TITLE_SIZE)
+        plt.tight_layout()
+        if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
+            plt.savefig(os.path.join(_tfolder, f"matching_prediction_{timestamp}.png"))
+        else:
+            plt.savefig(os.path.join(_tfolder, f"{_degree}_prediction_{timestamp}.png"))
+        plt.close(fig)
+
+
 # Main script
 # ===========
 
@@ -165,5 +190,6 @@ if __name__ == "__main__":
     for _timestamp in TIMESTAMPS:
 
         stats = report_stats(_timestamp)
+        plot_predictions(_timestamp)
         plot_shuffled_residuals(stats, rng=rng)
         plot_histogram_residuals(stats)
