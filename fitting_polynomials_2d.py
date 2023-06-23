@@ -25,8 +25,10 @@ import sklearn.preprocessing
 # Parameters
 # ==========
 
-# Side of unit square
+# Datapoints per side of coordinate grid
 nx = 10
+# Side dimension of coordinate grid
+side_dim = np.sqrt(2.)
 
 # Sigma of iid pixel noise
 noise_sigma = 1.
@@ -97,9 +99,9 @@ if __name__ == "__main__":
     # Output dict - will be pickled
     output = {}
 
-    # Define x, y grid coords for centroids of a unit square spanning square grid
-    # centred on the origin
-    xvals = np.linspace(-.5 + 1./(2. * nx), .5 - 1./(2. * nx), num=nx, endpoint=True)
+    # Define x, y grid coords for square of linear dimension side_dim centred on the origin
+    #xvals = np.linspace(-.5 + 1./(2. * nx), .5 - 1./(2. * nx), num=nx, endpoint=True)
+    xvals = np.linspace(-side_dim / 2., side_dim / 2., num=nx, endpoint=True)
     Xxgrid, Xygrid = np.meshgrid(xvals, xvals)
 
     # Use sklearn PolynomialFeatures to model simple polynomials in 2D
