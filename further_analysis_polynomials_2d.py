@@ -33,11 +33,11 @@ from fitting_polynomials_2d import TITLE_SIZE
 TIMESTAMPS = [os.path.basename(_p) for _p in glob.glob(os.path.join(PROJDIR, "*-*-*T*"))]
 
 # Degrees of the polynomial series model sets used in the regressions
-DEGREES = ("lo", "true", "hi")
-DEGREE_STRS = {"lo": "low", "true": "matching", "hi": "high"}  # used in display
+DEGREES = ("lo", "true", "hi", "vhi")
+DEGREE_STRS = {"lo": "low", "true": "matching", "hi": "high", "vhi": "very high"}  # used in display
 
-HIST_RANGE = [-4, 4]
-HIST_NBINS = 32
+HIST_RANGE = [-8, 8]
+HIST_NBINS = 80
 HIST_YLIM = [0, 50]
 
 
@@ -89,8 +89,8 @@ def report_stats(timestamp):
     """
     _tfolder, _tsfile = pathfile(timestamp, projdir=PROJDIR)
     stats = get_stats(timestamp)
-    print("RSS (lo, true, hi):")
-    print(tuple(stats[_degree]["RSS"] for _degree in ("lo", "true", "hi")))
+    print("RSS (lo, true, hi, vhi):")
+    print(tuple(stats[_degree]["RSS"] for _degree in DEGREES))
 
     statfile = os.path.join(_tfolder, f"stats_{timestamp}.yaml")
     print(f"Writing to {statfile}")
