@@ -33,9 +33,10 @@ noise_sigma = 1.
 
 # True, low (underspecified) and high (overspecified) polynomial model set degree to use when
 # fitting
-fit_degree_true = 8  # the actual signal curve will be a 2D polynomial series of this degree
 fit_degree_lo = 2
-fit_degree_hi = 16
+fit_degree_true = 8  # the actual signal curve will be a 2D polynomial series of this degree
+fit_degree_hi = 12
+fit_degree_vhi = 16
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
@@ -105,9 +106,10 @@ if __name__ == "__main__":
     # x, y coordinates
     X = np.stack([Xxgrid.flatten(order="C"), Xygrid.flatten(order="C")], axis=1)
     # Design matrices for the true, too low and too high cases
-    features_true = polynomial_design_matrix(X=X, degree=fit_degree_true)
     features_fit_lo = polynomial_design_matrix(X=X, degree=fit_degree_lo)
+    features_true = polynomial_design_matrix(X=X, degree=fit_degree_true)
     features_fit_hi = polynomial_design_matrix(X=X, degree=fit_degree_hi)
+    features_fit_vhi = polynomial_design_matrix(X=X, degree=fit_degree_vhi)
 
     # Build the true 2D contour and plot
     ctrue = np.random.randn(features_true.shape[-1]) * coeff_signal_to_noise
@@ -136,50 +138,62 @@ if __name__ == "__main__":
     # Perform too low order, true and too high order regressions
     predictions = []
     zflat = zdata.flatten(order="C")
-    for features in (features_fit_lo, features_true, features_fit_hi):
+    for features in (features_fit_lo, features_true, features_fit_hi, features_fit_vhi):
 
         regr = sklearn.linear_model.LinearRegression()
         regr.fit(features, zflat)
         predictions.append(regr.predict(features).reshape((nx, nx), order="C"))
 
-    pred_lo, pred_true, pred_hi = tuple(predictions)
+    pred_lo, pred_true, pred_hi, pred_vhi = tuple(predictions)
     output["pred_lo"] = pred_lo
     output["pred_true"] = pred_true
     output["pred_hi"] = pred_hi
+    output["pred_vhi"] = pred_vhi
 
     # Plot residuals
     fig = plt.figure(figsize=FIGSIZE)
-    plt.pcolor(zdata - pred_lo, cmap=CMAP)
+    rlo = zdata - pred_lo
+    plt.pcolor(rlo, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
-    plt.title("Low degree polynomial regression residuals", size=TITLE_SIZE)
+    plt.title("Low degree polynomial residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "lo_"+tstmp+".png"))
     plt.show()
-    rlo = zdata - pred_lo
     output["rlo"] = rlo
 
     fig = plt.figure(figsize=FIGSIZE)
-    plt.pcolor(zdata - pred_true, cmap=CMAP)
+    rtrue = zdata - pred_true
+    plt.pcolor(rtrue, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
-    plt.title("Matching degree polynomial regression residuals", size=TITLE_SIZE)
+    plt.title("Matching degree polynomial residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "matching_"+tstmp+".png"))
     plt.show()
-    rtrue = zdata - pred_true
     output["rtrue"] = rtrue
 
     fig = plt.figure(figsize=FIGSIZE)
-    plt.pcolor(zdata - pred_hi, cmap=CMAP)
+    rhi = zdata - pred_hi
+    plt.pcolor(rhi, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
-    plt.title("High degree polynomial regression residuals", size=TITLE_SIZE)
+    plt.title("High degree polynomial residuals", size=TITLE_SIZE)
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "hi_"+tstmp+".png"))
     plt.show()
-    rhi = zdata - pred_hi
     output["rhi"] = rhi
+
+    fig = plt.figure(figsize=FIGSIZE)
+    rvhi = zdata - pred_vhi
+    plt.pcolor(rvhi, cmap=CMAP)
+    plt.colorbar()
+    plt.clim(CLIM)
+    plt.title("Very high degree polynomial residuals", size=TITLE_SIZE)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, "vhi_"+tstmp+".png"))
+    plt.show()
+    output["rvhi"] = rvhi
 
     outfile = os.path.join(outdir, "output_"+tstmp+".pickle")
     print("Saving to "+outfile)
