@@ -156,7 +156,8 @@ def plot_histogram_residuals(stats):
 
 
 def plot_predictions(timestamp):
-    """
+    """Generates plots of predictions from fitting_polynomials_2d.py output
+    and saves it into the same folder for the given timestamp.
     """
     _tfolder, _tsfile = pathfile(timestamp, projdir=PROJDIR)
     with open(_tsfile, "rb") as fin:
