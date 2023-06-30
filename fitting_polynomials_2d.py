@@ -33,8 +33,8 @@ side_dim = np.sqrt(2.)
 # Sigma of iid pixel noise
 noise_sigma = 1.
 
-# True, low (underspecified) and high (overspecified) polynomial model set degree to use when
-# fitting
+# Low (underspecified), true / matching, high (overspecified) and very high (very overspecified)
+# polynomial model set degree to use in simulated regressions
 fit_degree_lo = 2
 fit_degree_true = 8  # the actual signal curve will be a 2D polynomial series of this degree
 fit_degree_hi = 12
@@ -45,8 +45,8 @@ fit_degree_vhi = 16
 coeff_signal_to_noise = 8.
 
 # Plotting settings
-FIGSIZE = (6, 4.9)
-CLIM = [-2.5, 2.5]
+FIGSIZE = (6, 4.9)  # this makes the pcolor plots approximately square
+CLIM = [-2.5, 2.5]  # a reasonable balance to show features across the lo->vhi residual plots
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     features_fit_hi = polynomial_design_matrix(X=X, degree=fit_degree_hi)
     features_fit_vhi = polynomial_design_matrix(X=X, degree=fit_degree_vhi)
 
-    # Build the true 2D contour and plot
+    # Build the true / ideal 2D contour and plot
     ctrue = np.random.randn(features_true.shape[-1]) * coeff_signal_to_noise
     ztrue = (np.matmul(features_true, ctrue)).reshape((nx, nx), order="C")
     output["ctrue"] = ctrue
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     plt.savefig(os.path.join(outdir, "ideal_"+tstmp+".png"))
     plt.show()
 
-    # Add the random noise to generate the dataset, and plot
+    # Add the random noise to generate the dataset and plot
     zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
     output["zdata"] = zdata
 
@@ -137,12 +137,12 @@ if __name__ == "__main__":
     plt.savefig(os.path.join(outdir, "data_"+tstmp+".png"))
     plt.show()
 
-    # Perform too low order, true and too high order regressions
+    # Perform too low, matching, too high, and very much too high degree regressions on data
     predictions = []
     zflat = zdata.flatten(order="C")
     for features in (features_fit_lo, features_true, features_fit_hi, features_fit_vhi):
 
-        regr = sklearn.linear_model.LinearRegression()
+        regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
         regr.fit(features, zflat)
         predictions.append(regr.predict(features).reshape((nx, nx), order="C"))
 
@@ -152,9 +152,18 @@ if __name__ == "__main__":
     output["pred_hi"] = pred_hi
     output["pred_vhi"] = pred_vhi
 
+    # Residuals
+    rlo = zdata - pred_lo
+    rtrue = zdata - pred_true
+    rhi = zdata - pred_hi
+    rvhi = zdata - pred_vhi
+    output["rlo"] = rlo
+    output["rtrue"] = rtrue
+    output["rhi"] = rhi
+    output["rvhi"] = rvhi
+
     # Plot residuals
     fig = plt.figure(figsize=FIGSIZE)
-    rlo = zdata - pred_lo
     plt.pcolor(rlo, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
@@ -162,10 +171,8 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "lo_"+tstmp+".png"))
     plt.show()
-    output["rlo"] = rlo
 
     fig = plt.figure(figsize=FIGSIZE)
-    rtrue = zdata - pred_true
     plt.pcolor(rtrue, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
@@ -173,10 +180,8 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "matching_"+tstmp+".png"))
     plt.show()
-    output["rtrue"] = rtrue
 
     fig = plt.figure(figsize=FIGSIZE)
-    rhi = zdata - pred_hi
     plt.pcolor(rhi, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
@@ -184,10 +189,8 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "hi_"+tstmp+".png"))
     plt.show()
-    output["rhi"] = rhi
 
     fig = plt.figure(figsize=FIGSIZE)
-    rvhi = zdata - pred_vhi
     plt.pcolor(rvhi, cmap=CMAP)
     plt.colorbar()
     plt.clim(CLIM)
@@ -195,8 +198,8 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "vhi_"+tstmp+".png"))
     plt.show()
-    output["rvhi"] = rvhi
 
+    # Save output for further analysis
     outfile = os.path.join(outdir, "output_"+tstmp+".pickle")
     print("Saving to "+outfile)
     with open(outfile, "wb") as fout:
