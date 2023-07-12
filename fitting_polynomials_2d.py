@@ -2,10 +2,10 @@
 fitting_polynomials_2d.py
 =========================
 
-A python script that generates examples of regression of in two dimensions,
+Python script that generates examples of regression of in two dimensions,
 described in the paper "No patterns in regression residuals," illustrating
-underspecified, correctly specified, and overspecified regression in
-randomly-generated surface fitting scenarios.
+underspecified, correctly specified, and overspecified regression of
+randomly-generated polynomial surfaces on a regular 2D grid.
 
 Saves output from each simulated regression into a uniquely timestamped
 subfolder of ./plots/polynomials_2d/.
@@ -17,7 +17,6 @@ import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
 import sklearn.linear_model
 import sklearn.preprocessing
 
@@ -100,7 +99,6 @@ if __name__ == "__main__":
     output = {}
 
     # Define x, y grid coords for square of linear dimension side_dim centred on the origin
-    #xvals = np.linspace(-.5 + 1./(2. * nx), .5 - 1./(2. * nx), num=nx, endpoint=True)
     xvals = np.linspace(-side_dim / 2., side_dim / 2., num=nx, endpoint=True)
     Xxgrid, Xygrid = np.meshgrid(xvals, xvals)
 
