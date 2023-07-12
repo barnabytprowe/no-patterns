@@ -40,6 +40,9 @@ HIST_RANGE = [-8, 8]
 HIST_NBINS = 80
 HIST_YLIM = [0, 50]
 
+# Number of runs of further data generation with which to estimate the RMS error of prediction
+NRUNS = 1000000
+
 
 # Functions
 # =========
@@ -186,6 +189,41 @@ def plot_predictions(data):
         plt.close(fig)
 
 
+def mean_squared_errors_of_prediction(data, rng=None):
+    """Calculates the mean squared error between predictions and new datasets
+    generated with the same ideal model but with new additive, iid errors.
+    """
+    if rng is None:
+        rng = np.random.default_rng()
+
+    timestamp = data["timestamp"]
+    print(f"Generating {NRUNS} new datasets for {timestamp}")
+    imshape = data["ztrue"].shape
+    new_errors = rng.normal(
+        loc=0.,
+        scale=fitting_polynomials_2d.noise_sigma,
+        size=(NRUNS, imshape[0], imshape[1]),
+    )
+    new_datasets = data["ztrue"] + new_errors
+
+    mean_squared_errors_of_prediction = {}  # MSEP
+    mean_msep = {}
+    std_msep = {}
+    for _degree in DEGREES:
+
+        pred = data["pred_"+_degree]
+        _ssquared_errp = ((new_datasets - pred)**2).sum(axis=(-2, -1))
+        mean_squared_errors_of_prediction[_degree] = _ssquared_errp / np.product(imshape)
+        mean_msep[_degree] = np.mean(mean_squared_errors_of_prediction[_degree])
+        std_msep[_degree] = np.std(mean_squared_errors_of_prediction[_degree])
+
+    mean_msep = pd.Series(mean_msep)
+    std_msep = pd.Series(std_msep)
+    print(f"Mean Squared Error of Prediction for {timestamp}:")
+    print(pd.DataFrame({"Mean": mean_msep, "Std": std_msep, "StdErr": std_msep / np.sqrt(NRUNS)}))
+    return mean_squared_errors_of_prediction
+
+
 # Main script
 # ===========
 
@@ -197,3 +235,5 @@ if __name__ == "__main__":
         data, stats = report_stats(_timestamp)
         plot_shuffled_residuals(stats, rng=rng)
         plot_histogram_residuals(stats)
+        plot_predictions(data)
+        mean_squared_errors_of_prediction(data, rng=rng)
