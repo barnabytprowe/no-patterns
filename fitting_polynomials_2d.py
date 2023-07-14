@@ -123,7 +123,8 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=FIGSIZE)
     plt.title("Ideal model curve", size=TITLE_SIZE)
-    plt.pcolor(ztrue, cmap=CMAP); plt.colorbar()
+    plt.pcolor(ztrue, cmap=CMAP)
+    plt.colorbar()
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "ideal_"+tstmp+".png"))
     plt.show()
@@ -134,7 +135,8 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=FIGSIZE)
     plt.title("Data", size=TITLE_SIZE)
-    plt.pcolor(zdata, cmap=CMAP); plt.colorbar()
+    plt.pcolor(zdata, cmap=CMAP)
+    plt.colorbar()
     plt.tight_layout()
     plt.savefig(os.path.join(outdir, "data_"+tstmp+".png"))
     plt.show()
