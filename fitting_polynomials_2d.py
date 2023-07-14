@@ -57,15 +57,22 @@ PROJDIR = os.path.join(PLTDIR, "polynomials_2d")
 # Functions
 # =========
 
-def polynomial_design_matrix(X, degree):
-    """Returns polynomial design matrix for input coordinates and polynomial degree.
+def polynomial_design_matrix(square_dimension, n_side, degree, order="C"):
+    """Returns a polynomial design matrix for a square coordinate grid centred
+    on the origin, up to the given degree in total polynomial order.
 
     Args:
-        X:
-            array-like of shape (n_samples, n_dimensions), the data to input to
-            the polynomial features
+        square_dimension: side dimensions of the coordinate grid square
+        n_side: number of grid points per side
         degree: maximum polynomial degree of features in all dimensions
+        order: array row/column ordering to use in np.flatten, default: 'C'
     """
+    # Define x, y grid coords for square of linear dimension side_dim centred on the origin
+    xvals = np.linspace(-square_dimension / 2., square_dimension / 2., num=n_side, endpoint=True)
+    Xxgrid, Xygrid = np.meshgrid(xvals, xvals)
+    X = np.stack([Xxgrid.flatten(order=order), Xygrid.flatten(order=order)], axis=1)
+
+    # Use sklearn PolynomialFeatures to model simple polynomials over x0, x1 coordinates
     poly_features = sklearn.preprocessing.PolynomialFeatures(degree=degree)
     return poly_features.fit_transform(X, y=None)
 
@@ -98,18 +105,15 @@ if __name__ == "__main__":
     # Output dict - will be pickled
     output = {}
 
-    # Define x, y grid coords for square of linear dimension side_dim centred on the origin
-    xvals = np.linspace(-side_dim / 2., side_dim / 2., num=nx, endpoint=True)
-    Xxgrid, Xygrid = np.meshgrid(xvals, xvals)
-
-    # Use sklearn PolynomialFeatures to model simple polynomials in 2D
-    # x, y coordinates
-    X = np.stack([Xxgrid.flatten(order="C"), Xygrid.flatten(order="C")], axis=1)
-    # Design matrices for the true, too low and too high cases
-    features_fit_lo = polynomial_design_matrix(X=X, degree=fit_degree_lo)
-    features_true = polynomial_design_matrix(X=X, degree=fit_degree_true)
-    features_fit_hi = polynomial_design_matrix(X=X, degree=fit_degree_hi)
-    features_fit_vhi = polynomial_design_matrix(X=X, degree=fit_degree_vhi)
+    # Design matrices
+    features_fit_lo = polynomial_design_matrix(
+        square_dimension=side_dim, n_side=nx, degree=fit_degree_lo, order="C")
+    features_true = polynomial_design_matrix(
+        square_dimension=side_dim, n_side=nx, degree=fit_degree_true, order="C")
+    features_fit_hi = polynomial_design_matrix(
+        square_dimension=side_dim, n_side=nx, degree=fit_degree_hi, order="C")
+    features_fit_vhi = polynomial_design_matrix(
+        square_dimension=side_dim, n_side=nx, degree=fit_degree_vhi, order="C")
 
     # Build the true / ideal 2D contour and plot
     ctrue = np.random.randn(features_true.shape[-1]) * coeff_signal_to_noise
