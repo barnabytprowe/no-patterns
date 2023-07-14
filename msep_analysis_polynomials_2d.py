@@ -61,3 +61,11 @@ if __name__ == "__main__":
     ztrue = (
         np.matmul(features_true, ctrue.T).T
     ).reshape(NRUNS, fitting_polynomials_2d.nx, fitting_polynomials_2d.nx, order="C")
+
+    # Generate the errors we will add to create simulated data
+    errors = rng.normal(
+        loc=0.,
+        scale=fitting_polynomials_2d.noise_sigma,
+        size=(NRUNS, fitting_polynomials_2d.nx, fitting_polynomials_2d.nx),
+    )
+    zdata = ztrue + errors
