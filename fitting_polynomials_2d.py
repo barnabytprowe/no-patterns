@@ -142,11 +142,11 @@ if __name__ == "__main__":
     plt.show()
 
     # Perform too low, matching, too high, and very much too high degree regressions on data
-    predictions = []
+    regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
     zflat = zdata.flatten(order="C")
+    predictions = []
     for features in (features_fit_lo, features_true, features_fit_hi, features_fit_vhi):
 
-        regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
         regr.fit(features, zflat)
         predictions.append(regr.predict(features).reshape((nx, nx), order="C"))
 
