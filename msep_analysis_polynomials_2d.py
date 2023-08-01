@@ -12,19 +12,27 @@ import pickle
 
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import seaborn as sns
 import sklearn.linear_model
 import sklearn.preprocessing
 
 import fitting_polynomials_2d
 from further_analysis_polynomials_2d import DEGREES
+from further_analysis_polynomials_2d import DEGREE_STRS
 
 
 # Parameters
 # ==========
 
+# LaTeX display strings for 10^x NRUNS
+NRUNS_STRS = {1000: r"$10^3$", 10000: r"$10^4$", 100000: r"$10^5$", 1000000: r"$10^6$"}
+
 # Number of simulated regression datasets
-NRUNS = 10000
+NRUNS = 100000
+if NRUNS not in NRUNS_STRS:
+    raise ValueError(f"User parameter NRUNS must be one of {set(NRUNS_STRS.keys())}")
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather less than the number of actual cores on your machine (6 for my
@@ -42,6 +50,8 @@ degrees = (
     fitting_polynomials_2d.fit_degree_hi,
     fitting_polynomials_2d.fit_degree_vhi,
 )
+degree_titles = {
+    _d: DEGREE_STRS[_d].title()+" (G="+str(_dv)+")" for _d, _dv in zip(DEGREES, degrees)}
 
 
 # Functions
@@ -138,6 +148,7 @@ if __name__ == "__main__":
     errors_of_prediction = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
     ideal_error = {_d: results["predictions"][_d] - results["ztrue"] for _d in DEGREES}
 
+    # Calculate MSR, MSEP and MSIE for each regression
     msr_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
     msep_all = pd.DataFrame({_d:(errors_of_prediction[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
     msie_all = pd.DataFrame({_d: (ideal_error[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
@@ -145,11 +156,71 @@ if __name__ == "__main__":
     msr_mean = pd.Series({_d: msr_all[_d].mean() for _d in DEGREES}, name="MSR")
     msep_mean = pd.Series({_d: msep_all[_d].mean() for _d in DEGREES}, name="MSEP")
     msie_mean = pd.Series({_d: msie_all[_d].mean() for _d in DEGREES}, name="MSIE")
-
     mean_results = pd.concat([msr_mean, msep_mean, msie_mean], axis=1)
     mean_results.index = degrees
 
     print("Plotting")
-    ax = mean_results.plot(logy=True)
-    ax.grid()
+    # MSR violin charts
+    fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
+    plt.axhline(0., color="k", ls=":")
+    sns.violinplot(
+        np.log10(msr_all).rename(columns=degree_titles),
+        palette="Greys", cut=0, scale="area",
+    )
+    plt.ylabel(r"$\log_{10}{\rm MSR}$")
+    plt.xlabel("Degree")
+    plt.title("Distribution of "+r"$\log_{10}{\rm MSR}$"+" versus regression model set degree")
+    plt.grid(which="both")
+    plt.ylim((-3.6, 1.4))
+    plt.tight_layout()
+    outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msr_poly2d_n{NRUNS}.pdf")
+    plt.savefig(outfile)
+    plt.show()
+
+    # MSEP violin charts
+    fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
+    plt.axhline(0., color="k", ls=":")
+    sns.violinplot(
+        np.log10(msep_all).rename(columns=degree_titles),
+        palette="Greys", cut=0, scale="area",
+    )
+    plt.ylabel(r"$\log_{10}{\rm MSEP}$")
+    plt.xlabel("Degree")
+    plt.title("Distribution of "+r"$\log_{10}{\rm MSEP}$"+" versus regression model set degree")
+    plt.grid(which="both")
+    plt.ylim((-0.89, 1.35))
+    plt.tight_layout()
+    outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msep_poly2d_n{NRUNS}.pdf")
+    plt.savefig(outfile)
+    plt.show()
+
+    # MSIE violin charts
+    fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
+    plt.axhline(0., color="k", ls=":")
+    sns.violinplot(
+        np.log10(msie_all).rename(columns=degree_titles),
+        palette="Greys", cut=0, scale="area",
+    )
+    plt.ylabel(r"$\log_{10}{\rm MSIE}$")
+    plt.xlabel("Degree")
+    plt.title("Distribution of "+r"$\log_{10}{\rm MSIE}$"+" versus regression model set degree")
+    plt.grid(which="both")
+    plt.ylim((-0.89, 1.35))
+    plt.tight_layout()
+    outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msie_poly2d_n{NRUNS}.pdf")
+    plt.savefig(outfile)
+    plt.show()
+
+    # Line chart of mean of MSR, MSEP, MSIE versus regression model set degree
+    ax = mean_results.plot(
+        logy=True, marker="s", color=[mpl.colormaps["gray"](_x) for _x in (.75, .4, .05)])
+    ax.axhline(1., color="k", ls=":")
+    ax.grid(which="both")
+    ax.set_xlabel("Degree")
+    ax.set_title("Sample mean of "+NRUNS_STRS[NRUNS]+" regressions")
+    plt.tight_layout()
+    plt.savefig(outfile)
+    outfile = os.path.join(
+        fitting_polynomials_2d.PROJDIR, f"mean_msr_msep_msie_poly2d_n{NRUNS}.pdf")
+    plt.savefig(outfile)
     plt.show()
