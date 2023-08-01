@@ -11,11 +11,13 @@ import multiprocessing
 import pickle
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import sklearn.linear_model
 import sklearn.preprocessing
 
 import fitting_polynomials_2d
+from further_analysis_polynomials_2d import DEGREES
 
 
 # Parameters
@@ -33,6 +35,14 @@ NCORES = 2
 # Module scope linear regression class
 regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
 
+# Module scope degrees array
+degrees = (
+    fitting_polynomials_2d.fit_degree_lo,
+    fitting_polynomials_2d.fit_degree_true,
+    fitting_polynomials_2d.fit_degree_hi,
+    fitting_polynomials_2d.fit_degree_vhi,
+)
+
 
 # Functions
 # =========
@@ -41,7 +51,9 @@ def _fit_predict(_dataset, _features=None):
     """Perform regression on input fitting_polynomial_2d.py-style dataset using
     input features, returning regression prediction
     """
-    _dataset = _dataset.flatten(order="C")
+    _dataset = _dataset.flatten(order="C")  # having flattening and then reshaping in the inner
+                                            # loop is not ideal, but will postpone optimization
+                                            # until performance limited
     regr.fit(_features, _dataset)
     return regr.predict(_features).reshape(
         (fitting_polynomials_2d.nx, fitting_polynomials_2d.nx), order="C")
@@ -50,32 +62,17 @@ def _fit_predict(_dataset, _features=None):
 def run_msep(rng):
     """Run full msep analysis and return results in a dictionary"""
     output = {}
+    feature_labels = [f"features_{_d}" for _d in DEGREES]
 
     # Design matrices
-    output["features_lo"] = fitting_polynomials_2d.polynomial_design_matrix(
-        square_dimension=fitting_polynomials_2d.side_dim,
-        n_side=fitting_polynomials_2d.nx,
-        degree=fitting_polynomials_2d.fit_degree_lo,
-        order="C",
-    )
-    output["features_true"] = fitting_polynomials_2d.polynomial_design_matrix(
-        square_dimension=fitting_polynomials_2d.side_dim,
-        n_side=fitting_polynomials_2d.nx,
-        degree=fitting_polynomials_2d.fit_degree_true,
-        order="C",
-    )
-    output["features_hi"] = fitting_polynomials_2d.polynomial_design_matrix(
-        square_dimension=fitting_polynomials_2d.side_dim,
-        n_side=fitting_polynomials_2d.nx,
-        degree=fitting_polynomials_2d.fit_degree_hi,
-        order="C",
-    )
-    output["features_vhi"] = fitting_polynomials_2d.polynomial_design_matrix(
-        square_dimension=fitting_polynomials_2d.side_dim,
-        n_side=fitting_polynomials_2d.nx,
-        degree=fitting_polynomials_2d.fit_degree_vhi,
-        order="C",
-    )
+    for _id, _flab in enumerate(feature_labels):
+
+        output[_flab] = fitting_polynomials_2d.polynomial_design_matrix(
+            square_dimension=fitting_polynomials_2d.side_dim,
+            n_side=fitting_polynomials_2d.nx,
+            degree=degrees[_id],
+            order="C",
+        )
 
     # Ideal model coefficients and corresponding images on the coordinate grid
     print("Generating ideal model coefficients")
@@ -99,20 +96,12 @@ def run_msep(rng):
 
     # Perform too low, matching, too high, and very much too high degree regressions on data
     output["predictions"] = {}
-    for _key, features in zip(
-                ("lo", "true", "hi", "vhi"),
-                (
-                    output["features_lo"],
-                    output["features_true"],
-                    output["features_hi"],
-                    output["features_vhi"]
-                ),
-            ):
+    for _dstr, _design_matrix in zip(DEGREES, [output[_flab] for _flab in feature_labels]):
 
-        _pfunc = functools.partial(_fit_predict, _features=features)
-        print(f"Regressing {NRUNS} {_key} runs using {NCORES} cores")
+        _pfunc = functools.partial(_fit_predict, _features=_design_matrix)
+        print(f"Regressing {NRUNS} {_dstr} runs using {NCORES} cores")
         with multiprocessing.Pool(NCORES) as p:
-            output["predictions"][_key] = np.asarray(
+            output["predictions"][_dstr] = np.asarray(
                 p.map(_pfunc, [_zf for _zf in output["zdata"]]), dtype=float)
 
     # Generate a new set of errors from which to calculate the Mean Squared Error of Prediction
@@ -143,3 +132,24 @@ if __name__ == "__main__":
         print(f"Saving results to {filename}")
         with open(filename, "wb") as fout:
             pickle.dump(results, fout)
+
+    print("Calculating key stats")
+    residuals = {_d: results["zdata"] - results["predictions"][_d] for _d in DEGREES}
+    errors_of_prediction = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
+    ideal_error = {_d: results["predictions"][_d] - results["ztrue"] for _d in DEGREES}
+
+    msr_all = {_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES}
+    msep_all = {_d: (errors_of_prediction[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES}
+    msie_all = {_d: (ideal_error[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES}
+
+    msr = pd.Series({_d: msr_all[_d].mean() for _d in DEGREES}, name="MSR")
+    msep = pd.Series({_d: msep_all[_d].mean() for _d in DEGREES}, name="MSEP")
+    msie = pd.Series({_d: msie_all[_d].mean() for _d in DEGREES}, name="MSIE")
+
+    results = pd.concat([msr, msep, msie], axis=1)
+    results.index = degrees
+
+    print("Plotting")
+    ax = results.plot(logy=True)
+    ax.grid()
+    plt.show()
