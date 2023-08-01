@@ -138,18 +138,18 @@ if __name__ == "__main__":
     errors_of_prediction = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
     ideal_error = {_d: results["predictions"][_d] - results["ztrue"] for _d in DEGREES}
 
-    msr_all = {_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES}
-    msep_all = {_d: (errors_of_prediction[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES}
-    msie_all = {_d: (ideal_error[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES}
+    msr_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
+    msep_all = pd.DataFrame({_d:(errors_of_prediction[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
+    msie_all = pd.DataFrame({_d: (ideal_error[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
 
-    msr = pd.Series({_d: msr_all[_d].mean() for _d in DEGREES}, name="MSR")
-    msep = pd.Series({_d: msep_all[_d].mean() for _d in DEGREES}, name="MSEP")
-    msie = pd.Series({_d: msie_all[_d].mean() for _d in DEGREES}, name="MSIE")
+    msr_mean = pd.Series({_d: msr_all[_d].mean() for _d in DEGREES}, name="MSR")
+    msep_mean = pd.Series({_d: msep_all[_d].mean() for _d in DEGREES}, name="MSEP")
+    msie_mean = pd.Series({_d: msie_all[_d].mean() for _d in DEGREES}, name="MSIE")
 
-    results = pd.concat([msr, msep, msie], axis=1)
-    results.index = degrees
+    mean_results = pd.concat([msr_mean, msep_mean, msie_mean], axis=1)
+    mean_results.index = degrees
 
     print("Plotting")
-    ax = results.plot(logy=True)
+    ax = mean_results.plot(logy=True)
     ax.grid()
     plt.show()
