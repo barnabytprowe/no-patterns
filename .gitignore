@@ -1,5 +1,6 @@
 plots/*
 old code/*
+*.pkl
 *.tmp.driveupload/
 *Shortcut.lnk
 __pycache__/*
