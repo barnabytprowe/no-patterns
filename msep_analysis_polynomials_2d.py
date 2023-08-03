@@ -164,12 +164,10 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
     plt.axhline(0., color="k", ls=":")
     sns.violinplot(
-        np.log10(msr_all).rename(columns=degree_titles),
-        palette="Greys", cut=0, scale="area",
-    )
+        np.log10(msr_all).rename(columns=degree_titles), palette="Greys", scale="area", cut=0.)
     plt.ylabel(r"$\log_{10}{\rm MSR}$")
     plt.xlabel("Degree")
-    plt.title("Distribution of "+r"$\log_{10}{\rm MSR}$"+" versus regression model set degree")
+    plt.title("Distribution of "+r"$\log_{10}{\rm MSR}$"+" with polynomial degree")
     plt.grid(which="both")
     plt.ylim((-3.6, 1.4))
     plt.tight_layout()
@@ -181,12 +179,10 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
     plt.axhline(0., color="k", ls=":")
     sns.violinplot(
-        np.log10(msep_all).rename(columns=degree_titles),
-        palette="Greys", cut=0, scale="area",
-    )
+        np.log10(msep_all).rename(columns=degree_titles), palette="Greys", scale="area", cut=0.)
     plt.ylabel(r"$\log_{10}{\rm MSEP}$")
     plt.xlabel("Degree")
-    plt.title("Distribution of "+r"$\log_{10}{\rm MSEP}$"+" versus regression model set degree")
+    plt.title("Distribution of "+r"$\log_{10}{\rm MSEP}$"+" with polynomial degree")
     plt.grid(which="both")
     plt.ylim((-0.89, 1.35))
     plt.tight_layout()
@@ -198,12 +194,10 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
     plt.axhline(0., color="k", ls=":")
     sns.violinplot(
-        np.log10(msie_all).rename(columns=degree_titles),
-        palette="Greys", cut=0, scale="area",
-    )
+        np.log10(msie_all).rename(columns=degree_titles), palette="Greys", scale="area", cut=0.)
     plt.ylabel(r"$\log_{10}{\rm MSIE}$")
     plt.xlabel("Degree")
-    plt.title("Distribution of "+r"$\log_{10}{\rm MSIE}$"+" versus regression model set degree")
+    plt.title("Distribution of "+r"$\log_{10}{\rm MSIE}$"+" with polynomial degree")
     plt.grid(which="both")
     plt.ylim((-0.89, 1.35))
     plt.tight_layout()
@@ -219,7 +213,6 @@ if __name__ == "__main__":
     ax.set_xlabel("Degree")
     ax.set_title("Sample mean of "+NRUNS_STRS[NRUNS]+" regressions")
     plt.tight_layout()
-    plt.savefig(outfile)
     outfile = os.path.join(
         fitting_polynomials_2d.PROJDIR, f"mean_msr_msep_msie_poly2d_n{NRUNS}.pdf")
     plt.savefig(outfile)
