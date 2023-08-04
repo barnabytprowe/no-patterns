@@ -159,8 +159,8 @@ if __name__ == "__main__":
     mean_results = pd.concat([msr_mean, msep_mean, msie_mean], axis=1)
     mean_results.index = degrees
 
-    print("Plotting")
     # MSR violin charts
+    print("Plotting MSR")
     fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
     plt.axhline(0., color="k", ls=":")
     sns.violinplot(
@@ -176,6 +176,7 @@ if __name__ == "__main__":
     plt.show()
 
     # MSEP violin charts
+    print("Plotting MSEP")
     fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
     plt.axhline(0., color="k", ls=":")
     sns.violinplot(
@@ -191,6 +192,7 @@ if __name__ == "__main__":
     plt.show()
 
     # MSIE violin charts
+    print("Plotting MSIE")
     fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
     plt.axhline(0., color="k", ls=":")
     sns.violinplot(
@@ -206,6 +208,7 @@ if __name__ == "__main__":
     plt.show()
 
     # Line chart of mean of MSR, MSEP, MSIE versus regression model set degree
+    print("Plotting means")
     ax = mean_results.plot(
         logy=True, marker="s", color=[mpl.colormaps["gray"](_x) for _x in (.75, .4, .05)])
     ax.axhline(1., color="k", ls=":")
