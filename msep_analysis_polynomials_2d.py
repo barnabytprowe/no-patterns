@@ -185,34 +185,44 @@ if __name__ == "__main__":
 
     # MSEP violin charts
     print("Plotting MSEP")
-    fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
-    plt.axhline(0., color="k", ls=":")
+    fig, ax = plt.subplots(figsize=fitting_polynomials_2d.FIGSIZE)
+    ax.axhline(0., color="k", ls=":")
     sns.violinplot(
-        np.log10(msep_all).rename(columns=degree_titles), palette="Greys", scale="area", cut=0.)
-    plt.ylabel(r"$\log_{10}{\rm MSEP}$")
-    plt.xlabel("Degree")
-    plt.title("Distribution of "+r"$\log_{10}{\rm MSEP}$"+" with polynomial degree")
-    plt.grid(which="both")
-    plt.ylim((-0.89, 1.35))
+        np.log10(msep_all).rename(columns=degree_titles),
+        palette="Greys",
+        scale="area",
+        cut=0.,
+        ax=ax,
+    )
+    ax.set_ylabel(r"$\log_{10}{\rm MSEP}$")
+    ax.set_xlabel("Degree")
+    ax.set_title("Distribution of "+r"$\log_{10}{\rm MSEP}$"+" with polynomial degree")
+    ax.grid()
+    ax.set_ylim((-0.89, 1.35))
     plt.tight_layout()
     outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msep_poly2d_n{NRUNS}.pdf")
-    plt.savefig(outfile)
+    fig.savefig(outfile)
     plt.show()
 
     # MSIE violin charts
     print("Plotting MSIE")
-    fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
-    plt.axhline(0., color="k", ls=":")
+    fig, ax = plt.subplots(figsize=fitting_polynomials_2d.FIGSIZE)
+    ax.axhline(0., color="k", ls=":")
     sns.violinplot(
-        np.log10(msie_all).rename(columns=degree_titles), palette="Greys", scale="area", cut=0.)
-    plt.ylabel(r"$\log_{10}{\rm MSIE}$")
-    plt.xlabel("Degree")
-    plt.title("Distribution of "+r"$\log_{10}{\rm MSIE}$"+" with polynomial degree")
-    plt.grid(which="both")
-    plt.ylim((-0.89, 1.35))
+        np.log10(msie_all).rename(columns=degree_titles),
+        palette="Greys",
+        scale="area",
+        cut=0.,
+        ax=ax,
+    )
+    ax.set_ylabel(r"$\log_{10}{\rm MSIE}$")
+    ax.set_xlabel("Degree")
+    ax.set_title("Distribution of "+r"$\log_{10}{\rm MSIE}$"+" with polynomial degree")
+    ax.grid()
+    ax.set_ylim((-0.89, 1.35))
     plt.tight_layout()
     outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msie_poly2d_n{NRUNS}.pdf")
-    plt.savefig(outfile)
+    fig.savefig(outfile)
     plt.show()
 
     # Line chart of mean of MSR, MSEP, MSIE versus regression model set degree
