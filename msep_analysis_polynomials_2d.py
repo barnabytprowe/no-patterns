@@ -161,18 +161,26 @@ if __name__ == "__main__":
 
     # MSR violin charts
     print("Plotting MSR")
-    fig = plt.figure(figsize=fitting_polynomials_2d.FIGSIZE)
-    plt.axhline(0., color="k", ls=":")
+    fig, ax = plt.subplots(figsize=fitting_polynomials_2d.FIGSIZE)
+    ax.axhline(0., color="k", ls=":")
     sns.violinplot(
-        np.log10(msr_all).rename(columns=degree_titles), palette="Greys", scale="area", cut=0.)
-    plt.ylabel(r"$\log_{10}{\rm MSR}$")
-    plt.xlabel("Degree")
-    plt.title("Distribution of "+r"$\log_{10}{\rm MSR}$"+" with polynomial degree")
-    plt.grid(which="both")
-    plt.ylim((-3.6, 1.4))
+        np.log10(msr_all).rename(columns=degree_titles),
+        palette="Greys",
+        scale="area",
+        cut=0.,
+        ax=ax,
+    )
+    ax.set_ylabel(r"$\log_{10}{\rm MSR}$")
+    ax.set_xlabel("Degree")
+    ax.set_title("Distribution of "+r"$\log_{10}{\rm MSR}$"+" with polynomial degree")
+    ax.minorticks_on()
+    ax.yaxis.set_minor_locator(mpl.ticker.AutoMinorLocator(4))
+    ax.yaxis.grid(which="both")
+    ax.xaxis.grid(which="major")
+    ax.set_ylim((-3.6, 1.4))
     plt.tight_layout()
     outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msr_poly2d_n{NRUNS}.pdf")
-    plt.savefig(outfile)
+    fig.savefig(outfile)
     plt.show()
 
     # MSEP violin charts
