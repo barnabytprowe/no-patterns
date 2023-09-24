@@ -37,7 +37,7 @@ DEGREES = ("lo", "true", "hi", "vhi")
 DEGREE_STRS = {"lo": "low", "true": "matching", "hi": "high", "vhi": "very high"}  # used in display
 
 HIST_RANGE = [-8, 8]
-HIST_NBINS = 80
+HIST_NBINS = 32
 HIST_YLIM = [0, 50]
 
 # Number of runs of further data generation with which to estimate the RMS error of prediction
