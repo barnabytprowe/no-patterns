@@ -40,6 +40,9 @@ HIST_RANGE = [-8, 8]
 HIST_NBINS = 32
 HIST_YLIM = [0, 50]
 
+HIST_LABEL_FONTSIZE = "x-large"
+HIST_TICK_FONTSIZE = "x-large"
+
 # Number of runs of further data generation with which to estimate the RMS error of prediction
 NRUNS = 1000000
 
@@ -151,8 +154,10 @@ def plot_histogram_residuals(stats):
         plt.hist(
             stats[_degree]["residuals"].flatten(), bins=HIST_NBINS, range=HIST_RANGE, color="Gray")
         plt.ylim(*HIST_YLIM)
-        plt.ylabel("Counts")
-        plt.xlabel("Residual value")
+        plt.ylabel("Counts", fontsize=HIST_LABEL_FONTSIZE)
+        plt.xlabel("Residual value", fontsize=HIST_LABEL_FONTSIZE)
+        plt.xticks(fontsize=HIST_TICK_FONTSIZE)
+        plt.yticks(fontsize=HIST_TICK_FONTSIZE)
         plt.grid()
         title_str = f"Histogram of {DEGREE_STRS[_degree]} degree polynomial residuals"
         plt.title(title_str, size=TITLE_SIZE)
