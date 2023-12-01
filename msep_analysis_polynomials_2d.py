@@ -160,7 +160,7 @@ if __name__ == "__main__":
     mean_results.index = degrees
 
     # MSR violin charts
-    print("Plotting MSR")
+    print("Plotting RSS / N")
     fig, ax = plt.subplots(figsize=fitting_polynomials_2d.FIGSIZE)
     ax.axhline(0., color="k", ls=":")
     sns.violinplot(
@@ -170,9 +170,13 @@ if __name__ == "__main__":
         cut=0.,
         ax=ax,
     )
-    ax.set_ylabel(r"$\log_{10}{\rm MSR}$")
+    ax.set_ylabel(r"$\log_{10}\left[ {\rm RSS} \, / \, N \right]$")
     ax.set_xlabel("Degree")
-    ax.set_title("Distribution of "+r"$\log_{10}{\rm MSR}$"+" with polynomial degree")
+    ax.set_title(
+        "Distribution of "
+        r"$\log_{10}\left[ {\rm RSS} \, / \, N \right] = \log_{10}\left[ \frac{1}{N} \sum_n r^2_n \right]$"
+        " with degree"
+    )
     ax.minorticks_on()
     ax.yaxis.set_minor_locator(mpl.ticker.AutoMinorLocator(4))
     ax.yaxis.grid(which="both")
