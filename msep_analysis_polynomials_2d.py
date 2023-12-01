@@ -153,6 +153,22 @@ if __name__ == "__main__":
     msep_all = pd.DataFrame({_d:(errors_of_prediction[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
     msie_all = pd.DataFrame({_d: (ideal_error[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
 
+    psi_all = pd.DataFrame(
+        {
+            _d: (ideal_error[_d]**2).sum(axis=(-2,-1)) / (results["errors"]**2).sum(axis=(-2,-1))
+            for _d in DEGREES
+        }
+    )
+    omega_all = pd.DataFrame(
+        {
+            _d: -1. + 2. * (
+                (ideal_error[_d] * results["errors"]).sum(axis=(-2,-1))
+                / (ideal_error[_d]**2).sum(axis=(-2,-1))
+            )
+            for _d in DEGREES
+        }
+    )
+
     msr_mean = pd.Series({_d: msr_all[_d].mean() for _d in DEGREES}, name="MSR")
     msep_mean = pd.Series({_d: msep_all[_d].mean() for _d in DEGREES}, name="MSEP")
     msie_mean = pd.Series({_d: msie_all[_d].mean() for _d in DEGREES}, name="MSIE")
@@ -186,6 +202,8 @@ if __name__ == "__main__":
     outfile = os.path.join(fitting_polynomials_2d.PROJDIR, f"msr_poly2d_n{NRUNS}.pdf")
     fig.savefig(outfile)
     plt.show()
+
+    import ipdb; ipdb.set_trace()
 
     # MSEP violin charts
     print("Plotting MSEP")
