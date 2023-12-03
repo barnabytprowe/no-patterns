@@ -1,8 +1,9 @@
 """
-msep_analysis_polynomials_2d.py
-===============================
+large_sample_polynomials_2d.py
+==============================
 
-Mean Squared Errors of Prediction analysis.
+Analysis of a large sample of polynomial regressions in two dimensions,
+described in the paper "No patterns in regression residuals."
 """
 
 import os

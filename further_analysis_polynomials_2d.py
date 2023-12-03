@@ -2,9 +2,9 @@
 further_analysis_polynomials_2d.py
 ==================================
 
-Python script that performs further analysis and generates additional plots
-based on the results of the regressions performed by fitting_polynomials_2d.py,
-described in the paper "No patterns in regression residuals."
+Further analysis and additional plots of regressions performed by
+fitting_polynomials_2d.py, described in the paper "No patterns in regression
+residuals."
 """
 
 import collections

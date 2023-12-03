@@ -2,10 +2,10 @@
 fitting_polynomials_2d.py
 =========================
 
-Python script that generates examples of regression of in two dimensions,
-described in the paper "No patterns in regression residuals," illustrating
-underspecified, correctly specified, and overspecified regression of
-randomly-generated polynomial surfaces on a regular 2D grid.
+Examples of regression of in two dimensions, described in the paper "No
+patterns in regression residuals," illustrating underspecified, correctly
+specified, and overspecified regression of randomly-generated polynomial
+surfaces on a regular 2D grid.
 
 Saves output from each simulated regression into a uniquely timestamped
 subfolder of ./plots/polynomials_2d/.
