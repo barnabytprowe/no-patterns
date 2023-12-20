@@ -70,8 +70,8 @@ def _fit_predict(_dataset, _features=None):
         (fitting_polynomials_2d.nx, fitting_polynomials_2d.nx), order="C")
 
 
-def run_msep(rng):
-    """Run full msep analysis and return results in a dictionary"""
+def run_large_sample_analysis(rng):
+    """Run full large sample analysis and return results in a dictionary"""
     output = {}
     feature_labels = [f"features_{_d}" for _d in DEGREES]
 
@@ -146,35 +146,49 @@ if __name__ == "__main__":
 
     print("Calculating key stats")
     residuals = {_d: results["zdata"] - results["predictions"][_d] for _d in DEGREES}
-    errors_of_prediction = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
-    ideal_error = {_d: results["predictions"][_d] - results["ztrue"] for _d in DEGREES}
+    cross_validation = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
+    ideal_discrepancy = {_d: results["predictions"][_d] - results["ztrue"] for _d in DEGREES}
 
-    # Calculate MSR, MSEP and MSIE for each regression
-    msr_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
-    msep_all = pd.DataFrame({_d:(errors_of_prediction[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
-    msie_all = pd.DataFrame({_d: (ideal_error[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
+    # Calculate RSS / N, mean square cross validation "error", and mean square ideal discrepancy
+    # per regression for each degree
+    rssn_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
+    xval_all = pd.DataFrame({_d: (cross_validation[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
+    msid_all = pd.DataFrame({_d: (ideal_discrepancy[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
 
+    # Calculate the overfitting parameters; "saturation"
     psi_all = pd.DataFrame(
         {
-            _d: (ideal_error[_d]**2).sum(axis=(-2,-1)) / (results["errors"]**2).sum(axis=(-2,-1))
+            _d: (
+                (ideal_discrepancy[_d]**2).sum(axis=(-2,-1))
+            ) / (results["errors"]**2).sum(axis=(-2,-1))
             for _d in DEGREES
         }
     )
+    # "overfit"
     omega_all = pd.DataFrame(
         {
             _d: -1. + 2. * (
-                (ideal_error[_d] * results["errors"]).sum(axis=(-2,-1))
-                / (ideal_error[_d]**2).sum(axis=(-2,-1))
-            )
+                (ideal_discrepancy[_d] * results["errors"]).sum(axis=(-2,-1))
+            ) / (ideal_discrepancy[_d]**2).sum(axis=(-2,-1))
             for _d in DEGREES
         }
     )
 
-    msr_mean = pd.Series({_d: msr_all[_d].mean() for _d in DEGREES}, name="MSR")
-    msep_mean = pd.Series({_d: msep_all[_d].mean() for _d in DEGREES}, name="MSEP")
-    msie_mean = pd.Series({_d: msie_all[_d].mean() for _d in DEGREES}, name="MSIE")
-    mean_results = pd.concat([msr_mean, msep_mean, msie_mean], axis=1)
+    rssn_mean = pd.Series(
+        {_d: rssn_all[_d].mean() for _d in DEGREES}, name="RSS / N")
+    xval_mean = pd.Series(
+        {_d: xval_all[_d].mean() for _d in DEGREES}, name="Mean square cross validation error")
+    msid_mean = pd.Series(
+        {_d: msid_all[_d].mean() for _d in DEGREES}, name="Mean square ideal discrepancy")
+    psi_mean = pd.Series({_d: psi_all[_d].mean() for _d in DEGREES}, name=r"Mean $\psi$")
+    omega_mean = pd.Series({_d: omega_all[_d].mean() for _d in DEGREES}, name=r"Mean $\omega$")
+
+    mean_results = pd.concat([rssn_mean, xval_mean, msid_mean], axis=1)
     mean_results.index = degrees
+
+
+
+    1/0
 
     # MSR violin charts
     print("Plotting RSS / N")
