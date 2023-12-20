@@ -44,7 +44,7 @@ NCORES = 2
 # Module scope linear regression class
 regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
 
-# Module scope degrees array
+# Gather module scope degrees into an array for convenience, use values from fitting_polynomials_2d
 degrees = (
     fitting_polynomials_2d.fit_degree_lo,
     fitting_polynomials_2d.fit_degree_true,
