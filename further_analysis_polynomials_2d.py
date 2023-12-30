@@ -194,9 +194,10 @@ def plot_predictions(data):
         plt.close(fig)
 
 
-def mean_squared_errors_of_prediction(data, rng=None):
-    """Calculates the mean squared error between predictions and new datasets
-    generated with the same ideal model but with new additive, iid errors.
+def mean_squared_cross_validation_residual(data, rng=None):
+    """Calculates the mean squared cross validation residual, the difference
+    between predictions and new datasets generated with the same ideal model
+    but with new additive, iid errors.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -211,22 +212,23 @@ def mean_squared_errors_of_prediction(data, rng=None):
     )
     new_datasets = data["ztrue"] + new_errors
 
-    mean_squared_errors_of_prediction = {}  # MSEP
-    mean_msep = {}
-    std_msep = {}
+    mean_squared_xvr = {}
+    mean_msxvr = {}
+    std_msxvr = {}
     for _degree in DEGREES:
 
         pred = data["pred_"+_degree]
-        _ssquared_errp = ((new_datasets - pred)**2).sum(axis=(-2, -1))
-        mean_squared_errors_of_prediction[_degree] = _ssquared_errp / np.product(imshape)
-        mean_msep[_degree] = np.mean(mean_squared_errors_of_prediction[_degree])
-        std_msep[_degree] = np.std(mean_squared_errors_of_prediction[_degree])
+        _ssquared_xvr = ((new_datasets - pred)**2).sum(axis=(-2, -1))
+        mean_squared_xvr[_degree] = _ssquared_xvr / np.product(imshape)
+        mean_msxvr[_degree] = np.mean(mean_squared_xvr[_degree])
+        std_msxvr[_degree] = np.std(mean_squared_xvr[_degree])
 
-    mean_msep = pd.Series(mean_msep)
-    std_msep = pd.Series(std_msep)
-    print(f"Mean Squared Error of Prediction for {timestamp}:")
-    print(pd.DataFrame({"Mean": mean_msep, "Std": std_msep, "StdErr": std_msep / np.sqrt(NRUNS)}))
-    return mean_squared_errors_of_prediction
+    mean_msxvr = pd.Series(mean_msxvr)
+    std_msxvr = pd.Series(std_msxvr)
+    print(f"Mean Squared Cross-Validation Residual for {timestamp}:")
+    print(
+        pd.DataFrame({"Mean": mean_msxvr, "Std": std_msxvr, "StdErr": std_msxvr / np.sqrt(NRUNS)}))
+    return mean_squared_xvr
 
 
 # Main script
@@ -241,4 +243,4 @@ if __name__ == "__main__":
         plot_shuffled_residuals(stats, rng=rng)
         plot_histogram_residuals(stats)
         plot_predictions(data)
-        mean_squared_errors_of_prediction(data, rng=rng)
+        mean_squared_cross_validation_residual(data, rng=rng)
