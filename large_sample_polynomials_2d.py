@@ -144,11 +144,14 @@ if __name__ == "__main__":
         with open(filename, "wb") as fout:
             pickle.dump(results, fout)
 
-    print("Calculating key stats")
+    print("Calculating residuals")
     residuals = {_d: results["zdata"] - results["predictions"][_d] for _d in DEGREES}
+    print("Calculating cross validation residuals")
     cross_validation = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
+    print("Calculating ideal discrepancies")
     ideal_discrepancy = {_d: results["predictions"][_d] - results["ztrue"] for _d in DEGREES}
 
+    print("Calculating summary statistics")
     # Calculate RSS / N, mean square cross validation "error", and mean square ideal discrepancy
     # per regression for each degree
     rssn_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
@@ -174,6 +177,18 @@ if __name__ == "__main__":
         }
     )
 
+    omega_stats = omega_all.describe()
+    omega_stats.columns = ("Underspecified", "Matching", "Overspecified", "Highly overspecified")
+    omega_stats.index = (
+        "Count", "Mean", "Standard deviation", "Minimum", r"$25%$", r"$50%$", r"$75%$", "Maximum")
+    omega_styler = omega_stats.style
+    omega_styler.format(precision=2)
+    omega_styler.format(subset=("Count", omega_stats.describe().columns), precision=0)
+    omega_styler.format(
+        subset=("Standard deviation", ["Overspecified", "Highly overspecified"]), precision=13)
+    print(omega_styler.to_latex())
+    1/0
+
     rssn_mean = pd.Series(
         {_d: rssn_all[_d].mean() for _d in DEGREES}, name="RSS / N")
     xval_mean = pd.Series(
@@ -185,6 +200,7 @@ if __name__ == "__main__":
 
     mean_results = pd.concat([rssn_mean, xval_mean, msid_mean], axis=1)
     mean_results.index = degrees
+
 
 
 
