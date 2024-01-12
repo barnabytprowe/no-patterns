@@ -182,11 +182,11 @@ if __name__ == "__main__":
     omega_stats.index = (
         "Count", "Mean", "Standard deviation", "Minimum", r"$25%$", r"$50%$", r"$75%$", "Maximum")
     omega_stats.loc["Count"] = NRUNS_STRS[NRUNS]
+    omega_stats.loc["Standard deviation", ["Overspecified", "Highly overspecified"]] = (
+        [r"$1 \times 10^{-11}$", r"$4 \times 10^{-11}$"])
     omega_styler = omega_stats.style
     omega_styler.format(precision=3)
     omega_styler.format(subset=("Count", omega_stats.describe().columns), precision=0)
-    omega_stats.loc["Standard deviation", ["Overspecified", "Highly overspecified"]] = (
-        [r"$1 \times 10^{-11}$", r"$4 \times 10^{-11}$"])
     #omega_styler.format(
     #    subset=("Standard deviation", ["Overspecified", "Highly overspecified"]), precision=13)
     print(omega_styler.to_latex())
