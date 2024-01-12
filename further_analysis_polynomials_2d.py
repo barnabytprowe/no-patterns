@@ -86,6 +86,7 @@ def get_data_stats(timestamp):
             "ctrue": data["ctrue"],
             "ztrue": data["ztrue"],
             "zdata": data["zdata"],
+            "errors": data["zdata"] - data["ztrue"],
             "residuals": _res,
             "RSS": np.sum(_res**2),
             "rho": np.fft.ifft2(np.abs(np.fft.fft2(_res))**2).real / np.product(_res.shape),
@@ -151,8 +152,9 @@ def plot_histogram_residuals(stats):
 
         print(f"Plotting {_degree} histogram")
         fig = plt.figure(figsize=FIGSIZE)
-        plt.hist(
-            stats[_degree]["residuals"].flatten(), bins=HIST_NBINS, range=HIST_RANGE, color="Gray")
+        _r = stats[_degree]["residuals"].flatten(s)
+        _msr = (_r**2).mean()
+        plt.hist(_r, bins=HIST_NBINS, range=HIST_RANGE, color="Gray")
         plt.ylim(*HIST_YLIM)
         plt.ylabel("Counts", fontsize=HIST_LABEL_FONTSIZE)
         plt.xlabel("Residual value", fontsize=HIST_LABEL_FONTSIZE)
@@ -161,6 +163,7 @@ def plot_histogram_residuals(stats):
         plt.grid()
         title_str = f"Histogram of {DEGREE_STRS[_degree]} degree polynomial residuals"
         plt.title(title_str, size=TITLE_SIZE)
+        plt.figtext(x=.65, y=.8, s=(r"RSS$/N$ = "+f"{_msr:5.3f}"), fontsize="xx-large")
         plt.tight_layout()
         timestamp = stats[_degree]["timestamp"]
         if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
@@ -169,6 +172,8 @@ def plot_histogram_residuals(stats):
             outfile = os.path.join(stats[_degree]["folder"], f"hist_{_degree}_{timestamp}.png")
         plt.savefig(outfile)
         plt.close(fig)
+        _mse =  (stats[_degree]["errors"].flatten()**2).mean()
+        print(f"{_degree} mean square residual, error = {_msr}, {_mse}")
 
 
 def plot_predictions(data):
