@@ -54,7 +54,7 @@ PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
 PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 
 # Output folder structure: project dir
-PROJDIR = os.path.join(PLTDIR, "polynomials_sinusoids_1d")
+PROJDIR = os.path.join(PLTDIR, "sinusoids_polynomials_1d")
 
 # Output file types
 OUTFILE_EXTENSIONS = (".png", ".pdf")
@@ -217,7 +217,6 @@ if __name__ == "__main__":
             ax = fig.add_axes([0.075, 0.3, 0.855, 0.45])
             im = ax.pcolor(_res.reshape((1, len(_res))), cmap=CMAP, clim=CLIM)
             ax.set_yticklabels([])
-            {}
             ax.set_title(
                 f"{fit_display[_fit]} {curve_family_display[_curve_family]} residual map",
                 size=TITLE_SIZE,
@@ -233,7 +232,6 @@ if __name__ == "__main__":
                 print(f"Saving to {outfile}")
                 fig.savefig(outfile)
 
-            #plt.show()
             plt.close(fig)
 
         # Now we're going to plot periodograms
@@ -241,6 +239,10 @@ if __name__ == "__main__":
         ax.set_title(
             curve_family_display[_curve_family].title()+" curve regression residual periodograms",
             size=TITLE_SIZE,
+        )
+        ax.plot(
+            output[f"ep_{_curve_family}"],
+            color="k", ls="--", linewidth=1, label="iid errors",
         )
         ax.plot(
             output[f"rp_{_curve_family}_lo"],
@@ -251,10 +253,6 @@ if __name__ == "__main__":
             color="k", ls="-", linewidth=1.5, label=fit_display["true"],
         )
         ax.plot(
-            output[f"ep_{_curve_family}"],
-            color="k", ls="--", linewidth=1, label="iid errors",
-        )
-        ax.plot(
             output[f"rp_{_curve_family}_hi"],
             color="blue", ls="-.", linewidth=1.5, label=fit_display["hi"],
         )
@@ -262,7 +260,6 @@ if __name__ == "__main__":
             output[f"rp_{_curve_family}_vhi"],
             color="purple", ls=":", linewidth=1.5, label=fit_display["vhi"],
         )
-        #ax.axhline(1., color="k", ls="-", linewidth=1)
         ax.set_yscale("log")
         ax.set_yticks(PERIODOGRAM_YTICKS)
         ax.set_ylim(PERIODOGRAM_YLIM)
