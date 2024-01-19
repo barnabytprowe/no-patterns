@@ -158,7 +158,7 @@ if __name__ == "__main__":
     xval_all = pd.DataFrame({_d: (cross_validation[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
     msid_all = pd.DataFrame({_d: (ideal_discrepancy[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
 
-    # Calculate the overfitting parameters; "saturation"
+    # Calculate the overfitting parameters
     psi_all = pd.DataFrame(
         {
             _d: (
@@ -167,7 +167,18 @@ if __name__ == "__main__":
             for _d in DEGREES
         }
     )
-    # "overfit"
+    psi_stats = psi_all.describe()
+    psi_stats.columns = ("Underspecified", "Matching", "Overspecified", "Highly overspecified")
+    psi_stats.index = (
+        "Count", "Mean", "Standard deviation", "Minimum", r"$25%$", r"$50%$", r"$75%$", "Maximum")
+    psi_stats.loc["Count"] = NRUNS_STRS[NRUNS]
+    psi_styler = psi_stats.style
+    psi_styler.format(precision=3)
+    psi_styler.format(subset=("Count", psi_stats.describe().columns), precision=0)
+    print()
+    print("psi:")
+    print(psi_styler.to_latex())
+
     omega_all = pd.DataFrame(
         {
             _d: -1. + 2. * (
@@ -189,7 +200,11 @@ if __name__ == "__main__":
     omega_styler.format(subset=("Count", omega_stats.describe().columns), precision=0)
     #omega_styler.format(
     #    subset=("Standard deviation", ["Overspecified", "Highly overspecified"]), precision=13)
+    print()
+    print("omega:")
     print(omega_styler.to_latex())
+
+    1/0
 
     rssn_mean = pd.Series(
         {_d: rssn_all[_d].mean() for _d in DEGREES}, name="RSS / N")
