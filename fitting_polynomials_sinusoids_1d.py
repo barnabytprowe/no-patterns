@@ -69,6 +69,7 @@ def sinusoid_design_matrix(x, degree):
     cosx = np.asarray([np.cos(2. * np.pi * float(j) * x) for j in range(0, degree)]).T
     return np.hstack([cosx, sinx])
 
+
 def chebyshev_design_matrix(x, degree):
     """Returns the Chebyshev polynomial design matrix up to input degree"""
     i1n = np.eye(degree)
