@@ -1,5 +1,5 @@
 """
-fitting_polynomials_sinusoids_1d.py
+fitting_sinusoids_polynomials_1d.py
 ===================================
 Script that generates examples of 1D curve fitting scenarios with additive iid
 Gaussian noise, illustrating underfitting, correctly specified, and overfitting
