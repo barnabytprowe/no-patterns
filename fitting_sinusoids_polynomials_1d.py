@@ -141,10 +141,10 @@ if __name__ == "__main__":
     }
     curve_family_display = {"sinu": "sinusoidal", "cheb": "Chebyshev polynomial"}
     fit_display = {
-        "lo": "Low (underfitting)",
+        "lo": "Low degree",
         "true": "Matching",
-        "hi": "High (overfitting)",
-        "vhi": "Very high (very overfitting)",
+        "hi": "High degree",
+        "vhi": "Very high degree",
     }
     for _curve_family in ("sinu", "cheb"):
 
