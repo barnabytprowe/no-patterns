@@ -89,6 +89,44 @@ def chebyshev_design_matrix(x, degree):
     return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
 
 
+def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, show=True):
+    """Makes and saves pcolor images plots of residuals in 1D regressions.
+
+    Args:
+        residuals: np.array-like
+        fit_display: display str for fit, e.g. Low degree, Matching degree etc.
+        curve_family_display: one of {'polynomial', 'Fourier'}
+        tstmp: timestamp used in folder structure
+        outdir: output folder
+        show: plt.show()?
+    """
+    fig = plt.figure(figsize=FIGSIZE_RESIDUALS)
+    ax = fig.add_axes([0.075, 0.3, 0.855, 0.45])
+    im = ax.pcolor(residuals.reshape((1, len(residuals))), cmap=CMAP, clim=CLIM)
+    ax.set_yticklabels([])
+    ax.set_title(f"{fit_display} {curve_family_display} residual map", size=TITLE_SIZE)
+
+    # See https://stackoverflow.com/a/39938019 for colormap handling
+    divider = make_axes_locatable(ax)
+    cax = fig.add_axes([0.945, 0.3, 0.01, 0.45])
+    fig.colorbar(im, cax=cax, orientation='vertical')
+    for _suffix in OUTFILE_EXTENSIONS:
+
+        outfile = os.path.join(
+            outdir, (
+                f"residuals_{fit_display.lower().replace(' ', '_')}_"
+                f"{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}"
+            ),
+        )
+        print(f"Saving to {outfile}")
+        fig.savefig(outfile)
+        if show:
+            plt.show()
+
+    plt.close(fig)
+    return
+
+
 # Main script
 # ===========
 
@@ -215,31 +253,18 @@ if __name__ == "__main__":
             # Residuals = data - model
             _res = output[f"y_{_curve_family}"] - output[f"ypred_{_curve_family}_{_fit}"]
             output[f"res_{_curve_family}_{_fit}"] = _res.copy()
-            # Residual periodogram
-            output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
-            # Image / map
-            fig = plt.figure(figsize=FIGSIZE_RESIDUALS)
-            ax = fig.add_axes([0.075, 0.3, 0.855, 0.45])
-            im = ax.pcolor(_res.reshape((1, len(_res))), cmap=CMAP, clim=CLIM)
-            ax.set_yticklabels([])
-            ax.set_title(
-                f"{fit_display[_fit]} {curve_family_display[_curve_family]} residual map",
-                size=TITLE_SIZE,
+            plot_residuals(
+                residuals=_res,
+                fit_display=fit_display[_fit],
+                curve_family_display=curve_family_display[_curve_family],
+                tstmp=tstmp,
+                outdir=outdir,
+                show=True,
             )
 
-            # See https://stackoverflow.com/a/39938019 for colormap handling
-            divider = make_axes_locatable(ax)
-            cax = fig.add_axes([0.945, 0.3, 0.01, 0.45])
-            fig.colorbar(im, cax=cax, orientation='vertical')
-            for _suffix in OUTFILE_EXTENSIONS:
-
-                outfile = os.path.join(outdir, f"residuals_{_fit}_{_curve_family}_{tstmp}{_suffix}")
-                print(f"Saving to {outfile}")
-                fig.savefig(outfile)
-                plt.show()
-
-            plt.close(fig)
+            # Calculate and store residual periodogram
+            output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
         # Now we're going to plot periodograms
         fig, ax = plt.subplots(figsize=FIGSIZE)
