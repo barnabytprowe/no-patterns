@@ -45,6 +45,16 @@ fit_degree_vhi = 32  # Added to illustrate the more extreme behaviour more clear
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
 
+# Title display strings for plots
+fit_display = {
+    "lo": "Low degree",
+    "true": "Matching",
+    "hi": "High degree",
+    "vhi": "Very high degree",
+}
+curve_family_display = {"sinu": "Fourier", "cheb": "polynomial"}
+
+
 # Plotting settings
 FIGSIZE = (10, 4)
 FIGSIZE_RESIDUALS = (10, 1.25)
@@ -141,13 +151,6 @@ if __name__ == "__main__":
         "true": features_true,
         "hi": features_hi,
         "vhi": features_vhi,
-    }
-    curve_family_display = {"sinu": "Fourier", "cheb": "polynomial"}
-    fit_display = {
-        "lo": "Low degree",
-        "true": "Matching",
-        "hi": "High degree",
-        "vhi": "Very high degree",
     }
     for _curve_family in ("sinu", "cheb"):
 
