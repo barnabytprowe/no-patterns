@@ -282,7 +282,7 @@ if __name__ == "__main__":
         "hi": features_hi,
         "vhi": features_vhi,
     }
-    for _curve_family in ("sinu", "cheb"):
+    for _curve_family in ("cheb", "sinu"):
 
         # Plotting scatter plots, ideal model and predictions
         # Perform regression at different degrees to generate predictions
