@@ -57,7 +57,7 @@ PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
 PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 
 # Output folder structure: project dir
-PROJDIR = os.path.join(PLTDIR, "sinusoids_polynomials_1d")
+PROJDIR = os.path.join(PLTDIR, "polynomials_fourier_1d")
 
 # Output file types
 OUTFILE_EXTENSIONS = (".png", ".pdf")
