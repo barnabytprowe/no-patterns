@@ -127,6 +127,53 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
     return
 
 
+def plot_periodograms(periodograms, curve_family_display, tstmp, outdir, show=True):
+    """Makes and saves plots of error and residual periodograms from 1D
+    regressions.
+
+    Args:
+        periodograms:
+            list of 5 array-likes containing the following 1d periodograms (in
+            order):
+            - iid errors
+            - Low degree model set residuals
+            - Matching degree model set residuals
+            - High degree model set residuals
+            - Very high degree model set residuals
+        curve_family_display: one of {'polynomial', 'Fourier'}
+        tstmp: timestamp used in folder structure
+        outdir: output folder
+        show: plt.show()?
+    """
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+    ax.set_title(
+        curve_family_display.title()+" series regression residual periodograms", size=TITLE_SIZE)
+    ax.plot(periodograms[0], color="k", ls="--", linewidth=1, label="iid errors")
+    ax.plot(periodograms[1], color="red", ls="--", linewidth=1.5, label=FIT_DISPLAY["lo"])
+    ax.plot(periodograms[2], color="k", ls="-", linewidth=1.5, label=FIT_DISPLAY["true"])
+    ax.plot(periodograms[3], color="blue", ls="-.", linewidth=1.5, label=FIT_DISPLAY["hi"])
+    ax.plot(periodograms[4], color="purple", ls=":", linewidth=1.5, label=FIT_DISPLAY["vhi"])
+
+    ax.set_yscale("log")
+    ax.set_yticks(PERIODOGRAM_YTICKS)
+    ax.set_ylim(PERIODOGRAM_YLIM)
+    ax.grid()
+    ax.legend()
+    fig.tight_layout()
+    for _suffix in OUTFILE_EXTENSIONS:
+
+        outfile = os.path.join(
+            outdir,
+            f"periodograms_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}",
+        )
+        print(f"Saving to {outfile}")
+        fig.savefig(outfile)
+
+    if show:
+        plt.show()
+    plt.close(fig)
+
+
 # Main script
 # ===========
 
@@ -192,10 +239,7 @@ if __name__ == "__main__":
     }
     for _curve_family in ("sinu", "cheb"):
 
-        # Calculate periodograms of just the errors; will be plotted later
-        output[f"ep_{_curve_family}"] = np.abs(
-            np.fft.rfft(output[f"e_{_curve_family}"]))**2 / len(output[f"e_{_curve_family}"])
-
+        # Plotting scatter plots, ideal model and predictions
         # Perform regression at different degrees
         for _fit in ("lo", "true", "hi", "vhi"):
 
@@ -265,43 +309,21 @@ if __name__ == "__main__":
             # Calculate and store residual periodogram
             output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
-        # Now we're going to plot periodograms
-        fig, ax = plt.subplots(figsize=FIGSIZE)
-        ax.set_title(
-            curve_family_display[_curve_family].title()+" series regression residual periodograms",
-            size=TITLE_SIZE,
-        )
-        ax.plot(
-            output[f"ep_{_curve_family}"],
-            color="k", ls="--", linewidth=1, label="iid errors",
-        )
-        ax.plot(
-            output[f"rp_{_curve_family}_lo"],
-            color="red", ls="--", linewidth=1.5, label=fit_display["lo"],
-        )
-        ax.plot(
-            output[f"rp_{_curve_family}_true"],
-            color="k", ls="-", linewidth=1.5, label=fit_display["true"],
-        )
-        ax.plot(
-            output[f"rp_{_curve_family}_hi"],
-            color="blue", ls="-.", linewidth=1.5, label=fit_display["hi"],
-        )
-        ax.plot(
-            output[f"rp_{_curve_family}_vhi"],
-            color="purple", ls=":", linewidth=1.5, label=fit_display["vhi"],
-        )
-        ax.set_yscale("log")
-        ax.set_yticks(PERIODOGRAM_YTICKS)
-        ax.set_ylim(PERIODOGRAM_YLIM)
-        ax.grid()
-        ax.legend()
-        fig.tight_layout()
-        plt.show()
-        for _suffix in OUTFILE_EXTENSIONS:
+        # Calculate periodograms of just the errors for plotting
+        output[f"ep_{_curve_family}"] = np.abs(
+            np.fft.rfft(output[f"e_{_curve_family}"]))**2 / len(output[f"e_{_curve_family}"])
 
-            outfile = os.path.join(outdir, f"periodograms_{_curve_family}_{tstmp}{_suffix}")
-            print(f"Saving to {outfile}")
-            fig.savefig(outfile)
-
-        plt.close(fig)
+        # Now we're going to plot periodograms, gathering them into an ordered list
+        plot_periodograms(
+            [
+                output[f"ep_{_curve_family}"],  # iid errors periodogram for comparison
+                output[f"rp_{_curve_family}_lo"],
+                output[f"rp_{_curve_family}_true"],
+                output[f"rp_{_curve_family}_hi"],
+                output[f"rp_{_curve_family}_vhi"],
+            ],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_curve_family],
+            tstmp=tstmp,
+            outdir=outdir,
+            show=True,
+        )
