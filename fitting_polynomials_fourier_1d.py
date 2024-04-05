@@ -89,6 +89,51 @@ def chebyshev_design_matrix(x, degree):
     return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
 
 
+def plot_regressions(xarr, yarrs, curve_family_display, tstmp, outdir, show=True):
+    """Makes and saves scatter and line plots of 1D regressions.
+
+    Args:
+        xarr:
+            numpy array-like containing x coordinates shared by all arrays in
+            yarrs
+        yarrs:
+            list of 6 array-likes containing the following values in the
+            dependent variable y, in order:
+            - ideal model
+            - data (= ideal model + iid errors)
+            - Low degree model set OLS prediction
+            - Matching degree model set set OLS prediction
+            - High degree model set set OLS prediction
+            - Very high degree model set set OLS prediction
+        curve_family_display: one of {'polynomial', 'Fourier'}
+        tstmp: timestamp used in folder structure
+        outdir: output folder
+        show: plt.show()?
+    """
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+    ax.set_title(f"{curve_family_display} series regression in one dimension", size=TITLE_SIZE)
+    ax.plot(xarr, yarrs[0], color="k", ls="-", linewidth=2, label="Ideal model")
+    ax.plot(xarr, yarrs[1], "k+", markersize=15, label="Data")
+    ax.plot(xarr, yarrs[2], color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"])
+    ax.plot(xarr, yarrs[3], color="k", ls="-", linewidth=1, label=FIT_DISPLAY["true"])
+    ax.plot(xarr, yarrs[4], color="blue", ls="-.", linewidth=1, label=FIT_DISPLAY["hi"])
+    ax.plot(xarr, yarrs[5], color="purple", ls=":", linewidth=1.25, label=FIT_DISPLAY["vhi"])
+    ax.set_xlabel(r"$x$")
+    ax.grid()
+    ax.legend()
+    fig.tight_layout()
+    for _suffix in OUTFILE_EXTENSIONS:
+
+        outfile = os.path.join(
+            outdir, f"curves_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}")
+        print(f"Saving to {outfile}")
+        fig.savefig(outfile)
+
+    if show:
+        plt.show()
+    plt.close(fig)
+
+
 def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, show=True):
     """Makes and saves pcolor images plots of residuals in 1D regressions.
 
@@ -240,7 +285,7 @@ if __name__ == "__main__":
     for _curve_family in ("sinu", "cheb"):
 
         # Plotting scatter plots, ideal model and predictions
-        # Perform regression at different degrees
+        # Perform regression at different degrees to generate predictions
         for _fit in ("lo", "true", "hi", "vhi"):
 
             _design_matrix = features_dict[_fit][_curve_family]
@@ -248,47 +293,21 @@ if __name__ == "__main__":
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_curve_family}_{_fit}"] = _yfit
 
-        # Then plot data versus x and regression predictions as curves of y versus x
-        # First we plot the lines in a conventional x, y graph format
-        fig, ax = plt.subplots(figsize=FIGSIZE)
-        ax.set_title(
-            CURVE_FAMILY_DISPLAY[_curve_family].title()+" series regression in one dimension",
-            size=TITLE_SIZE,
+        plot_regressions(
+            xarr={"sinu": x_sinu, "cheb": x_cheb}[_curve_family],
+            yarrs=[
+                output[f"ytrue_{_curve_family}"],  # ideal model
+                output[f"y_{_curve_family}"],  # data
+                output[f"ypred_{_curve_family}_lo"],
+                output[f"ypred_{_curve_family}_true"],
+                output[f"ypred_{_curve_family}_hi"],
+                output[f"ypred_{_curve_family}_vhi"]
+            ],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_curve_family],
+            tstmp=tstmp,
+            outdir=outdir,
+            show=True,
         )
-        _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
-        ax.plot(
-            _x, output[f"ytrue_{_curve_family}"],
-            color="k", ls="-", linewidth=2, label="Ideal model",
-        )
-        ax.plot(_x, output[f"y_{_curve_family}"], "k+", markersize=15, label="Data")
-        ax.plot(
-            _x, output[f"ypred_{_curve_family}_lo"],
-            color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"],
-        )
-        ax.plot(
-            _x, output[f"ypred_{_curve_family}_true"],
-            color="k", ls="-", linewidth=1, label=FIT_DISPLAY["true"],
-        )
-        ax.plot(
-            _x, output[f"ypred_{_curve_family}_hi"],
-            color="blue", ls="-.", linewidth=1, label=FIT_DISPLAY["hi"],
-        )
-        ax.plot(
-            _x, output[f"ypred_{_curve_family}_vhi"],
-            color="purple", ls=":", linewidth=1.25, label=FIT_DISPLAY["vhi"],
-        )
-        ax.set_xlabel(r"$x$")
-        ax.grid()
-        ax.legend()
-        fig.tight_layout()
-        plt.show()
-        for _suffix in OUTFILE_EXTENSIONS:
-
-            outfile = os.path.join(outdir, f"curves_{_curve_family}_{tstmp}{_suffix}")
-            print(f"Saving to {outfile}")
-            fig.savefig(outfile)
-
-        plt.close(fig)
 
         # Now residuals, but using imaging to bring out patterns
         for _fit in ("lo", "true", "hi", "vhi"):
