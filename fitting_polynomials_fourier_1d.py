@@ -111,7 +111,8 @@ def plot_regressions(xarr, yarrs, curve_family_display, tstmp, outdir, show=True
         show: plt.show()?
     """
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.set_title(f"{curve_family_display} series regression in one dimension", size=TITLE_SIZE)
+    ax.set_title(
+        f"{curve_family_display.title()} series regression in one dimension", size=TITLE_SIZE)
     ax.plot(xarr, yarrs[0], color="k", ls="-", linewidth=2, label="Ideal model")
     ax.plot(xarr, yarrs[1], "k+", markersize=15, label="Data")
     ax.plot(xarr, yarrs[2], color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"])
