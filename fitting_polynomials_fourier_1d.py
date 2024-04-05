@@ -142,7 +142,7 @@ if __name__ == "__main__":
         "hi": features_hi,
         "vhi": features_vhi,
     }
-    curve_family_display = {"sinu": "sinusoidal", "cheb": "Chebyshev polynomial"}
+    curve_family_display = {"sinu": "Fourier", "cheb": "polynomial"}
     fit_display = {
         "lo": "Low degree",
         "true": "Matching",
@@ -167,7 +167,7 @@ if __name__ == "__main__":
         # First we plot the lines in a conventional x, y graph format
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.set_title(
-            curve_family_display[_curve_family].title()+" curve regression in one dimension",
+            curve_family_display[_curve_family].title()+" series regression in one dimension",
             size=TITLE_SIZE,
         )
         _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
@@ -234,13 +234,14 @@ if __name__ == "__main__":
                 outfile = os.path.join(outdir, f"residuals_{_fit}_{_curve_family}_{tstmp}{_suffix}")
                 print(f"Saving to {outfile}")
                 fig.savefig(outfile)
+                plt.show()
 
             plt.close(fig)
 
         # Now we're going to plot periodograms
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.set_title(
-            curve_family_display[_curve_family].title()+" curve regression residual periodograms",
+            curve_family_display[_curve_family].title()+" series regression residual periodograms",
             size=TITLE_SIZE,
         )
         ax.plot(
