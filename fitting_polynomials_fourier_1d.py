@@ -1,12 +1,15 @@
 """
-fitting_sinusoids_polynomials_1d.py
-===================================
-Script that generates examples of 1D curve fitting scenarios with additive iid
-Gaussian noise, illustrating underfitting, correctly specified, and overfitting
-scenarios.
+fitting_polynomials_fourier_1d.py
+=================================
+
+Examples of regression of in one dimension, described in the paper "No patterns
+in regression residuals," illustrating underspecified, correctly specified, and
+overfitting scenarios.  Chebyshev polynomial of the first kind series models,
+and Fourier series models, are combined with additive iid Gaussian noise and
+subject to ordinary linear regression.
 
 Saves output into a uniquely timestamped subfolder of
-./plots/polynomials_sinusoids_1d/.
+./plots/polynomials_fourier_1d/.
 """
 
 import os
