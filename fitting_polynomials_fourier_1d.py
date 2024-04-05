@@ -48,7 +48,7 @@ coeff_signal_to_noise = 1.
 # Plotting settings
 FIGSIZE = (10, 4)
 FIGSIZE_RESIDUALS = (10, 1.25)
-CLIM = None #[-2.5, 2.5]
+CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
 
