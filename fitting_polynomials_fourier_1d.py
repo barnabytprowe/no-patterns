@@ -45,15 +45,6 @@ fit_degree_vhi = 32  # Added to illustrate the more extreme behaviour more clear
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
 
-# Title display strings for plots
-fit_display = {
-    "lo": "Low degree",
-    "true": "Matching",
-    "hi": "High degree",
-    "vhi": "Very high degree",
-}
-curve_family_display = {"sinu": "Fourier", "cheb": "polynomial"}
-
 
 # Plotting settings
 FIGSIZE = (10, 4)
@@ -61,6 +52,15 @@ FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
+
+# Title display strings for plots
+FIT_DISPLAY = {
+    "lo": "Low degree",
+    "true": "Matching",
+    "hi": "High degree",
+    "vhi": "Very high degree",
+}
+CURVE_FAMILY_DISPLAY = {"sinu": "Fourier", "cheb": "polynomial"}
 
 # Periodogram chart settings
 PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
@@ -208,7 +208,7 @@ if __name__ == "__main__":
         # First we plot the lines in a conventional x, y graph format
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.set_title(
-            curve_family_display[_curve_family].title()+" series regression in one dimension",
+            CURVE_FAMILY_DISPLAY[_curve_family].title()+" series regression in one dimension",
             size=TITLE_SIZE,
         )
         _x = {"sinu": x_sinu, "cheb": x_cheb}[_curve_family]
@@ -219,19 +219,19 @@ if __name__ == "__main__":
         ax.plot(_x, output[f"y_{_curve_family}"], "k+", markersize=15, label="Data")
         ax.plot(
             _x, output[f"ypred_{_curve_family}_lo"],
-            color="red", ls="--", linewidth=1, label=fit_display["lo"],
+            color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_true"],
-            color="k", ls="-", linewidth=1, label=fit_display["true"],
+            color="k", ls="-", linewidth=1, label=FIT_DISPLAY["true"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_hi"],
-            color="blue", ls="-.", linewidth=1, label=fit_display["hi"],
+            color="blue", ls="-.", linewidth=1, label=FIT_DISPLAY["hi"],
         )
         ax.plot(
             _x, output[f"ypred_{_curve_family}_vhi"],
-            color="purple", ls=":", linewidth=1.25, label=fit_display["vhi"],
+            color="purple", ls=":", linewidth=1.25, label=FIT_DISPLAY["vhi"],
         )
         ax.set_xlabel(r"$x$")
         ax.grid()
@@ -256,13 +256,12 @@ if __name__ == "__main__":
 
             plot_residuals(
                 residuals=_res,
-                fit_display=fit_display[_fit],
-                curve_family_display=curve_family_display[_curve_family],
+                fit_display=FIT_DISPLAY[_fit],
+                curve_family_display=CURVE_FAMILY_DISPLAY[_curve_family],
                 tstmp=tstmp,
                 outdir=outdir,
                 show=True,
             )
-
             # Calculate and store residual periodogram
             output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
