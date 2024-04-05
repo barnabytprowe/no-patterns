@@ -290,14 +290,12 @@ if __name__ == "__main__":
 
         plt.close(fig)
 
-        # Now we are going to look at the residuals, but imaging rather than plotting them
-        # Define and store the residuals
+        # Now residuals, but using imaging to bring out patterns
         for _fit in ("lo", "true", "hi", "vhi"):
 
             # Residuals = data - model
             _res = output[f"y_{_curve_family}"] - output[f"ypred_{_curve_family}_{_fit}"]
-            output[f"res_{_curve_family}_{_fit}"] = _res.copy()
-
+            output[f"res_{_curve_family}_{_fit}"] = _res.copy()  # store residuals
             plot_residuals(
                 residuals=_res,
                 fit_display=FIT_DISPLAY[_fit],
