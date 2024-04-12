@@ -34,19 +34,30 @@ nx = 100
 # Sigma of iid pixel noise
 noise_sigma = 1.
 
-# True, low (insufficient) and high (overfitting) polynomial order to use when fitting
-fit_degree_true = 8  # the real signal in the simulations will be a 1D sinusoidal / polnoymial
-                     # series up to this order
-fit_degree_lo = 2
-fit_degree_hi = 16
-fit_degree_vhi = 32  # Added to illustrate the more extreme behaviour more clearly
+# Settings for the ideal model, underspecified, overspecified and highly overspecified
+# series model degrees to use as model sets for the ideal model and fitting
+fit_degree = {}
+
+# real signal (ideal model) degree in the simulations (1D polynomial / Fourier series) will also
+# be used as a model set for regression
+fit_degree["true"] = {"cheb": 12, "sinu": 8}
+
+fit_degree["lo"] = {"cheb": 4, "sinu": 2}  # underspecified model sets
+fit_degree["hi"] = {"cheb": 24, "sinu": 16}  # overspecified model sets
+fit_degree["vhi"] = {"cheb": 36, "sinu": 24}  # added to illustrate more extreme behaviour clearly
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
 
+# Define x coordinates as linearly spaced points on the some interval, e.g. [0, 1), [-1, 1)
+x = {
+    "cheb": np.linspace(-1., 1., num=nx, endpoint=False),
+    "sinu": np.linspace(0., 1., num=nx, endpoint=False),
+}
 
-# Plotting settings
+
+# Plot settings
 FIGSIZE = (10, 4)
 FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = [-2.5, 2.5]
@@ -60,7 +71,7 @@ FIT_DISPLAY = {
     "hi": "High degree",
     "vhi": "Very high degree",
 }
-CURVE_FAMILY_DISPLAY = {"sinu": "Fourier", "cheb": "polynomial"}
+CURVE_FAMILY_DISPLAY = {"cheb": "polynomial", "sinu": "Fourier"}
 
 # Periodogram chart settings
 PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
@@ -232,37 +243,24 @@ if __name__ == "__main__":
     # Output dict - will be pickled
     output = {}
 
-    # Define x coordinates as linearly spaced points on the unit interval
-    x_sinu = np.linspace(0., 1., num=nx, endpoint=False)
-    x_cheb = np.linspace(-1., 1., num=nx, endpoint=False)
-
-    # Design matrices for the true, too low and too high cases
-    features_lo = {
-        "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_lo),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_lo),
-    }
-    features_true = {
-        "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_true),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_true),
-    }
-    features_hi = {
-        "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_hi),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_hi),
-    }
-    features_vhi = {
-        "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_vhi),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_vhi),
+    # Design matrices for the different model sets
+    features = {
+        _degree: {
+            _k: _f(x=x[_k], degree=fit_degree[_degree][_k])
+            for _k, _f in (("cheb", chebyshev_design_matrix), ("sinu", sinusoid_design_matrix))
+        }
+        for _degree in ("lo", "true", "hi", "vhi")
     }
 
     # Build the true 1d curve coefficients
-    sinu_coeffs_true = np.random.randn(features_true["sinu"].shape[-1]) * coeff_signal_to_noise
-    cheb_coeffs_true = np.random.randn(features_true["cheb"].shape[-1]) * coeff_signal_to_noise
+    sinu_coeffs_true = np.random.randn(features["true"]["sinu"].shape[-1]) * coeff_signal_to_noise
+    cheb_coeffs_true = np.random.randn(features["true"]["cheb"].shape[-1]) * coeff_signal_to_noise
     output["sinu_coeffs_true"] = sinu_coeffs_true
     output["cheb_coeffs_true"] = cheb_coeffs_true
 
     # Build the true 1d curves from these coefficients
-    ytrue_sinu = np.matmul(features_true["sinu"], sinu_coeffs_true)
-    ytrue_cheb = np.matmul(features_true["cheb"], cheb_coeffs_true)
+    ytrue_sinu = np.matmul(features["true"]["sinu"], sinu_coeffs_true)
+    ytrue_cheb = np.matmul(features["true"]["cheb"], cheb_coeffs_true)
     output["ytrue_sinu"] = ytrue_sinu
     output["ytrue_cheb"] = ytrue_cheb
 
@@ -276,26 +274,19 @@ if __name__ == "__main__":
     output["y_sinu"] = y_sinu
     output["y_cheb"] = y_cheb
 
-    # Fit the sinusoidal and polynomial features
-    features_dict = {
-        "lo": features_lo,
-        "true": features_true,
-        "hi": features_hi,
-        "vhi": features_vhi,
-    }
     for _curve_family in ("cheb", "sinu"):
 
         # Plotting scatter plots, ideal model and predictions
         # Perform regression at different degrees to generate predictions
         for _fit in ("lo", "true", "hi", "vhi"):
 
-            _design_matrix = features_dict[_fit][_curve_family]
+            _design_matrix = features[_fit][_curve_family]
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_curve_family}"], rcond=None)[0]
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_curve_family}_{_fit}"] = _yfit
 
         plot_regressions(
-            xarr={"sinu": x_sinu, "cheb": x_cheb}[_curve_family],
+            xarr=x[_curve_family],
             yarrs=[
                 output[f"ytrue_{_curve_family}"],  # ideal model
                 output[f"y_{_curve_family}"],  # data
