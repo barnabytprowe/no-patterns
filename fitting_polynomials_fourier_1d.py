@@ -85,7 +85,7 @@ def sinusoid_design_matrix(x, degree):
 
 def chebyshev_design_matrix(x, degree):
     """Returns the Chebyshev polynomial design matrix up to input degree"""
-    i1n = np.eye(degree)
+    i1n = np.eye(1 + degree)
     return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
 
 
@@ -239,19 +239,19 @@ if __name__ == "__main__":
     # Design matrices for the true, too low and too high cases
     features_lo = {
         "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_lo),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=(1 + fit_degree_lo)),
+        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_lo),
     }
     features_true = {
         "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_true),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=(1 + fit_degree_true)),
+        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_true),
     }
     features_hi = {
         "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_hi),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=(1 + fit_degree_hi)),
+        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_hi),
     }
     features_vhi = {
         "sinu": sinusoid_design_matrix(x=x_sinu, degree=fit_degree_vhi),
-        "cheb": chebyshev_design_matrix(x=x_cheb, degree=(1 + fit_degree_vhi)),
+        "cheb": chebyshev_design_matrix(x=x_cheb, degree=fit_degree_vhi),
     }
 
     # Build the true 1d curve coefficients
