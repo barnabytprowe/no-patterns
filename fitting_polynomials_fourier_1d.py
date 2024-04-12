@@ -77,6 +77,9 @@ CURVE_FAMILY_DISPLAY = {"cheb": "polynomial", "sinu": "Fourier"}
 PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
 PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 
+# Autocorrelation function chart settings
+ACF_MAX_LAG = 10
+
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "polynomials_fourier_1d")
 
@@ -431,11 +434,11 @@ if __name__ == "__main__":
         # Now plot autocorrelation functions
         plot_acfs(
             [
-                output[f"eacf_{_cf}"],  # iid errors periodogram for comparison
-                output[f"racf_{_cf}_lo"],
-                output[f"racf_{_cf}_true"],
-                output[f"racf_{_cf}_hi"],
-                output[f"racf_{_cf}_vhi"],
+                output[f"eacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors periodogram for comparison
+                output[f"racf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
             ],
             nfull=nx,
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
