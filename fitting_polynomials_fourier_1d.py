@@ -250,6 +250,76 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
     plt.close(fig)
 
 
+def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
+    """Makes and saves plots of error and residual autocorrelation functions
+    from 1D regressions.
+
+    Args:
+        acfs:
+            list of 5 array-likes containing the following 1d autocorrelation
+            functions (in order):
+            - iid errors
+            - Low degree model set residuals
+            - Matching degree model set residuals
+            - High degree model set residuals
+            - Very high degree model set residuals
+        nfull:
+            int full size of original dataset, such that
+            len(acf) = nfull // 2 + 1 for each for each acf in the acfs
+        curve_family_display: one of {'polynomial', 'Fourier'}
+        tstmp: timestamp used in folder structure
+        outdir: output folder
+        show: plt.show()?
+    """
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+    ax.set_title(
+        curve_family_display.title()+" series regression circular autocorrelation functions",
+        size=TITLE_SIZE,
+    )
+
+    offset = 0.
+    ax.plot(
+        np.arange(len(acfs[0])), acfs[0], color="k", ls="--", linewidth=1, label="iid errors")
+    ax.plot(
+        1 * offset + np.arange(len(acfs[1])), acfs[1],
+        marker="o", color="red", ls="--", linewidth=1.5, label=FIT_DISPLAY["lo"],
+    )
+    ax.plot(
+        2 * offset + np.arange(len(acfs[2])), acfs[2],
+        marker="x", color="k", ls="-", linewidth=1.5, label=FIT_DISPLAY["true"],
+    )
+    ax.plot(
+        3 * offset + np.arange(len(acfs[3])), acfs[3],
+        marker="+", color="blue", ls="-.", linewidth=1.5, label=FIT_DISPLAY["hi"],
+    )
+    ax.plot(
+        4 * offset + np.arange(len(acfs[4])), acfs[4],
+        marker=".", color="purple", ls=":", linewidth=1.5, label=FIT_DISPLAY["vhi"],
+    )
+
+    ax.axhline(-2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
+    ax.axhline(-1. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
+    ax.axhline(+0., ls="-", linewidth=1, color="k")
+    ax.axhline(+1. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
+    ax.axhline(+2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
+    ax.set_xlabel("Lag")
+    ax.grid()
+    ax.legend()
+    fig.tight_layout()
+    for _suffix in OUTFILE_EXTENSIONS:
+
+        outfile = os.path.join(
+            outdir,
+            f"acfs_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}",
+        )
+        print(f"Saving to {outfile}")
+        fig.savefig(outfile)
+
+    if show:
+        plt.show()
+    plt.close(fig)
+
+
 # Main script
 # ===========
 
