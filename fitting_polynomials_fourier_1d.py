@@ -184,7 +184,7 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
     return
 
 
-def plot_periodograms(periodograms, curve_family_display, tstmp, outdir, show=True):
+def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, show=True):
     """Makes and saves plots of error and residual periodograms from 1D
     regressions.
 
@@ -197,23 +197,42 @@ def plot_periodograms(periodograms, curve_family_display, tstmp, outdir, show=Tr
             - Matching degree model set residuals
             - High degree model set residuals
             - Very high degree model set residuals
+        nfull:
+            int full size of original dataset, such that
+            len(p) = nfull // 2 + 1 for each for each p in the periodograms
         curve_family_display: one of {'polynomial', 'Fourier'}
         tstmp: timestamp used in folder structure
         outdir: output folder
         show: plt.show()?
     """
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.set_title(
-        curve_family_display.title()+" series regression residual periodograms", size=TITLE_SIZE)
-    ax.plot(periodograms[0], color="k", ls="--", linewidth=1, label="iid errors")
-    ax.plot(periodograms[1], color="red", ls="--", linewidth=1.5, label=FIT_DISPLAY["lo"])
-    ax.plot(periodograms[2], color="k", ls="-", linewidth=1.5, label=FIT_DISPLAY["true"])
-    ax.plot(periodograms[3], color="blue", ls="-.", linewidth=1.5, label=FIT_DISPLAY["hi"])
-    ax.plot(periodograms[4], color="purple", ls=":", linewidth=1.5, label=FIT_DISPLAY["vhi"])
+    ax.set_title(curve_family_display.title()+" series regression periodograms", size=TITLE_SIZE)
+
+    ax.plot(
+        np.arange(len(periodograms[0])) / nfull, periodograms[0], color="k", ls="--",
+        linewidth=1, label="iid errors",
+    )
+    ax.plot(
+        np.arange(len(periodograms[1])) / nfull, periodograms[1], color="red", ls="--",
+        linewidth=1.5, label=FIT_DISPLAY["lo"],
+    )
+    ax.plot(
+        np.arange(len(periodograms[2])) / nfull, periodograms[2], color="k", ls="-",
+        linewidth=1.5, label=FIT_DISPLAY["true"],
+    )
+    ax.plot(
+        np.arange(len(periodograms[3])) / nfull, periodograms[3], color="blue", ls="-.",
+        linewidth=1.5, label=FIT_DISPLAY["hi"],
+    )
+    ax.plot(
+        np.arange(len(periodograms[4])) / nfull, periodograms[4], color="purple", ls=":",
+        linewidth=1.5, label=FIT_DISPLAY["vhi"],
+    )
 
     ax.set_yscale("log")
     ax.set_yticks(PERIODOGRAM_YTICKS)
     ax.set_ylim(PERIODOGRAM_YLIM)
+    ax.set_xlabel("Frequency")
     ax.grid()
     ax.legend()
     fig.tight_layout()
