@@ -390,7 +390,7 @@ if __name__ == "__main__":
                 curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
                 tstmp=tstmp,
                 outdir=outdir,
-                show=False,
+                show=True,
             )
             # Calculate residual periodogram via FFT and store
             output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
