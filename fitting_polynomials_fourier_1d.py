@@ -252,86 +252,73 @@ if __name__ == "__main__":
         for _degree in ("lo", "true", "hi", "vhi")
     }
 
-    # Build the true 1d curve coefficients
-    sinu_coeffs_true = np.random.randn(features["true"]["sinu"].shape[-1]) * coeff_signal_to_noise
-    cheb_coeffs_true = np.random.randn(features["true"]["cheb"].shape[-1]) * coeff_signal_to_noise
-    output["sinu_coeffs_true"] = sinu_coeffs_true
-    output["cheb_coeffs_true"] = cheb_coeffs_true
+    for _cf in ("cheb", "sinu"):  # Big outer loop over curve family
 
-    # Build the true 1d curves from these coefficients
-    ytrue_sinu = np.matmul(features["true"]["sinu"], sinu_coeffs_true)
-    ytrue_cheb = np.matmul(features["true"]["cheb"], cheb_coeffs_true)
-    output["ytrue_sinu"] = ytrue_sinu
-    output["ytrue_cheb"] = ytrue_cheb
+        # Build the true 1d curve coefficients
+        output[f"{_cf}_coeffs_true"] = coeff_signal_to_noise * np.random.randn(
+            features["true"][_cf].shape[-1])
+        # Build the true 1d curves from these coefficients
+        output[f"ytrue_{_cf}"] = np.matmul(features["true"][_cf], output[f"{_cf}_coeffs_true"])
+        # Add random Gaussian iid errors to generate our simulation dataset y values
+        output[f"e_{_cf}"] = noise_sigma * np.random.randn(nx)
+        output[f"y_{_cf}"] = output[f"ytrue_{_cf}"] + output[f"e_{_cf}"]
 
-    # Add random Gaussian iid errors to generate our simulation dataset y values
-    e_sinu = noise_sigma * np.random.randn(nx)
-    e_cheb = noise_sigma * np.random.randn(nx)
-    y_sinu = ytrue_sinu + e_sinu
-    y_cheb = ytrue_cheb + e_cheb
-    output["e_sinu"] = e_sinu
-    output["e_cheb"] = e_cheb
-    output["y_sinu"] = y_sinu
-    output["y_cheb"] = y_cheb
-
-    for _curve_family in ("cheb", "sinu"):
-
-        # Plotting scatter plots, ideal model and predictions
-        # Perform regression at different degrees to generate predictions
+        # Plot scatter plots of data, ideal model and predictions
+        # First perform regression at different degrees to generate predictions
         for _fit in ("lo", "true", "hi", "vhi"):
 
-            _design_matrix = features[_fit][_curve_family]
-            _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_curve_family}"], rcond=None)[0]
+            _design_matrix = features[_fit][_cf]
+            _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
             _yfit = _design_matrix.dot(_coeffs.T)
-            output[f"ypred_{_curve_family}_{_fit}"] = _yfit
+            output[f"ypred_{_cf}_{_fit}"] = _yfit
 
+        # Plot ideal model, data, and ordinary least squares regression predictions
         plot_regressions(
-            xarr=x[_curve_family],
+            xarr=x[_cf],
             yarrs=[
-                output[f"ytrue_{_curve_family}"],  # ideal model
-                output[f"y_{_curve_family}"],  # data
-                output[f"ypred_{_curve_family}_lo"],
-                output[f"ypred_{_curve_family}_true"],
-                output[f"ypred_{_curve_family}_hi"],
-                output[f"ypred_{_curve_family}_vhi"]
+                output[f"ytrue_{_cf}"],  # ideal model
+                output[f"y_{_cf}"],  # data
+                output[f"ypred_{_cf}_lo"],
+                output[f"ypred_{_cf}_true"],
+                output[f"ypred_{_cf}_hi"],
+                output[f"ypred_{_cf}_vhi"]
             ],
-            curve_family_display=CURVE_FAMILY_DISPLAY[_curve_family],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
             show=True,
         )
 
-        # Now residuals, but using imaging to bring out patterns
+        # Now plot residuals, but using imaging to bring out patterns
         for _fit in ("lo", "true", "hi", "vhi"):
 
             # Residuals = data - model
-            _res = output[f"y_{_curve_family}"] - output[f"ypred_{_curve_family}_{_fit}"]
-            output[f"res_{_curve_family}_{_fit}"] = _res.copy()  # store residuals
+            _res = output[f"y_{_cf}"] - output[f"ypred_{_cf}_{_fit}"]
+            output[f"res_{_cf}_{_fit}"] = _res.copy()  # store residuals
             plot_residuals(
                 residuals=_res,
                 fit_display=FIT_DISPLAY[_fit],
-                curve_family_display=CURVE_FAMILY_DISPLAY[_curve_family],
+                curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
                 tstmp=tstmp,
                 outdir=outdir,
                 show=True,
             )
             # Calculate and store residual periodogram
-            output[f"rp_{_curve_family}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
+            output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
         # Calculate periodograms of just the errors for plotting
-        output[f"ep_{_curve_family}"] = np.abs(
-            np.fft.rfft(output[f"e_{_curve_family}"]))**2 / len(output[f"e_{_curve_family}"])
+        output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / len(output[f"e_{_cf}"])
 
-        # Now we're going to plot periodograms, gathering them into an ordered list
+        # Now we plot error and residual periodograms
         plot_periodograms(
             [
-                output[f"ep_{_curve_family}"],  # iid errors periodogram for comparison
-                output[f"rp_{_curve_family}_lo"],
-                output[f"rp_{_curve_family}_true"],
-                output[f"rp_{_curve_family}_hi"],
-                output[f"rp_{_curve_family}_vhi"],
+                output[f"ep_{_cf}"],  # iid errors periodogram for comparison
+                output[f"rp_{_cf}_lo"],
+                output[f"rp_{_cf}_true"],
+                output[f"rp_{_cf}_hi"],
+                output[f"rp_{_cf}_vhi"],
             ],
-            curve_family_display=CURVE_FAMILY_DISPLAY[_curve_family],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
             show=True,
