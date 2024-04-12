@@ -392,7 +392,7 @@ if __name__ == "__main__":
                 outdir=outdir,
                 show=False,
             )
-            # Calculate and store residual periodogram
+            # Calculate residual periodogram via FFT and store
             output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
 
         # Calculate periodograms of just the errors for plotting
@@ -407,6 +407,37 @@ if __name__ == "__main__":
                 output[f"rp_{_cf}_hi"],
                 output[f"rp_{_cf}_vhi"],
             ],
+            nfull=nx,
+            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
+            tstmp=tstmp,
+            outdir=outdir,
+            show=True,
+        )
+
+        # Calculate (circular) autocorrelation functions via inverse FFT of residual periodograms
+        for _fit in ("lo", "true", "hi", "vhi"):
+
+            output[f"racf_{_cf}_{_fit}"] = np.fft.irfft(output[f"rp_{_cf}_{_fit}"])
+            output[f"racf_{_cf}_{_fit}"] /= output[f"racf_{_cf}_{_fit}"][0]  # variance normalize
+            output[f"racf_{_cf}_{_fit}"] = (  # take only first n // 2 + 1 elements due to symmetry
+                output[f"racf_{_cf}_{_fit}"][:len(output[f"rp_{_cf}_{_fit}"])])
+
+        # Calculate (circular) autocorrelation function of just the errors for plotting
+        output[f"eacf_{_cf}"] = np.fft.irfft(output[f"ep_{_cf}"])
+        output[f"eacf_{_cf}"] /= output[f"eacf_{_cf}"][0]  # variance normalize
+        # take only first n // 2 + 1 elements due to symmetry
+        output[f"eacf_{_cf}"] = output[f"eacf_{_cf}"][:len(output[f"ep_{_cf}"])]
+
+        # Now plot autocorrelation functions
+        plot_acfs(
+            [
+                output[f"eacf_{_cf}"],  # iid errors periodogram for comparison
+                output[f"racf_{_cf}_lo"],
+                output[f"racf_{_cf}_true"],
+                output[f"racf_{_cf}_hi"],
+                output[f"racf_{_cf}_vhi"],
+            ],
+            nfull=nx,
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
