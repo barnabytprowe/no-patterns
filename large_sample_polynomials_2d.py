@@ -168,7 +168,8 @@ if __name__ == "__main__":
         }
     )
     psi_stats = psi_all.describe()
-    psi_stats.columns = ("Underspecified", "Matching", "Overspecified", "Highly overspecified")
+    psi_stats.columns = (
+        "Low degree", "Matching degree", "Overspecified degree", "Very high degree")
     psi_stats.index = (
         "Count", "Mean", "Standard deviation", "Minimum", r"$25%$", r"$50%$", r"$75%$", "Maximum")
     psi_stats.loc["Count"] = NRUNS_STRS[NRUNS]
@@ -189,9 +190,8 @@ if __name__ == "__main__":
     )
 
     omega_stats = omega_all.describe()
-    omega_stats.columns = ("Underspecified", "Matching", "Overspecified", "Highly overspecified")
-    omega_stats.index = (
-        "Count", "Mean", "Standard deviation", "Minimum", r"$25%$", r"$50%$", r"$75%$", "Maximum")
+    omega_stats.columns = psi_stats.columns
+    omega_stats.index = psi_stats.index
     omega_stats.loc["Count"] = NRUNS_STRS[NRUNS]
     omega_stats.loc["Standard deviation", ["Overspecified", "Highly overspecified"]] = (
         [r"$1 \times 10^{-11}$", r"$4 \times 10^{-11}$"])
