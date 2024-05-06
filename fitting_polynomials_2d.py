@@ -25,23 +25,25 @@ import sklearn.preprocessing
 # ==========
 
 # Datapoints per side of coordinate grid
-nx = 10
-# Side dimension of coordinate grid
-side_dim = np.sqrt(2.)
+nx = 28
+# Extent of coordinate grid
+x0x1_min = -1.
+x0x1_max = +1.
 
 # Sigma of iid pixel noise
 noise_sigma = 1.
 
 # Low (underspecified), true / matching, high (overspecified) and very high (very overspecified)
 # polynomial model set degree to use in simulated regressions
-fit_degree_lo = 2
-fit_degree_true = 8  # the actual signal curve will be a 2D polynomial series of this degree
-fit_degree_hi = 12
-fit_degree_vhi = 16
+fit_degree_lo = 3
+fit_degree_true = 6 # the actual signal curve will be a 2D polynomial series of this degree
+fit_degree_hi = 24
+fit_degree_vhi = 48
+
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
-coeff_signal_to_noise = 8.
+coeff_signal_to_noise = 1.
 
 # Plotting settings
 FIGSIZE = (6, 4.9)  # this makes the pcolor plots approximately square
