@@ -46,7 +46,7 @@ fit_degree_vhi = 48
 coeff_signal_to_noise = 1.
 
 # Plotting settings
-FIGSIZE = (6, 4.9)  # this makes the pcolor plots approximately square
+FIGSIZE = (6, 5)  # this makes the pcolor plots approximately square
 CLIM = [-2.5, 2.5]  # a reasonable balance to show features across the lo->vhi residual plots
 CMAP = "Greys_r"
 TITLE_SIZE = "x-large"
