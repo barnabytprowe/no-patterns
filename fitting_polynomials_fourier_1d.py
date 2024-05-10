@@ -42,9 +42,9 @@ fit_degree = {}
 # be used as a model set for regression
 fit_degree["true"] = {"cheb": 12, "sinu": 8}
 
-fit_degree["lo"] = {"cheb": 4, "sinu": 2}  # underspecified model sets
+fit_degree["lo"] = {"cheb": 6, "sinu": 4}  # underspecified model sets
 fit_degree["hi"] = {"cheb": 24, "sinu": 16}  # overspecified model sets
-fit_degree["vhi"] = {"cheb": 36, "sinu": 24}  # added to illustrate more extreme behaviour clearly
+fit_degree["vhi"] = {"cheb": 48, "sinu": 32}  # added to illustrate more extreme behaviour clearly
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
