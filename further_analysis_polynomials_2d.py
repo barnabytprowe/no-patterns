@@ -37,8 +37,8 @@ DEGREES = ("lo", "true", "hi", "vhi")
 DEGREE_STRS = {"lo": "low", "true": "matching", "hi": "high", "vhi": "very high"}  # used in display
 
 HIST_RANGE = [-8, 8]
-HIST_NBINS = 32
-HIST_YLIM = [0, 50]
+HIST_NBINS = 80
+HIST_YLIM = [0, 100]
 
 HIST_LABEL_FONTSIZE = "x-large"
 HIST_TICK_FONTSIZE = "x-large"
@@ -155,19 +155,22 @@ def plot_histogram_residuals(stats):
 
         print(f"Plotting {_degree} histogram")
         fig = plt.figure(figsize=FIGSIZE)
-        _r = stats[_degree]["residuals"].flatten(s)
+        _r = stats[_degree]["residuals"].flatten()
         _msr = (_r**2).mean()
+
         plt.hist(_r, bins=HIST_NBINS, range=HIST_RANGE, color="Gray")
-        plt.ylim(*HIST_YLIM)
+        if _degree != "vhi":
+            plt.ylim(*HIST_YLIM)
         plt.ylabel("Counts", fontsize=HIST_LABEL_FONTSIZE)
         plt.xlabel("Residual value", fontsize=HIST_LABEL_FONTSIZE)
         plt.xticks(fontsize=HIST_TICK_FONTSIZE)
         plt.yticks(fontsize=HIST_TICK_FONTSIZE)
         plt.grid()
-        title_str = f"Histogram of {DEGREE_STRS[_degree]} degree polynomial residuals"
+        title_str = f"Histogram: {DEGREE_STRS[_degree]} degree polynomial residuals"
         plt.title(title_str, size=TITLE_SIZE)
         plt.figtext(x=.65, y=.8, s=(r"RSS$/N$ = "+f"{_msr:5.3f}"), fontsize="xx-large")
         plt.tight_layout()
+
         timestamp = stats[_degree]["timestamp"]
         if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
             outfile = os.path.join(stats[_degree]["folder"], f"hist_matching_{timestamp}.png")
