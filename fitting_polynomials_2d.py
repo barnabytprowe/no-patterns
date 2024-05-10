@@ -38,7 +38,6 @@ fit_degree_true = 6 # the actual signal curve will be a 2D polynomial series of 
 fit_degree_hi = 24
 fit_degree_vhi = 48
 
-
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
 coeff_signal_to_noise = 1.
@@ -182,13 +181,12 @@ if __name__ == "__main__":
     output["zdata"] = zdata
 
     # Perform too low, matching, too high, and very much too high degree regressions on data
-    regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
     zflat = zdata.flatten(order="C")
     predictions = []
-    for _design in (design_lo, design_true, design_hi, design_vhi):
+    for _design_matrix in (design_lo, design_true, design_hi, design_vhi):
 
-        _coeffs = np.linalg.lstsq(_design, zdata.flatten(order="C"), rcond=None)[0]
-        _prediction = _design.dot(_coeffs.T).reshape((nx, nx), order="C")
+        _coeffs = np.linalg.lstsq(_design_matrix, zflat, rcond=None)[0].T
+        _prediction = _design_matrix.dot(_coeffs).reshape((nx, nx), order="C")
         predictions.append(_prediction)
 
     pred_lo, pred_true, pred_hi, pred_vhi = tuple(predictions)
@@ -197,7 +195,7 @@ if __name__ == "__main__":
     output["pred_hi"] = pred_hi
     output["pred_vhi"] = pred_vhi
 
-    # Residuals
+    # Calculate and plot residuals
     rlo = zdata - pred_lo
     plot_image(
         rlo,
