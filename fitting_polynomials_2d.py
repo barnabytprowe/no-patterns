@@ -25,8 +25,8 @@ import pandas as pd
 # Datapoints per side of coordinate grid
 nx = 28
 # Extent of coordinate grid
-x0x1_min = -1.
-x0x1_max = +1.
+x0x1_min = -.85
+x0x1_max = +.85
 
 # Sigma of iid pixel noise
 noise_sigma = 1.
