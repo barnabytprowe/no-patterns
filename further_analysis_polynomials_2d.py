@@ -44,7 +44,7 @@ HIST_LABEL_FONTSIZE = "x-large"
 HIST_TICK_FONTSIZE = "x-large"
 
 # Number of runs of further data generation with which to estimate the RMS error of prediction
-NRUNS = 100000
+NRUNS = 1000
 
 
 # Functions
@@ -207,7 +207,7 @@ def plot_predictions(data):
         )
 
 
-def mean_squared_cross_validation_residual(data, rng=None):
+def mean_squared_cross_validation_residual(data, rng=None, nruns=NRUNS):
     """Calculates the mean squared cross validation residual, the difference
     between predictions and new datasets generated with the same ideal model
     but with new additive, iid errors.
@@ -216,13 +216,10 @@ def mean_squared_cross_validation_residual(data, rng=None):
         rng = np.random.default_rng()
 
     timestamp = data["timestamp"]
-    print(f"Generating {NRUNS} new datasets for {timestamp}")
+    print(f"Generating {nruns} new datasets for {timestamp}")
     imshape = data["ztrue"].shape
     new_errors = rng.normal(
-        loc=0.,
-        scale=fitting_polynomials_2d.noise_sigma,
-        size=(NRUNS, imshape[0], imshape[1]),
-    )
+        loc=0., scale=fitting_polynomials_2d.noise_sigma, size=(nruns, imshape[0], imshape[1]))
     new_datasets = data["ztrue"] + new_errors
 
     mean_squared_xvr = {}
@@ -240,7 +237,7 @@ def mean_squared_cross_validation_residual(data, rng=None):
     std_msxvr = pd.Series(std_msxvr)
     print(f"Mean Squared Cross-Validation Residual for {timestamp}:")
     print(
-        pd.DataFrame({"Mean": mean_msxvr, "Std": std_msxvr, "StdErr": std_msxvr / np.sqrt(NRUNS)}))
+        pd.DataFrame({"Mean": mean_msxvr, "Std": std_msxvr, "StdErr": std_msxvr / np.sqrt(nruns)}))
     return mean_squared_xvr
 
 
