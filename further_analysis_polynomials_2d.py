@@ -117,31 +117,34 @@ def plot_shuffled_residuals(stats, rng=None):
     """Generates and saves (into the same folder as the stats) a randomly-shuffled
     image of the all the residuals from an input stats dict.
     """
+
     if rng is None:
         rng = np.random.default_rng()
 
     for _degree in DEGREES:
 
-        res = stats[_degree]["residuals"]
+        _res = stats[_degree]["residuals"]
         # re-order residuals using shuffle
-        res_flattened = res.flatten()
-        rng.shuffle(res_flattened)
-        shuffled_res = res_flattened.reshape(res.shape)
-        # plot
-        fig = plt.figure(figsize=FIGSIZE)
-        plt.pcolor(shuffled_res, cmap=CMAP)
-        plt.colorbar()
-        plt.clim(CLIM)
-        title_str = f"Shuffled {DEGREE_STRS[_degree]} degree polynomial residuals"
-        plt.title(title_str, size=TITLE_SIZE)
-        plt.tight_layout()
-        timestamp = stats[_degree]["timestamp"]
+        _res_flattened = _res.flatten(order="C")
+        rng.shuffle(_res_flattened)
+        _shuffled_res = _res_flattened.reshape(_res.shape, order="C")
+
+        _timestamp = stats[_degree]["timestamp"]
         if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
-            outfile = os.path.join(stats[_degree]["folder"], f"matching_shuffled_{timestamp}.png")
+            _outfile = os.path.join(
+                stats[_degree]["folder"], f"matching_shuffled_{_timestamp}.png")
         else:
-            outfile =  os.path.join(stats[_degree]["folder"], f"{_degree}_shuffled_{timestamp}.png")
-        plt.savefig(outfile)
-        plt.close(fig)
+            _outfile =  os.path.join(
+                stats[_degree]["folder"], f"{_degree}_shuffled_{_timestamp}.png")
+
+        fitting_polynomials_2d.plot_image(
+            _shuffled_res,
+            title=f"Shuffled {DEGREE_STRS[_degree]} degree polynomial residuals",
+            filename=_outfile,
+            clim=CLIM,
+            show=False,
+            tick_stride=7
+        )
 
 
 def plot_histogram_residuals(stats):
@@ -180,23 +183,25 @@ def plot_predictions(data):
     """Generates plots of predictions from fitting_polynomials_2d.py output
     and saves it into the same folder for the given timestamp.
     """
+
+    timestamp = data["timestamp"]
     for _degree in DEGREES:
 
         print(f"Plotting {_degree} prediction")
-        pred = data["pred_"+_degree]
-        # plot
-        fig = plt.figure(figsize=FIGSIZE)
-        plt.pcolor(pred, cmap=CMAP)
-        plt.colorbar()
-        title_str = f"{DEGREE_STRS[_degree].title()} degree polynomial prediction"
-        plt.title(title_str, size=TITLE_SIZE)
-        plt.tight_layout()
-        timestamp = data["timestamp"]
+        _prediction = data["pred_"+_degree]
+
         if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
-            plt.savefig(os.path.join(data["folder"], f"matching_prediction_{timestamp}.png"))
+            _outfile = os.path.join(data["folder"], f"matching_prediction_{timestamp}.png")
         else:
-            plt.savefig(os.path.join(data["folder"], f"{_degree}_prediction_{timestamp}.png"))
-        plt.close(fig)
+            _outfile = os.path.join(data["folder"], f"{_degree}_prediction_{timestamp}.png")
+        fitting_polynomials_2d.plot_image(
+            _prediction,
+            title=f"{DEGREE_STRS[_degree].title()} degree polynomial prediction",
+            filename=_outfile,
+            clim=None,
+            show=False,
+            tick_stride=7
+        )
 
 
 def mean_squared_cross_validation_residual(data, rng=None):
