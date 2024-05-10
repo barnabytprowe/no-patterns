@@ -44,7 +44,7 @@ HIST_LABEL_FONTSIZE = "x-large"
 HIST_TICK_FONTSIZE = "x-large"
 
 # Number of runs of further data generation with which to estimate the RMS error of prediction
-NRUNS = 1000000
+NRUNS = 100000
 
 
 # Functions
