@@ -72,27 +72,27 @@ def build_output_folder_structure(timestamp, project_dir=PROJDIR):
     return outdir
 
 
-# Consistent functions for determining p, q indices labels for the cth
-# coefficient theta_pq, used in the construction of the design matrix
+# Consistent functions for determining p, q indices labels for the kth coefficient
+# also labelled theta_pq, used in the construction of the design matrix
 
-def _dtri(c):
-    """Total order (in both x0 and x1) of the cth column polynomial minus one"""
-    return np.floor(.5 * (np.sqrt(1. + 8. * c) - 3)).astype(int)
-
-
-def _ntri(c):
-    """Number of coefficients in the complete series of degree _dtri"""
-    return (1 + _dtri(c)) * (2 + _dtri(c)) // 2
+def _dtri(k):
+    """Total order (in both x0 and x1) of the kth column polynomial, minus one"""
+    return np.floor(.5 * (np.sqrt(1. + 8. * k) - 3)).astype(int)
 
 
-def _ps(c):
-    """p index label for the cth coefficient theta_pq"""
-    return 1 + _dtri(c) + _ntri(c) - c
+def _ktri(k):
+    """Number of coefficients in the complete series of degree _dtri(k)"""
+    return (1 + _dtri(k)) * (2 + _dtri(k)) // 2
 
 
-def _qs(c):
-    """q index label for the cth coefficient theta_pq"""
-    return c - _ntri(c)
+def _ps(k):
+    """p index label for the kth coefficient theta_pq"""
+    return 1 + _dtri(k) + _ktri(k) - k
+
+
+def _qs(k):
+    """q index label for the kth coefficient theta_pq"""
+    return k - _ktri(k)
 
 
 def chebyshev_design_matrix(x0, x1, degree):
