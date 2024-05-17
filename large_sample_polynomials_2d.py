@@ -20,18 +20,18 @@ import sklearn.linear_model
 import sklearn.preprocessing
 
 import fitting_polynomials_2d
-from further_analysis_polynomials_2d import DEGREES
-from further_analysis_polynomials_2d import DEGREE_STRS
+from fitting_polynomials_2d import nx, x0x1_min, x0x1_max, coeff_signal_to_noise, noise_sigma
+from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
 
 
 # Parameters
 # ==========
 
 # LaTeX display strings for 10^x NRUNS
-NRUNS_STRS = {1000: r"$10^3$", 10000: r"$10^4$", 100000: r"$10^5$", 1000000: r"$10^6$"}
+NRUNS_STRS = {300: r"$300$", 1000: r"$10^3$", 10000: r"$10^4$", 100000: r"$10^5$", 1000000: r"$10^6$"}
 
 # Number of simulated regression datasets
-NRUNS = 100000
+NRUNS = 1000
 if NRUNS not in NRUNS_STRS:
     raise ValueError(f"User parameter NRUNS must be one of {set(NRUNS_STRS.keys())}")
 
@@ -41,33 +41,26 @@ if NRUNS not in NRUNS_STRS:
 NCORES = 2
 
 
-# Module scope linear regression class
-regr = sklearn.linear_model.LinearRegression()  # uses LAPACK via np leastsq under the hood
-
 # Gather module scope degrees into an array for convenience, use values from fitting_polynomials_2d
-degrees = (
+degree_values = (
     fitting_polynomials_2d.fit_degree_lo,
     fitting_polynomials_2d.fit_degree_true,
     fitting_polynomials_2d.fit_degree_hi,
     fitting_polynomials_2d.fit_degree_vhi,
 )
 degree_titles = {
-    _d: DEGREE_STRS[_d].title()+" (G="+str(_dv)+")" for _d, _dv in zip(DEGREES, degrees)}
+    _d: DEGREE_STRS[_d].title()+" (G="+str(_dv)+")" for _d, _dv in zip(DEGREES, degree_values)}
 
 
 # Functions
 # =========
 
-def _fit_predict(_dataset, _features=None):
+def _fit_predict(data_flat, design_matrix=None):
     """Perform regression on input fitting_polynomial_2d.py-style dataset using
     input features, returning regression prediction
     """
-    _dataset = _dataset.flatten(order="C")  # having flattening and then reshaping in the inner
-                                            # loop is not ideal, but will postpone optimization
-                                            # until performance limited
-    regr.fit(_features, _dataset)
-    return regr.predict(_features).reshape(
-        (fitting_polynomials_2d.nx, fitting_polynomials_2d.nx), order="C")
+    coeffs = np.linalg.lstsq(design_matrix, data_flat, rcond=None)[0].T
+    return design_matrix.dot(coeffs).reshape((nx, nx), order="C")
 
 
 def run_large_sample_analysis(rng):
@@ -75,53 +68,45 @@ def run_large_sample_analysis(rng):
     output = {}
     feature_labels = [f"features_{_d}" for _d in DEGREES]
 
+    # Prepare two independent variables on a grid
+    xvals = np.linspace(x0x1_min, x0x1_max, num=nx, endpoint=True)
+    x0, x1 = np.meshgrid(xvals, xvals)
+    x0 = x0.flatten(order="C")
+    x1 = x1.flatten(order="C")
+
     # Design matrices
     for _id, _flab in enumerate(feature_labels):
 
-        output[_flab] = fitting_polynomials_2d.polynomial_design_matrix(
-            square_dimension=fitting_polynomials_2d.side_dim,
-            n_side=fitting_polynomials_2d.nx,
-            degree=degrees[_id],
-            order="C",
-        )
+        output[_flab] = fitting_polynomials_2d.chebyshev_design_matrix(
+            x0, x1, degree=degree_values[_id])
 
     # Ideal model coefficients and corresponding images on the coordinate grid
     print("Generating ideal model coefficients")
     output["ctrue"] = rng.normal(
-        loc=0.,
-        scale=fitting_polynomials_2d.coeff_signal_to_noise,
-        size=(NRUNS, output["features_true"].shape[-1]),
-    )
+        loc=0., scale=coeff_signal_to_noise, size=(NRUNS, output["features_true"].shape[-1]))
     output["ztrue"] = (
-        np.matmul(output["features_true"], output["ctrue"].T).T
-    ).reshape(NRUNS, fitting_polynomials_2d.nx, fitting_polynomials_2d.nx, order="C")
+        np.matmul(output["features_true"], output["ctrue"].T).T).reshape((NRUNS, nx, nx), order="C")
 
     # Generate the errors we will add to create simulated data
     print("Generating data errors")
-    output["errors"] = rng.normal(
-        loc=0.,
-        scale=fitting_polynomials_2d.noise_sigma,
-        size=(NRUNS, fitting_polynomials_2d.nx, fitting_polynomials_2d.nx),
-    )
+    output["errors"] = rng.normal(loc=0., scale=noise_sigma, size=(NRUNS, nx, nx))
     output["zdata"] = output["ztrue"] + output["errors"]
 
+    oshape = output["zdata"].shape
     # Perform too low, matching, too high, and very much too high degree regressions on data
+    zdata_flat = output["zdata"].reshape(oshape[0], oshape[1] * oshape[2], order="C")
     output["predictions"] = {}
     for _dstr, _design_matrix in zip(DEGREES, [output[_flab] for _flab in feature_labels]):
 
-        _pfunc = functools.partial(_fit_predict, _features=_design_matrix)
+        _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix)
         print(f"Regressing {NRUNS} {_dstr} runs using {NCORES} cores")
         with multiprocessing.Pool(NCORES) as p:
             output["predictions"][_dstr] = np.asarray(
-                p.map(_pfunc, [_zf for _zf in output["zdata"]]), dtype=float)
+                p.map(_pfunc, [_zf for _zf in zdata_flat]), dtype=float)
 
     # Generate a new set of errors from which to calculate the Mean Squared Error of Prediction
     print("Generating new data errors")
-    output["errors_new"] = rng.normal(
-        loc=0.,
-        scale=fitting_polynomials_2d.noise_sigma,
-        size=(NRUNS, fitting_polynomials_2d.nx, fitting_polynomials_2d.nx),
-    )
+    output["errors_new"] = rng.normal(loc=0., scale=noise_sigma, size=(NRUNS, nx, nx))
     output["zdata_new"] = output["ztrue"] + output["errors_new"]
     return output
 
@@ -139,7 +124,7 @@ if __name__ == "__main__":
         with open(filename, "rb") as funit:
             results = pickle.load(funit)
     else:
-        results = run_msep(rng)
+        results = run_large_sample_analysis(rng)
         print(f"Saving results to {filename}")
         with open(filename, "wb") as fout:
             pickle.dump(results, fout)
@@ -168,8 +153,7 @@ if __name__ == "__main__":
         }
     )
     psi_stats = psi_all.describe()
-    psi_stats.columns = (
-        "Low degree", "Matching degree", "Overspecified degree", "Very high degree")
+    psi_stats.columns = ("Low degree", "Matching degree", "High degree", "Very high degree")
     psi_stats.index = (
         "Count", "Mean", "Standard deviation", "Minimum", r"$25%$", r"$50%$", r"$75%$", "Maximum")
     psi_stats.loc["Count"] = NRUNS_STRS[NRUNS]
@@ -193,8 +177,8 @@ if __name__ == "__main__":
     omega_stats.columns = psi_stats.columns
     omega_stats.index = psi_stats.index
     omega_stats.loc["Count"] = NRUNS_STRS[NRUNS]
-    omega_stats.loc["Standard deviation", ["Overspecified", "Highly overspecified"]] = (
-        [r"$1 \times 10^{-11}$", r"$4 \times 10^{-11}$"])
+    #omega_stats.loc["Standard deviation", ["Overspecified", "Highly overspecified"]] = (
+    #    [r"$1 \times 10^{-11}$", r"$4 \times 10^{-11}$"])
     omega_styler = omega_stats.style
     omega_styler.format(precision=3)
     omega_styler.format(subset=("Count", omega_stats.describe().columns), precision=0)
