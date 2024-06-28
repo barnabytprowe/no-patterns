@@ -20,15 +20,16 @@ NX = 2001
 x = np.linspace(-1., 1., num=NX, endpoint=True)
 
 # Number of degrees, legend labels
-MAX_DEGREE = 6
+MAX_DEGREE = 7
 DEGREE_LINESTYLE = {
     0: ":",
     1: "-",
     2: "--",
     3: "-.",
     4: (0, (1, 3)),
-    5: (0, (7, 1.5)),
-    6: (0, (1, 2, 12, 2)),
+    5: (0, (6, 1)),
+    6: (0, (1, 1, 14, 1)),
+    7: (0, (6, 1, 1, 1, 1, 1)),
 }
 DEGREE_LABELS = {
     0: r"$T_0(x)$",
@@ -38,6 +39,7 @@ DEGREE_LABELS = {
     4: r"$T_4(x)$",
     5: r"$T_5(x)$",
     6: r"$T_6(x)$",
+    7: r"$T_7(x)$",
 }
 
 # Output file & types
@@ -48,7 +50,7 @@ OUTFILE_EXTENSIONS = (".png", ".pdf")
 # Make plot
 cheby_polys = chebyshev_design_matrix(x, MAX_DEGREE)
 fig = plt.figure(figsize=(10, 4))
-for _degree in range(MAX_DEGREE + 1):
+for _degree in range(1 + MAX_DEGREE):
 
     plt.plot(
         x,
@@ -65,5 +67,13 @@ plt.xlabel(r"$x$", fontsize=12)
 plt.ylabel(r"$T_k(x)$", fontsize=12)
 plt.title("Chebyshev polynomials of the first kind")
 plt.tight_layout()
+
+# Save
+for _ext in OUTFILE_EXTENSIONS:
+
+    _outfile = OUTFILE+_ext
+    print(f"Saving to {_outfile}")
+    plt.savefig(_outfile)
+
 plt.show()
 plt.close(fig)
