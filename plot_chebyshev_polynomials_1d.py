@@ -62,10 +62,10 @@ for _degree in range(1 + MAX_DEGREE):
     )
 
 plt.grid()
-plt.legend(bbox_to_anchor=(1.01, 1), loc="upper left")
-plt.xlabel(r"$x$", fontsize=12)
-plt.ylabel(r"$T_k(x)$", fontsize=12)
-plt.title("Chebyshev polynomials of the first kind")
+plt.legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=14)
+plt.xlabel(r"$x$", fontsize=14)
+plt.ylabel(r"$T_k(x)$", fontsize=14)
+plt.title("Chebyshev polynomials of the first kind", fontsize=14)
 plt.tight_layout()
 
 # Save
