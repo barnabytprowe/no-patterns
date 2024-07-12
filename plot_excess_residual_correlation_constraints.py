@@ -1,6 +1,6 @@
 """
-plotting_excess_residual_correlation_constraints.py
-===================================================
+plot_excess_residual_correlation_constraints.py
+===============================================
 
 Plotting constraints from positive semi-definiteness for the excess correlation
 of residuals at different observations, described in the paper "No patterns in
