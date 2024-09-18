@@ -101,13 +101,13 @@ def build_regression_sample(
     # Perform too low, matching, too high, and very much too high degree regressions on data
     zdata_flat = output["zdata"].reshape(oshape[0], oshape[1] * oshape[2], order="C")
     output["predictions"] = {}
-    for _dstr, _design_matrix in zip(
-        degree_vals.keys(), [output[_flab] for _flab in feature_labels]
-    ):
-        _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix)
-        print(f"Regressing {nruns} {_dstr} runs using {NCORES} cores")
+    for _d in degree_vals:
+
+        _design_matrix = output[feature_labels[_d]]
+        _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix, nx=nx, order="C")
+        print(f"Regressing {nruns} {_d} runs using {NCORES} cores")
         with multiprocessing.Pool(NCORES) as p:
-            output["predictions"][_dstr] = np.asarray(
+            output["predictions"][_d] = np.asarray(
                 p.map(_pfunc, [_zf for _zf in zdata_flat]), dtype=float)
 
     # Generate a new set of errors from which to calculate the Mean Squared Error of Prediction
