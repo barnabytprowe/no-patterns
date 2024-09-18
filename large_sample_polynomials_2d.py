@@ -28,7 +28,13 @@ from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
 # ==========
 
 # LaTeX display strings for 10^x NRUNS
-NRUNS_STRS = {300: r"$300$", 1000: r"$10^3$", 10000: r"$10^4$", 100000: r"$10^5$", 1000000: r"$10^6$"}
+NRUNS_STRS = {
+    300: r"$300$",
+    1000: r"$10^3$",
+    10000: r"$10^4$",
+    100000: r"$10^5$",
+    1000000: r"$10^6$",
+}
 
 # Number of simulated regression datasets
 NRUNS = 1000
@@ -139,9 +145,9 @@ if __name__ == "__main__":
     print("Calculating summary statistics")
     # Calculate RSS / N, mean square cross validation "error", and mean square ideal discrepancy
     # per regression for each degree
-    rssn_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
-    xval_all = pd.DataFrame({_d: (cross_validation[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
-    msid_all = pd.DataFrame({_d: (ideal_discrepancy[_d]**2).mean(axis=(-2,-1)) for _d in DEGREES})
+    rssn_all = pd.DataFrame({_d: (residuals[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
+    xval_all = pd.DataFrame({_d: (cross_validation[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
+    msid_all = pd.DataFrame({_d: (ideal_discrepancy[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
 
     # Calculate the overfitting parameters
     psi_all = pd.DataFrame(
@@ -167,8 +173,8 @@ if __name__ == "__main__":
     omega_all = pd.DataFrame(
         {
             _d: -1. + 2. * (
-                (ideal_discrepancy[_d] * results["errors"]).sum(axis=(-2,-1))
-            ) / (ideal_discrepancy[_d]**2).sum(axis=(-2,-1))
+                (ideal_discrepancy[_d] * results["errors"]).sum(axis=(-2, -1))
+            ) / (ideal_discrepancy[_d]**2).sum(axis=(-2, -1))
             for _d in DEGREES
         }
     )
