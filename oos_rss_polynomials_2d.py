@@ -25,18 +25,18 @@ from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
 # ==========
 
 # LaTeX display strings for supported NRUNS options
-NRUNS_STRS = {
-    300: r"$300$",
-    1000: r"$10^3$",
-    10000: r"$10^4$",
-    100000: r"$10^5$",
-    1000000: r"$10^6$",
-}
+# NRUNS_STRS = {
+#     300: r"$300$",
+#     1000: r"$10^3$",
+#     10000: r"$10^4$",
+#     100000: r"$10^5$",
+#     1000000: r"$10^6$",
+# }
 
-# Number of simulated regression datasets
-NRUNS = 300  #1000
-if NRUNS not in NRUNS_STRS:
-    raise ValueError(f"User parameter NRUNS must be one of {set(NRUNS_STRS.keys())}")
+# Number of simulated regression, out-of-sample datasets
+NRUNS = 1000
+# if NRUNS not in NRUNS_STRS:
+#     raise ValueError(f"User parameter NRUNS must be one of {set(NRUNS_STRS.keys())}")
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
