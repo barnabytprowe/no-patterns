@@ -7,10 +7,11 @@ predictions from fitting_polynomials_2d.py, described in the paper "No patterns
 in regression residuals."
 """
 
-import os
 import functools
 import multiprocessing
+import os
 import pickle
+import time
 
 import numpy as np
 
@@ -31,14 +32,14 @@ NRUNS_STRS = {
 }
 
 # Number of simulated regression datasets
-NRUNS = 1000
+NRUNS = 300  #1000
 if NRUNS not in NRUNS_STRS:
     raise ValueError(f"User parameter NRUNS must be one of {set(NRUNS_STRS.keys())}")
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
-# environments a number rather less than the number of actual cores on your machine (6 for my
+# environments a number rather fewer than the number of actual cores on your machine (6 for my
 # laptop) works best, perhaps due to some under-the-hood parallelization
-NCORES = 2
+NCORES = 1
 
 # Gather module scope degrees into an array for convenience, use values from fitting_polynomials_2d
 _dvals = (
@@ -48,11 +49,15 @@ _dvals = (
     fitting_polynomials_2d.fit_degree_vhi,
 )
 DEGREE_VALS = {
-    _d: _dval for _d, _dv in zip(DEGREES, _dvals)
+    _d: _dval for _d, _dval in zip(DEGREES, _dvals)
 }
 DEGREE_TITLES = {
-    _d: DEGREE_STRS[_d].title()+" (G="+str(_dval)+")" for _d, _dv in zip(DEGREES, _dvals)
+    _d: DEGREE_STRS[_d].title()+" (G="+str(_dval)+")" for _d, _dval in DEGREE_VALS.items()
 }
+
+# Pickle cache file location
+PICKLE_CACHE = f"oos_rss_n{NRUNS}.pkl"
+CLOBBER = True  # overwrite any existing pickle cache
 
 
 # Functions
@@ -67,7 +72,14 @@ def _fit_predict(data_flat, design_matrix=None, nx=fitting_polynomials_2d.nx, or
 
 
 def build_regression_sample(
-    rng, degree_vals=DEGREE_VALS, nx=fitting_polynomials_2d.nx, nruns=NRUNS
+    rng,
+    degree_vals=DEGREE_VALS,
+    nx=fitting_polynomials_2d.nx,
+    nruns=NRUNS,
+    x0x1_min=fitting_polynomials_2d.x0x1_min,
+    x0x1_max=fitting_polynomials_2d.x0x1_max,
+    coeff_signal_to_noise=fitting_polynomials_2d.coeff_signal_to_noise,
+    noise_sigma=fitting_polynomials_2d.noise_sigma,
 ):
     """Run full large sample analysis and return results in a dictionary"""
     output = {}
@@ -83,7 +95,7 @@ def build_regression_sample(
     for _d in degree_vals:
 
         output[feature_labels[_d]] = fitting_polynomials_2d.chebyshev_design_matrix(
-            x0, x1, degree=degree_values[_d])
+            x0, x1, degree=degree_vals[_d])
 
     # Ideal model coefficients and corresponding images on the coordinate grid
     print("Generating ideal model coefficients")
@@ -105,7 +117,7 @@ def build_regression_sample(
 
         _design_matrix = output[feature_labels[_d]]
         _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix, nx=nx, order="C")
-        print(f"Regressing {nruns} {_d} runs using {NCORES} cores")
+        print(f"Regressing {nruns} {_d} runs using multiprocessing with {NCORES=}")
         with multiprocessing.Pool(NCORES) as p:
             output["predictions"][_d] = np.asarray(
                 p.map(_pfunc, [_zf for _zf in zdata_flat]), dtype=float)
@@ -115,3 +127,33 @@ def build_regression_sample(
     output["errors_new"] = rng.normal(loc=0., scale=noise_sigma, size=(nruns, nx, nx))
     output["zdata_new"] = output["ztrue"] + output["errors_new"]
     return output
+
+
+# Main script
+# ===========
+
+if __name__ == "__main__":
+
+    rng = np.random.default_rng()
+
+    if not CLOBBER and os.path.isfile(PICKLE_CACHE):
+        print(f"Loading from {PICKLE_CACHE=}")
+        with open(PICKLE_CACHE, "rb") as funit:
+            results = pickle.load(funit)
+    else:
+        t0 = time.time()
+        results = build_regression_sample(
+            rng,
+            degree_vals=DEGREE_VALS,
+            nx=fitting_polynomials_2d.nx,
+            nruns=NRUNS,
+            x0x1_min=fitting_polynomials_2d.x0x1_min,
+            x0x1_max=fitting_polynomials_2d.x0x1_max,
+            coeff_signal_to_noise=fitting_polynomials_2d.coeff_signal_to_noise,
+            noise_sigma=fitting_polynomials_2d.noise_sigma,
+        )
+        t1 = time.time()
+        print(f"Wall time: {(t1 - t0):.2f}s")
+        print(f"Saving results to {PICKLE_CACHE=}")
+        with open(PICKLE_CACHE, "wb") as fout:
+            pickle.dump(results, fout)
