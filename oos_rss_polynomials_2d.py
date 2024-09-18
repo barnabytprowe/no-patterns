@@ -13,7 +13,9 @@ import os
 import pickle
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 import fitting_polynomials_2d
 from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
@@ -57,7 +59,7 @@ DEGREE_TITLES = {
 
 # Pickle cache file location
 PICKLE_CACHE = f"oos_rss_n{NRUNS}.pkl"
-CLOBBER = True  # overwrite any existing pickle cache
+CLOBBER = False  # overwrite any existing pickle cache
 
 
 # Functions
@@ -157,3 +159,12 @@ if __name__ == "__main__":
         print(f"Saving results to {PICKLE_CACHE=}")
         with open(PICKLE_CACHE, "wb") as fout:
             pickle.dump(results, fout)
+
+    print("Calculating out-of-sample residuals")
+    oos_rimages = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
+    print("Calculating out-of-sample RSS/N")
+    oos_rssn = pd.DataFrame({_d: (oos_rimages[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
+    relative_oos_rss = (oos_rssn.T / oos_rssn["true"].T).T
+
+    plt.boxplot(oos_rssn, whis=[.5, 99.5]); plt.yscale("log"); plt.grid(which="both"); plt.show()
+    plt.boxplot(relative_oos_rss, whis=[.5, 99.5]); plt.yscale("log"); plt.grid(which="both"); plt.show()
