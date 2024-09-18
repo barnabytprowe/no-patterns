@@ -34,7 +34,7 @@ noise_sigma = 1.
 # Low (underspecified), true / matching, high (overspecified) and very high (very overspecified)
 # polynomial model set degree to use in simulated regressions
 fit_degree_lo = 3
-fit_degree_true = 6 # the actual signal curve will be a 2D polynomial series of this degree
+fit_degree_true = 6  # the actual signal curve will be a 2D polynomial series of this degree
 fit_degree_hi = 24
 fit_degree_vhi = 48
 
@@ -150,7 +150,7 @@ def plot_image(data, title, filename=None, clim=None, show=True, tick_stride=7):
 if __name__ == "__main__":
 
     # Current timestamp, used in I/0
-    tstmp =  pd.Timestamp.now().isoformat().replace(":", "")
+    tstmp = pd.Timestamp.now().isoformat().replace(":", "")
     outdir = build_output_folder_structure(tstmp, project_dir=PROJDIR)
 
     # Output dict - will be pickled

@@ -134,7 +134,7 @@ def plot_shuffled_residuals(stats, rng=None):
             _outfile = os.path.join(
                 stats[_degree]["folder"], f"matching_shuffled_{_timestamp}.png")
         else:
-            _outfile =  os.path.join(
+            _outfile = os.path.join(
                 stats[_degree]["folder"], f"{_degree}_shuffled_{_timestamp}.png")
 
         fitting_polynomials_2d.plot_image(
@@ -178,7 +178,7 @@ def plot_histogram_residuals(stats):
             outfile = os.path.join(stats[_degree]["folder"], f"hist_{_degree}_{timestamp}.png")
         plt.savefig(outfile)
         plt.close(fig)
-        _mse =  (stats[_degree]["errors"].flatten()**2).mean()
+        _mse = (stats[_degree]["errors"].flatten()**2).mean()
         print(f"{_degree} mean square residual, error = {_msr}, {_mse}")
 
 
