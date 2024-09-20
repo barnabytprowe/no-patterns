@@ -43,7 +43,12 @@ DEGREE_VALS = {
     _d: _dval for _d, _dval in zip(DEGREES, _dvals)
 }
 DEGREE_TITLES = {
-    _d: DEGREE_STRS[_d].title()+" (G="+str(_dval)+")" for _d, _dval in DEGREE_VALS.items()
+    _d: (
+        DEGREE_STRS[_d].title()+f"\n$(G={_dval})$"
+        if _d != "true"
+        else DEGREE_STRS[_d].title()+f"\n$(G = G^* = {_dval})$"
+    )
+    for _d, _dval in DEGREE_VALS.items()
 }
 
 # Pickle cache file location
@@ -173,8 +178,8 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.grid(which="both")
     plt.ylabel(r"RSS$/N$", size="large")
-    plt.xticks([1, 2, 3, 4], DEGREE_TITLES.values())
-    plt.title(r"In-sample RSS$/N$")
+    plt.xticks([1, 2, 3, 4], DEGREE_TITLES.values(), size="large")
+    plt.title(r"In-sample RSS$/N$", size="x-large")
     plt.tight_layout()
     print(f"Saving to {INS_OUTFILE}")
     plt.savefig(INS_OUTFILE)
@@ -187,8 +192,8 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.grid(which="both")
     plt.ylabel(r"RSS$/N$", size="large")
-    plt.xticks([1, 2, 3, 4], DEGREE_TITLES.values())
-    plt.title(r"Out-of-sample RSS$/N$")
+    plt.xticks([1, 2, 3, 4], DEGREE_TITLES.values(), size="large")
+    plt.title(r"Out-of-sample RSS$/N$", size="x-large")
     plt.tight_layout()
     print(f"Saving to {OOS_OUTFILE}")
     plt.savefig(OOS_OUTFILE)
@@ -203,8 +208,12 @@ if __name__ == "__main__":
     plt.ylabel(r"Out-of-sample RSS$_G$ / RSS$_{G^*}$", size="large")
     plt.ylim((0.85, 14.))
     plt.axhline(1., color="k", lw="1.2", ls="--")
-    plt.xticks([1, 2, 3], np.asarray(list(DEGREE_TITLES.values()))[[True, False, True, True]])
-    plt.title(r"Matched-relative out-of-sample RSS")
+    plt.xticks(
+        [1, 2, 3],
+        np.asarray(list(DEGREE_TITLES.values()))[[True, False, True, True]],
+        size="large",
+    )
+    plt.title(r"Matched-relative out-of-sample RSS", size="x-large")
     plt.tight_layout()
     print(f"Saving to {MR_OUTFILE}")
     plt.savefig(MR_OUTFILE)
