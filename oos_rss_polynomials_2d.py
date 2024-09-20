@@ -50,6 +50,17 @@ DEGREE_TITLES = {
 PICKLE_CACHE = f"oos_rss_n{NRUNS}.pkl"
 CLOBBER = False  # overwrite any existing pickle cache
 
+# Figure size
+FIGSIZE = (6, 7)
+
+# Show plot figures on screen?
+SHOW_PLOTS = True
+
+# Output plot files
+INS_OUTFILE = os.path.join(fitting_polynomials_2d.PROJDIR, f"in-sample_rss_n{NRUNS}.pdf")
+OOS_OUTFILE = os.path.join(fitting_polynomials_2d.PROJDIR, f"out-of-sample_rss_n{NRUNS}.pdf")
+MR_OUTFILE = os.path.join(fitting_polynomials_2d.PROJDIR, f"matched-relative_rss_n{NRUNS}.pdf")
+
 
 # Functions
 # =========
@@ -149,11 +160,54 @@ if __name__ == "__main__":
         with open(PICKLE_CACHE, "wb") as fout:
             pickle.dump(results, fout)
 
-    print("Calculating out-of-sample residuals")
-    oos_rimages = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
-    print("Calculating out-of-sample RSS/N")
-    oos_rssn = pd.DataFrame({_d: (oos_rimages[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
+    print("Calculating in-sample, out-of-sample residuals and summary statistics")
+    ins_residuals = {_d: results["zdata"] - results["predictions"][_d] for _d in DEGREES}
+    oos_residuals = {_d: results["zdata_new"] - results["predictions"][_d] for _d in DEGREES}
+    ins_rssn = pd.DataFrame({_d: (ins_residuals[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
+    oos_rssn = pd.DataFrame({_d: (oos_residuals[_d]**2).mean(axis=(-2, -1)) for _d in DEGREES})
     relative_oos_rss = (oos_rssn.T / oos_rssn["true"].T).T
 
-    plt.boxplot(oos_rssn, whis=[.5, 99.5]); plt.yscale("log"); plt.grid(which="both"); plt.show()
-    plt.boxplot(relative_oos_rss, whis=[.5, 99.5]); plt.yscale("log"); plt.grid(which="both"); plt.show()
+    # Plot in-sample RSS for simulation runs
+    fig = plt.figure(figsize=FIGSIZE)
+    plt.boxplot(ins_rssn, whis=[0, 100], sym="x")
+    plt.yscale("log")
+    plt.grid(which="both")
+    plt.ylabel(r"RSS$/N$", size="large")
+    plt.xticks([1, 2, 3, 4], DEGREE_TITLES.values())
+    plt.title(r"In-sample RSS$/N$")
+    plt.tight_layout()
+    print(f"Saving to {INS_OUTFILE}")
+    plt.savefig(INS_OUTFILE)
+    if SHOW_PLOTS:
+        plt.show()
+    plt.close(fig)
+
+    fig = plt.figure(figsize=FIGSIZE)
+    plt.boxplot(oos_rssn, whis=[0, 100], sym="x")
+    plt.yscale("log")
+    plt.grid(which="both")
+    plt.ylabel(r"RSS$/N$", size="large")
+    plt.xticks([1, 2, 3, 4], DEGREE_TITLES.values())
+    plt.title(r"Out-of-sample RSS$/N$")
+    plt.tight_layout()
+    print(f"Saving to {OOS_OUTFILE}")
+    plt.savefig(OOS_OUTFILE)
+    if SHOW_PLOTS:
+        plt.show()
+    plt.close(fig)
+
+    fig = plt.figure(figsize=FIGSIZE)
+    plt.boxplot(relative_oos_rss[["lo", "hi", "vhi"]], whis=[0, 100], sym="x")
+    plt.yscale("log")
+    plt.grid(which="both")
+    plt.ylabel(r"Out-of-sample RSS$_G$ / RSS$_{G^*}$", size="large")
+    plt.ylim((0.85, 14.))
+    plt.axhline(1., color="k", lw="1.2", ls="--")
+    plt.xticks([1, 2, 3], np.asarray(list(DEGREE_TITLES.values()))[[True, False, True, True]])
+    plt.title(r"Matched-relative out-of-sample RSS")
+    plt.tight_layout()
+    print(f"Saving to {MR_OUTFILE}")
+    plt.savefig(MR_OUTFILE)
+    if SHOW_PLOTS:
+        plt.show()
+    plt.close(fig)
