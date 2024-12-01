@@ -69,7 +69,7 @@ lbfgs_optim = {
         "tolerance_change": 1e-10,
     }
 }
-early_exit_rtol = 1e-11
+early_exit_rtol = 1e-12
 
 # use graphics card if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
