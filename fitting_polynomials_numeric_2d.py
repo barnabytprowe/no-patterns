@@ -61,10 +61,15 @@ iter_stride = 1000
 loss_function = torch.nn.MSELoss(reduction="mean")
 gradient_descent_optim = {torch.optim.Adam: {"lr": 0.001, "betas": (0.99, 0.999), "eps": 1e-8}}
 lbfgs_optim = {
-    torch.optim.LBFGS: {"lr": 1, "max_iter": iter_stride, "line_search_fn": "strong_wolfe"}
-    # "tolerance_grad":1e-13, "tolerance_change": 1e-15}
+    torch.optim.LBFGS: {
+        "lr": 1,
+        "max_iter": iter_stride,
+        "line_search_fn": "strong_wolfe",
+        "tolerance_grad": 1e-8,
+        "tolerance_change": 1e-10,
+    }
 }
-early_exit_rtol = 1.e-14
+early_exit_rtol = 1e-11
 
 # use graphics card if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
