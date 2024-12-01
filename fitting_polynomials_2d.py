@@ -174,21 +174,24 @@ if __name__ == "__main__":
         min_val=x0x1_min, max_val=x0x1_max, nside=nx, endpoint=True, flatten_order="C")
 
     # Design matrices
-    design_lo = chebyshev_design_matrix(x0, x1, degree=fit_degree_lo)
-    design_true = chebyshev_design_matrix(x0, x1, degree=fit_degree_true)
-    design_hi = chebyshev_design_matrix(x0, x1, degree=fit_degree_hi)
-    design_vhi = chebyshev_design_matrix(x0, x1, degree=fit_degree_vhi)
+    design_lo, design_true, design_hi, design_vhi = tuple(
+        chebyshev_design_matrix(x0, x1, degree=_deg)
+        for _deg in (fit_degree_lo, fit_degree_true, fit_degree_hi, fit_degree_vhi)
+    )
 
-    # Build the true / ideal 2D contour and plot
+    # Build the true / ideal 2D contour, plot and save
     ctrue = np.random.randn(design_true.shape[-1]) * coeff_signal_to_noise
     ztrue = (np.matmul(design_true, ctrue)).reshape((nx, nx), order="C")
-    plot_image(ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"))
+
+    plot_image(
+        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True)
     output["ctrue"] = ctrue
     output["ztrue"] = ztrue
 
-    # Add the random noise to generate the dataset and plot
+    # Add the random noise to generate the dataset, plot and save
     zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
-    plot_image(zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"))
+
+    plot_image(zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"), show=True)
     output["zdata"] = zdata
 
     # Perform too low, matching, too high, and very much too high degree regressions on data
