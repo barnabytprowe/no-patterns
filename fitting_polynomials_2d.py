@@ -95,6 +95,19 @@ def _qs(k):
     return k - _ktri(k)
 
 
+def square_grid(min_val=-1.0, max_val=+1.0, nside=100, endpoint=True, flatten_order="C"):
+    """Returns numpy arrays x0, x1 containing the coordinates of a square grid,
+    symmetric with respect to the line x0=x1, defined by input min and max
+    coordinate values.
+    """
+    xvals = np.linspace(min_val, max_val, num=nx, endpoint=True)
+    x0, x1 = np.meshgrid(xvals, xvals)
+    if flatten_order is not None:
+        x0 = x0.flatten(order=flatten_order)
+        x1 = x1.flatten(order=flatten_order)
+    return x0, x1
+
+
 def chebyshev_design_matrix(x0, x1, degree):
     """Returns the Chebyshev polynomial design matrix up to input degree for two
     independent coordinates x0, x1
@@ -157,10 +170,8 @@ if __name__ == "__main__":
     output = {}
 
     # Prepare two independent variables on a grid
-    xvals = np.linspace(x0x1_min, x0x1_max, num=nx, endpoint=True)
-    x0, x1 = np.meshgrid(xvals, xvals)
-    x0 = x0.flatten(order="C")
-    x1 = x1.flatten(order="C")
+    x0, x1 = square_grid(
+        min_val=x0x1_min, max_val=x0x1_max, nside=nx, endpoint=True, flatten_order="C")
 
     # Design matrices
     design_lo = chebyshev_design_matrix(x0, x1, degree=fit_degree_lo)
