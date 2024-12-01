@@ -56,8 +56,8 @@ if tstamp_exists:
     tstamp_project_dir = os.path.join(PLTDIR, "polynomials_2d")
 
 # Pytorch settings
-n_epochs = int(1e6)
-iter_stride = 10000
+n_epochs = int(1e5)
+iter_stride = 1000
 loss_function = torch.nn.MSELoss(reduction="mean")
 gradient_descent_optim = {torch.optim.Adam: {"lr": 0.001, "betas": (0.99, 0.999), "eps": 1e-8}}
 lbfgs_optim = {
@@ -156,6 +156,9 @@ if __name__ == "__main__":
                 )
                 _loss0 = _loss.item()
 
+            if np.isclose(_loss.item() / _lstsq_loss, 1., atol=0, rtol=1.e-14):
+                continue
+
         output[f"gd_pred_{_spec}"] = _pred.numpy(force=True).reshape((nx, nx), order="C")
         output[f"gd_losses_{_spec}"] = _losses
 
@@ -185,6 +188,9 @@ if __name__ == "__main__":
                     f"ideal: {_lstsq_loss:>7f}"
                 )
                 _loss0 = _loss.item()
+
+            if np.isclose(_loss.item() / _lstsq_loss, 1., atol=0, rtol=1.e-14):
+                continue
 
         output[f"lbfgs_pred_{_spec}"] = _pred.numpy(force=True).reshape((nx, nx), order="C")
         output[f"lbfgs_losses_{_spec}"] = _losses
