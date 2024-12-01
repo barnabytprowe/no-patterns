@@ -156,9 +156,9 @@ if __name__ == "__main__":
                     f"GD/{tstmp}/{_spec}: epoch: {1 + i:d}/{n_epochs:d}, loss: {_loss:>7f}, "
                     f"dloss: {min(_loss - _loss0, 0):>7e}, ideal: {_lstsq_loss:>7f}"
                 )
-                if np.isclose(_loss / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
-                    continue
                 _loss0 = _loss.item()
+                if np.isclose(_loss0 / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
+                    break
 
         output[f"gd_pred_{_spec}"] = _pred.numpy(force=True).reshape((nx, nx), order="C")
         output[f"gd_losses_{_spec}"] = _losses
@@ -190,8 +190,8 @@ if __name__ == "__main__":
                 )
                 _loss0 = _loss.item()
 
-            if np.isclose(_loss / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
-                continue
+            if np.isclose(_loss0 / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
+                break
 
         output[f"lbfgs_pred_{_spec}"] = _pred.numpy(force=True).reshape((nx, nx), order="C")
         output[f"lbfgs_losses_{_spec}"] = _losses
