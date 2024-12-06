@@ -84,12 +84,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if __name__ == "__main__":
 
-    if not tstmp_exists:
-        # current timestamp
-        tstmp = pd.Timestamp.now().isoformat().replace(":", "")
-    outdir = fitting_polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
-
-    # Output dict - will be pickled
+    # Output dict - will be pickled later
     output = {}
 
     # Prepare two independent variables on a grid
@@ -103,29 +98,28 @@ if __name__ == "__main__":
             all_specifications, (fit_degree_lo, fit_degree_true, fit_degree_hi, fit_degree_vhi))
     }
 
-    # Build the true / ideal 2D contour and plot
+    # Build the true / ideal 2D contour, and the noise-added data, and plot
     if tstmp_exists:
         print(f"Loading fitting_polynomials_2d output data from {tsfile}")
         with open(tsfile, "rb") as fin:
             tsdata = pickle.load(fin)
         ctrue = tsdata["ctrue"]
         ztrue = tsdata["ztrue"]
-    else:
-        ctrue = np.random.randn(design_matrices["true"].shape[-1]) * coeff_signal_to_noise
-        ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((nx, nx), order="C")
-
-    fitting_polynomials_2d.plot_image(
-        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True)
-    output["ctrue"] = ctrue
-    output["ztrue"] = ztrue
-
-    # Add the random noise to generate the dataset and plot
-    if tstmp_exists:
         zdata = tsdata["zdata"]
     else:
+        # current timestamp
+        tstmp = pd.Timestamp.now().isoformat().replace(":", "")
+        ctrue = np.random.randn(design_matrices["true"].shape[-1]) * coeff_signal_to_noise
+        ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((nx, nx), order="C")
         zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
+
+    outdir = fitting_polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
+    fitting_polynomials_2d.plot_image(
+        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True)
     fitting_polynomials_2d.plot_image(
         zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"), show=True)
+    output["ctrue"] = ctrue
+    output["ztrue"] = ztrue
     output["zdata"] = zdata
 
     # Prepare torch tensor and run
