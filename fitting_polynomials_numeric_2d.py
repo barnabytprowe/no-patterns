@@ -25,6 +25,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 import fitting_polynomials_2d
+import further_analysis_polynomials_2d
 from fitting_polynomials_2d import (  # all parameters defined in core fitting module
     x0x1_min,
     x0x1_max,
@@ -35,6 +36,7 @@ from fitting_polynomials_2d import (  # all parameters defined in core fitting m
     fit_degree_vhi,
     coeff_signal_to_noise,
     noise_sigma,
+    CLIM,
 )
 
 
@@ -50,13 +52,15 @@ all_specifications = ("lo", "true", "hi", "vhi")
 run_specifications = ("lo", "true", "hi", "vhi")
 
 # Use existing timestamp?
-tstamp_exists = False
-if tstamp_exists:
-    tstamp = ""
-    tstamp_project_dir = os.path.join(PLTDIR, "polynomials_2d")
+tstmp_exists = True
+if tstmp_exists:
+    # change this to use a referenced pre-run regression example output by fitting_polynomials_2d.py
+    tstmp = "2024-05-10T112411.980432"
+    tstmp_project_dir = os.path.join(PLTDIR, "polynomials_2d")
+    tsfolder, tsfile = further_analysis_polynomials_2d.pathfile(tstmp, projdir=tstmp_project_dir)
 
 # Pytorch settings
-n_epochs = int(1e5)
+n_epochs = int(1e6)
 iter_stride = 1000
 loss_function = torch.nn.MSELoss(reduction="mean")
 gradient_descent_optim = {torch.optim.Adam: {"lr": 0.001, "betas": (0.99, 0.999), "eps": 1e-8}}
@@ -65,11 +69,11 @@ lbfgs_optim = {
         "lr": 1,
         "max_iter": iter_stride,
         "line_search_fn": "strong_wolfe",
-        "tolerance_grad": 1e-8,
-        "tolerance_change": 1e-10,
+        "tolerance_grad": 1e-15,
+        "tolerance_change": 1e-13,
     }
 }
-early_exit_rtol = 1e-12
+early_exit_rtol = 1e-13
 
 # use graphics card if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -80,7 +84,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if __name__ == "__main__":
 
-    if not tstamp_exists:
+    if not tstmp_exists:
         # current timestamp
         tstmp = pd.Timestamp.now().isoformat().replace(":", "")
     outdir = fitting_polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
@@ -100,24 +104,28 @@ if __name__ == "__main__":
     }
 
     # Build the true / ideal 2D contour and plot
-    if tstamp_exists:
-        raise NotImplementedError()
+    if tstmp_exists:
+        print(f"Loading fitting_polynomials_2d output data from {tsfile}")
+        with open(tsfile, "rb") as fin:
+            tsdata = pickle.load(fin)
+        ctrue = tsdata["ctrue"]
+        ztrue = tsdata["ztrue"]
     else:
         ctrue = np.random.randn(design_matrices["true"].shape[-1]) * coeff_signal_to_noise
         ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((nx, nx), order="C")
 
     fitting_polynomials_2d.plot_image(
-        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"))
+        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True)
     output["ctrue"] = ctrue
     output["ztrue"] = ztrue
 
     # Add the random noise to generate the dataset and plot
-    if tstamp_exists:
-        raise NotImplementedError()
+    if tstmp_exists:
+        zdata = tsdata["zdata"]
     else:
         zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
     fitting_polynomials_2d.plot_image(
-        zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"))
+        zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"), show=True)
     output["zdata"] = zdata
 
     # Prepare torch tensor and run
@@ -195,6 +203,7 @@ if __name__ == "__main__":
                 )
                 _loss0 = _loss.item()
 
+            print(_loss0 / _lstsq_loss - 1.)
             if np.isclose(_loss0 / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
                 break
 
@@ -202,41 +211,42 @@ if __name__ == "__main__":
         output[f"lbfgs_losses_{_spec}"] = _losses
 
     # Calculate and plot residuals
-    # rlo = zdata - pred_lo
-    # plot_image(
-    #     rlo,
-    #     "Low degree polynomial residuals",
-    #     filename=os.path.join(outdir, "lo_"+tstmp+".png"),
-    #     clim=CLIM,
-    # )
-    # rtrue = zdata - pred_true
-    # plot_image(
-    #     rtrue,
-    #     "Matching degree polynomial residuals",
-    #     filename=os.path.join(outdir, "matching_"+tstmp+".png"),
-    #     clim=CLIM,
-    # )
-    # rhi = zdata - pred_hi
-    # plot_image(
-    #     rhi,
-    #     "High degree polynomial residuals",
-    #     filename=os.path.join(outdir, "hi_"+tstmp+".png"),
-    #     clim=CLIM,
-    # )
-    # rvhi = zdata - pred_vhi
-    # plot_image(
-    #     rvhi,
-    #     "Very high degree polynomial residuals",
-    #     filename=os.path.join(outdir, "vhi_"+tstmp+".png"),
-    #     clim=CLIM,
-    # )
-    # output["rlo"] = rlo
-    # output["rtrue"] = rtrue
-    # output["rhi"] = rhi
-    # output["rvhi"] = rvhi
+    for _optim in ("gd", "lbfgs"):
+        rlo = zdata - output[f"{_optim}_pred_lo"]
+        fitting_polynomials_2d.plot_image(
+            rlo,
+            "Low degree polynomial residuals",
+            filename=os.path.join(outdir, "lo_"+tstmp+".png"),
+            clim=CLIM,
+        )
+        rtrue = zdata - output[f"{_optim}_pred_true"]
+        fitting_polynomials_2d.plot_image(
+            rtrue,
+            "Matching degree polynomial residuals",
+            filename=os.path.join(outdir, "matching_"+tstmp+".png"),
+            clim=CLIM,
+        )
+        rhi = zdata - output[f"{_optim}_pred_hi"]
+        fitting_polynomials_2d.plot_image(
+            rhi,
+            "High degree polynomial residuals",
+            filename=os.path.join(outdir, "hi_"+tstmp+".png"),
+            clim=CLIM,
+        )
+        rvhi = zdata - output[f"{_optim}_pred_vhi"]
+        fitting_polynomials_2d.plot_image(
+            rvhi,
+            "Very high degree polynomial residuals",
+            filename=os.path.join(outdir, "vhi_"+tstmp+".png"),
+            clim=CLIM,
+        )
+        output[f"{_optim}_r_lo"] = rlo
+        output[f"{_optim}_r_true"] = rtrue
+        output[f"{_optim}_r_hi"] = rhi
+        output[f"{_optim}_r_vhi"] = rvhi
 
     # Save output for further analysis
-    outfile = os.path.join(outdir, "output_"+tstmp+".pickle")
+    outfile = os.path.join(outdir, f"output_{tstmp}_n{n_epochs}.pickle")
     print("Saving to "+outfile)
     with open(outfile, "wb") as fout:
         pickle.dump(output, fout)
