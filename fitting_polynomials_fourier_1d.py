@@ -329,7 +329,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
 if __name__ == "__main__":
 
     # Current timestamp, used in I/0
-    tstmp =  pd.Timestamp.now().isoformat().replace(":", "")
+    tstmp = pd.Timestamp.now().isoformat().replace(":", "")
     outdir = fitting_polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
 
     # Output dict - will be pickled
