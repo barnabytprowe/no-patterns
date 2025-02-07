@@ -92,8 +92,8 @@ OUTFILE_EXTENSIONS = (".png", ".pdf")
 
 def sinusoid_design_matrix(x, degree):
     """Returns the sinusoid [cosx, sinx] design matrix up to input degree"""
-    sinx = np.asarray([np.sin(2. * np.pi * float(j) * x) for j in range(0, degree)]).T
-    cosx = np.asarray([np.cos(2. * np.pi * float(j) * x) for j in range(0, degree)]).T
+    sinx = np.asarray([np.sin(2. * np.pi * float(j) * x) for j in range(0, 1 + degree)]).T
+    cosx = np.asarray([np.cos(2. * np.pi * float(j) * x) for j in range(0, 1 + degree)]).T
     return np.hstack([cosx, sinx])
 
 
