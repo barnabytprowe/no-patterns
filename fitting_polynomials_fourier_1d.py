@@ -67,7 +67,7 @@ TITLE_SIZE = "x-large"
 # Title display strings for plots
 FIT_DISPLAY = {
     "lo": "Low degree",
-    "true": "Matching",
+    "true": "Matching degree",
     "hi": "High degree",
     "vhi": "Very high degree",
 }
@@ -126,7 +126,7 @@ def plot_regressions(xarr, yarrs, curve_family_display, tstmp, outdir, show=True
     """
     fig, ax = plt.subplots(figsize=FIGSIZE)
     ax.set_title(
-        f"{curve_family_display.title()} series regression in one dimension", size=TITLE_SIZE)
+        f"{curve_family_display.title()} series regression simulation", size=TITLE_SIZE)
     ax.plot(xarr, yarrs[0], color="k", ls="-", linewidth=2, label="Ideal model")
     ax.plot(xarr, yarrs[1], "k+", markersize=15, label="Data")
     ax.plot(xarr, yarrs[2], color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"])
@@ -164,7 +164,8 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
     ax = fig.add_axes([0.075, 0.3, 0.855, 0.45])
     im = ax.pcolor(residuals.reshape((1, len(residuals))), cmap=CMAP, clim=CLIM)
     ax.set_yticklabels([])
-    ax.set_title(f"{fit_display} {curve_family_display} residual map", size=TITLE_SIZE)
+    ax.set_title(
+        f"{fit_display} {curve_family_display} series regression residuals", size=TITLE_SIZE)
 
     # See https://stackoverflow.com/a/39938019 for colormap handling
     divider = make_axes_locatable(ax)
@@ -209,7 +210,8 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
         show: plt.show()?
     """
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.set_title(curve_family_display.title()+" series regression periodograms", size=TITLE_SIZE)
+    ax.set_title(
+        curve_family_display.title()+" series regression residual periodograms", size=TITLE_SIZE)
 
     ax.plot(
         np.arange(len(periodograms[0])) / nfull, periodograms[0], color="k", ls="--",
@@ -276,7 +278,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     """
     fig, ax = plt.subplots(figsize=FIGSIZE)
     ax.set_title(
-        curve_family_display.title()+" series regression circular autocorrelation functions",
+        curve_family_display.title()+" series regression residual autocorrelation functions",
         size=TITLE_SIZE,
     )
 
