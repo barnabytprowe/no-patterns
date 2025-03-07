@@ -143,7 +143,16 @@ def process_lin_kernigan(pk, results_dict, distance_matrix=None, x0=None):
     )
 
 
-def multiprocess_2opt(dm, x0=None, max_processing_time=TIMEOUT_2OPT, nproc=NPROC):
+def multiprocess_local_search(
+    dm,
+    x0=None,
+    max_processing_time=TIMEOUT_2OPT,
+    nproc=NPROC,
+    perturbation_scheme="two_opt",
+):
+    """Launch and gather results from multiprocessing of approximate TSP
+    solutions using local search heuristics.
+    """
     processes = {}
     manager = multiprocessing.Manager()
     results_storage = manager.dict()
@@ -151,7 +160,7 @@ def multiprocess_2opt(dm, x0=None, max_processing_time=TIMEOUT_2OPT, nproc=NPROC
         x0 = [None] * nproc
 
     for ip in range(nproc):
-        print(f"Launching process {ip} for 2-opt TSP, {max_processing_time=}s")
+        print(f"Launching process {ip} for {perturbation_scheme} TSP, {max_processing_time=}s")
         processes[ip] = multiprocessing.Process(
             target=process_local_search,
             args=(ip, results_storage),
@@ -164,10 +173,13 @@ def multiprocess_2opt(dm, x0=None, max_processing_time=TIMEOUT_2OPT, nproc=NPROC
     for ip in range(nproc):
         processes[ip].join(max_processing_time)
 
-    return zip(*results_storage.values())
+    return results_storage
 
 
 def multiprocess_lk(dm, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
+    """Launch and gather results from multiprocessing of approximate TSP
+    solutions using the Lin-Kernighan algorithm.
+    """
     processes = {}
     manager = multiprocessing.Manager()
     results_storage = manager.dict()
@@ -234,11 +246,19 @@ if __name__ == "__main__":
         p0 = None
 
     # Solve local (2-opt)
-    x02o, total_weights_2o = multiprocess_2opt(
-        dm=dm, x0=[p0] * NPROC, max_processing_time=TIMEOUT_2OPT, nproc=NPROC)
-    print("Total weights:")
+    results_2o = multiprocess_local_search(
+        dm=dm,
+        x0=[p0] * NPROC,
+        max_processing_time=TIMEOUT_2OPT,
+        nproc=NPROC,
+        perturbation_scheme="two_opt",
+    )
+    x02o, total_weights_2o = zip(*results_2o.values())
+    print("Total weights after two_opt local search:")
     print(pd.Series(total_weights_2o))
+
+    # Refine with Lin-Kernighan
     x0lk, total_weights_lk = multiprocess_lk(
         dm=dm, x0=x02o, max_processing_time=TIMEOUT_LK, nproc=NPROC)
-    print("Total weights:")
+    print("Total weights after Lin-Kernighan:")
     print(pd.Series(total_weights_lk))
