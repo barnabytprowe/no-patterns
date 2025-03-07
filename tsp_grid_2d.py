@@ -82,13 +82,37 @@ def plot_path(xy, path, figsize=(6, 5.5)):
     plt.show()
 
 
-def process_local_search(pk, results_dict, distance_matrix=None, x0=None, max_processing_time=None):
+def process_local_search(
+    pk,
+    results_dict,
+    distance_matrix=None,
+    x0=None,
+    max_processing_time=None,
+    perturbation_scheme="two_opt",
+):
+    """Target function for multiprocessing local search heuristic approximating
+    TSP solutions.
+
+    Stores output of call to python_tsp.heuristics.solve_tsp_local_search in
+    results_dict[pk].
+
+    Args:
+        pk: process key for result storage
+        results_dict:
+            dict-like as returned by multiprocessing.Manager().dict(), to be
+            used for shared memory storage of solution results
+        distance_matrix: passed to solve_tsp_local_search
+        x0: passed to solve_tsp_local_search
+        max_processing_time: passed to solve_tsp_local_search
+        perturbation_scheme: passed to solve_tsp_local_search
+    """
     if distance_matrix is None:
         raise ValueError("distance_matrix must be supplied")
 
     results_dict[pk] = solve_tsp_local_search(
         distance_matrix=distance_matrix,
         x0=x0,
+        perturbation_scheme=perturbation_scheme,
         max_processing_time=max_processing_time,
         verbose=False,
     )
