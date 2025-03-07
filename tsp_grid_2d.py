@@ -90,7 +90,7 @@ def process_local_search(
     max_processing_time=None,
     perturbation_scheme="two_opt",
 ):
-    """Target function for multiprocessing local search heuristic approximating
+    """Target function for multiprocessing local search heuristic approximate
     TSP solutions.
 
     Stores output of call to python_tsp.heuristics.solve_tsp_local_search in
@@ -119,6 +119,20 @@ def process_local_search(
 
 
 def process_lin_kernigan(pk, results_dict, distance_matrix=None, x0=None):
+    """Target function for multiprocessing Lin-Kernighan algorithm approximate
+    TSP solutions.
+
+    Stores output of call to python_tsp.heuristics.solve_tsp_lin_kernighan in
+    results_dict[pk].
+
+    Args:
+        pk: process key for result storage
+        results_dict:
+            dict-like as returned by multiprocessing.Manager().dict(), to be
+            used for shared memory storage of solution results
+        distance_matrix: passed to solve_tsp_lin_kernighan
+        x0: passed to solve_tsp_lin_kernighan
+    """
     if distance_matrix is None:
         raise ValueError("distance_matrix must be supplied")
 
