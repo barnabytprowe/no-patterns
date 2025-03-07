@@ -153,8 +153,8 @@ if __name__ == "__main__":
     psi_all = pd.DataFrame(
         {
             _d: (
-                (ideal_discrepancy[_d]**2).sum(axis=(-2,-1))
-            ) / (results["errors"]**2).sum(axis=(-2,-1))
+                (ideal_discrepancy[_d]**2).sum(axis=(-2, -1))
+            ) / (results["errors"]**2).sum(axis=(-2, -1))
             for _d in DEGREES
         }
     )
