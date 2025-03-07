@@ -213,7 +213,7 @@ if __name__ == "__main__":
         np.asarray(list(DEGREE_TITLES.values()))[[True, False, True, True]],
         size="large",
     )
-    plt.title(r"Matched-relative out-of-sample RSS", size="x-large")
+    plt.title(r"Matched-relative out-of-sample RSS ratio", size="x-large")
     plt.tight_layout()
     print(f"Saving to {MR_OUTFILE}")
     plt.savefig(MR_OUTFILE)
