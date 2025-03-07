@@ -21,7 +21,7 @@ NPROC = 6
 
 # Timeout settings
 # 2-opt initial optimization
-TIMEOUT_2OPT = 400
+TIMEOUT_2OPT = 500
 CYCLE_LK = 1
 TIMEOUT_LK = 30
 
