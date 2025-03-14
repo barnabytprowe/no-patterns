@@ -69,19 +69,24 @@ def add_edges_from_distance_matrix(graph, distance_matrix):
     return graph
 
 
-def plot_path(xy, path, figsize=(6, 5.5)):
+def plot_path(xy, path, figsize=(6, 5.5), title=None):
     """Plot a path through xy coordinates.
 
     Args:
         xy: array-like where each row contains the coordinates of a 2D point
         path: index of xy rows defining the path to plot
+
+    Returns: matplotlib.Axes instance for the plot
     """
     x, y = zip(*[xy[_i] for _i in path])
     fig = plt.figure(figsize=figsize)
-    plt.plot(x, y, "ko")
-    plt.plot(x, y)
-    plt.tight_layout()
-    plt.show()
+    ax = fig.add_subplot()
+    ax.plot(x, y, "ko")
+    ax.plot(x, y)
+    if title:
+        ax.set_title(title)
+    fig.tight_layout()
+    return ax
 
 
 def process_local_search(
