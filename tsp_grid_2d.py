@@ -17,13 +17,15 @@ import fitting_polynomials_2d
 
 
 # Number of processes
-NPROC = 6
+NPROC = 8
 
-# Timeout settings
+INITIALIZE_WITH_CHRISTOFIDES = True
+# Timeout settings (all in seconds)
 # 2-opt initial optimization
-TIMEOUT_2OPT = 500
-CYCLE_LK = 1
-TIMEOUT_LK = 30
+TIMEOUT_2OPT = 600
+# Lin-Kernighan
+CYCLE_LK = 1  # checks for completion every cycle
+TIMEOUT_LK = 30  # total timeout
 
 # Grid dimensions
 ngrid = 28
@@ -234,14 +236,14 @@ if __name__ == "__main__":
     G = add_edges_from_distance_matrix(G, dm)
     print(f"Time taken: {time.time() - t0:.2f}s")
 
-    if False:
+    if INITIALIZE_WITH_CHRISTOFIDES:
         print("Calculating Christofides approximation")
         tc = time.time()
         p0 = nx.algorithms.approximation.traveling_salesman_problem(G, method=christofides)[:-1]
         print(f"Time taken: {time.time() - tc:.2f}s")
         p0_weight = nx.path_weight(G, p0 + [0], weight='weight')
         print(f"Christofides path_weight = {p0_weight}")
-        plot_path(grid_points, p0)
+        #plot_path(grid_points, p0)
     else:
         p0 = None
 
