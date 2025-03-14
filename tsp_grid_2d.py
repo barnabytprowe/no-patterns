@@ -226,7 +226,7 @@ def multiprocess_lk(dm, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
                 processes[ip].join(1)
             break
 
-    return zip(*results_storage.values())
+    return results_storage
 
 
 if __name__ == "__main__":
@@ -253,19 +253,36 @@ if __name__ == "__main__":
         p0 = None
 
     # Solve local (2-opt)
-    results_2o = multiprocess_local_search(
+    results_2opt = multiprocess_local_search(
         dm=dm,
         x0=[p0] * NPROC,
         max_processing_time=TIMEOUT_2OPT,
         nproc=NPROC,
         perturbation_scheme="two_opt",
     )
-    x02o, total_weights_2o = zip(*results_2o.values())
+    p2opt, total_weights_2opt = zip(*results_2opt.values())
     print("Total weights after two_opt local search:")
-    print(pd.Series(total_weights_2o))
+    print(pd.Series(total_weights_2opt))
 
     # Refine with Lin-Kernighan
-    x0lk, total_weights_lk = multiprocess_lk(
-        dm=dm, x0=x02o, max_processing_time=TIMEOUT_LK, nproc=NPROC)
+    results_lk = multiprocess_lk(
+        dm=dm, x0=p2opt, max_processing_time=TIMEOUT_LK, nproc=NPROC)
+    plk, total_weights_lk = zip(*results_lk.values())
     print("Total weights after Lin-Kernighan:")
     print(pd.Series(total_weights_lk))
+
+    if INITIALIZE_WITH_CHRISTOFIDES:
+        ax = plot_path(grid_points, p0, title="Christofides approximation")
+#        ax.figure.show()
+        plt.show()
+
+    for i, _p2opt in enumerate(p2opt):
+        ax = plot_path(grid_points, _p2opt, title=f"2-opt local search {i + 1}")
+#        ax.figure.show()
+                plt.show()
+
+
+    for i, _plk in enumerate(plk):
+        ax = plot_path(grid_points, _plk, title=f"Lin-Kernighan algorithm {i + 1}")
+#        ax.figure.show()
+        plt.show()
