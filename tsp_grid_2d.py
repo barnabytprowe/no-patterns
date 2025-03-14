@@ -231,16 +231,18 @@ def multiprocess_lk(dm, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
 
 if __name__ == "__main__":
 
+    # Initialize complete (but unweighted edge) graph and distance matrix
     G = nx.complete_graph(ngrid**2)
     grid_points = [(i, j) for i in range(ngrid) for j in range(ngrid)]
-
     dm = distance_matrix(grid_points)
-    # Add edges with weights = distance between points
+
+    # Add edges between all node pairs with weight = distance between points
     print(f"Adding edge distance weights for complete {ngrid}x{ngrid} grid graph")
     t0 = time.time()
     G = add_edges_from_distance_matrix(G, dm)
     print(f"Time taken: {time.time() - t0:.2f}s")
 
+    # Initialize
     if INITIALIZE_WITH_CHRISTOFIDES:
         print("Calculating Christofides approximation")
         tc = time.time()
@@ -248,7 +250,6 @@ if __name__ == "__main__":
         print(f"Time taken: {time.time() - tc:.2f}s")
         p0_weight = nx.path_weight(G, p0 + [0], weight='weight')
         print(f"Christofides path_weight = {p0_weight}")
-        #plot_path(grid_points, p0)
     else:
         p0 = None
 
