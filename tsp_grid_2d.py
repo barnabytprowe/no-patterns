@@ -125,7 +125,7 @@ def process_local_search(
     )
 
 
-def process_lin_kernigan(pk, results_dict, distance_matrix=None, x0=None):
+def process_lin_kernighan(pk, results_dict, distance_matrix=None, x0=None):
     """Target function for multiprocessing approximate TSP solutions using the
     Lin-Kernighan algorithm.
 
@@ -194,9 +194,9 @@ def multiprocess_lk(dm, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
         x0 = [None] * nproc
 
     for ip in range(nproc):
-        print(f"Launching process {ip} for Lin-Kernigan TSP")
+        print(f"Launching process {ip} for Lin-Kernighan TSP")
         processes[ip] = multiprocessing.Process(
-            target=process_lin_kernigan,
+            target=process_lin_kernighan,
             args=(ip, results_storage),
             kwargs={"distance_matrix": dm, "x0": x0[ip]},
         )
