@@ -277,9 +277,9 @@ if __name__ == "__main__":
         plt.show()
 
     for i, _p2opt in enumerate(p2opt):
-        ax = plot_path(grid_points, _p2opt, title=f"2-opt local search {i + 1}")
+        ax = plot_path(grid_points, _p2opt, title=f"2-opt local search")
         plt.show()
 
     for i, _plk in enumerate(plk):
-        ax = plot_path(grid_points, _plk, title=f"Lin-Kernighan algorithm {i + 1}")
+        ax = plot_path(grid_points, _plk, title=f"Lin-Kernighan algorithm")
         plt.show()
