@@ -4,6 +4,7 @@ grids
 """
 
 import multiprocessing
+import pickle
 import time
 
 import matplotlib.pyplot as plt
@@ -17,18 +18,21 @@ import fitting_polynomials_2d
 
 
 # Number of processes
-NPROC = 6
+NPROC = 7
 
 INITIALIZE_WITH_CHRISTOFIDES = True
 # Timeout settings (all in seconds)
 # 2-opt initial optimization
-TIMEOUT_2OPT = 300
+TIMEOUT_2OPT = 1200
 # Lin-Kernighan
 CYCLE_LK = 1  # checks for completion every cycle
 TIMEOUT_LK = 30  # total timeout
 
 # Grid dimensions
 ngrid = 28
+
+# Pickle file output
+output_pickle = f"tsp_grid_2d_{ngrid}x{ngrid}_{NPROC}_{TIMEOUT_2OPT}.pkl"
 
 
 def distance_matrix(xy):
@@ -273,13 +277,16 @@ if __name__ == "__main__":
     print(f"Time taken: {time.time() - t0:.2f}s")
 
     # Initialize
+    odict = {}
     if INITIALIZE_WITH_CHRISTOFIDES:
         print("Calculating Christofides approximation")
         tc = time.time()
         p0 = nx.algorithms.approximation.traveling_salesman_problem(G, method=christofides)[:-1]
         print(f"Time taken: {time.time() - tc:.2f}s")
-        p0_weight = nx.path_weight(G, p0 + [0], weight='weight')
-        print(f"Christofides path_weight = {p0_weight}")
+        total_weights_p0 = nx.path_weight(G, p0 + [0], weight='weight')
+        print(f"Christofides path_weight = {total_weights_p0}")
+        odict["p0"] = p0
+        odict["total_weights_p0"] = total_weights_p0
     else:
         p0 = None
 
@@ -292,6 +299,9 @@ if __name__ == "__main__":
         perturbation_scheme="two_opt",
     )
     p2opt, total_weights_2opt = zip(*results_2opt.values())
+    odict["results_2opt"] = results_2opt
+    odict["p2opt"] = p2opt
+    odict["total_weights_2opt"] = total_weights_2opt
     print("Total weights after two_opt local search:")
     print(pd.Series(total_weights_2opt))
 
@@ -299,8 +309,15 @@ if __name__ == "__main__":
     results_lk = multiprocess_lk(
         dm=dm, x0=p2opt, max_processing_time=TIMEOUT_LK, nproc=NPROC)
     plk, total_weights_lk = zip(*results_lk.values())
+    odict["results_lk"] = results_lk
+    odict["plk"] = plk
+    odict["total_weights_lk"] = total_weights_lk
     print("Total weights after Lin-Kernighan:")
     print(pd.Series(total_weights_lk))
+
+    print(f"Saving results to {output_pickle}")
+    with open(output_pickle, "wb") as fout:
+        pickle.dump(odict, fout)
 
     if INITIALIZE_WITH_CHRISTOFIDES:
         ax = plot_path(grid_points, p0, title="Christofides approximation")
