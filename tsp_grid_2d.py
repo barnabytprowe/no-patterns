@@ -22,7 +22,7 @@ NPROC = 6
 INITIALIZE_WITH_CHRISTOFIDES = True
 # Timeout settings (all in seconds)
 # 2-opt initial optimization
-TIMEOUT_2OPT = 600
+TIMEOUT_2OPT = 300
 # Lin-Kernighan
 CYCLE_LK = 1  # checks for completion every cycle
 TIMEOUT_LK = 30  # total timeout
@@ -295,5 +295,5 @@ if __name__ == "__main__":
         plt.show()
 
     for i, _plk in enumerate(plk):
-        ax = plot_path(grid_points, _plk, title=f"Lin-Kernighan algorithm")
+        ax = plot_path(grid_points, _plk, title=f"2-opt, Lin-Kernighan algorithm")
         plt.show()
