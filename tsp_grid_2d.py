@@ -17,7 +17,7 @@ import fitting_polynomials_2d
 
 
 # Number of processes
-NPROC = 8
+NPROC = 6
 
 INITIALIZE_WITH_CHRISTOFIDES = True
 # Timeout settings (all in seconds)
@@ -158,7 +158,21 @@ def multiprocess_local_search(
     perturbation_scheme="two_opt",
 ):
     """Launch and gather results from multiprocessing of approximate TSP
-    solutions using local search heuristics.
+    solutions using local search heuristics
+
+    Args:
+        distance_matrix: passed to python_tsp.heuristics.process_local_search
+        x0:
+            if set, a length nproc iterable of previous TSP path approximations
+            to use as starting points for local search, passed for each process
+            run to python_tsp.heuristics.process_local_search
+        max_processing_time: passed to python_tsp.heuristics.process_local_search
+        nproc: int number of processes to run simultaneously via multiprocessing
+        perturbation_scheme: passed to python_tsp.heuristics.process_local_search
+
+    Returns:
+        dict of returns from python_tsp.heuristics.process_local_search keyed by
+        integer process label, one of range(nproc)
     """
     processes = {}
     manager = multiprocessing.Manager()
