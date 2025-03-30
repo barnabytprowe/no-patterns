@@ -191,7 +191,7 @@ def multiprocess_local_search(
     return {_p: _result for _p, _result in enumerate(results)}
 
 
-def multiprocess_lk(dm, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
+def multiprocess_lk(distance_matrix, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
     """Launch and gather results from multiprocessing of approximate TSP
     solutions using the Lin-Kernighan algorithm.
 
@@ -222,7 +222,7 @@ def multiprocess_lk(dm, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
         processes[ip] = multiprocessing.Process(
             target=process_lin_kernighan,
             args=(ip, results_storage),
-            kwargs={"distance_matrix": dm, "x0": x0[ip]},
+            kwargs={"distance_matrix": distance_matrix, "x0": x0[ip]},
         )
         processes[ip].start()
 
