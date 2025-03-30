@@ -48,6 +48,7 @@ def apply_args_and_kwargs(fn, args, kwargs):
     return fn(*args, **kwargs)
 
 
+# Graph & plot utilities
 
 def distance_matrix(xy):
     """Create symmetric distance matrix via numpy.
@@ -106,6 +107,8 @@ def plot_path(xy, path, figsize=(6, 5.5), title=None):
     fig.tight_layout()
     return ax
 
+
+# Multi processing
 
 def process_lin_kernighan(pk, results_dict, distance_matrix=None, x0=None):
     """Target function for multiprocessing approximate TSP solutions using the
