@@ -19,8 +19,8 @@ import fitting_polynomials_2d
 
 
 # Number of processes to run simultaneously, and total runs to attempt
-NPROC = 10
-NRUNS = 30
+NPROC = 8
+NRUNS = 32
 
 INITIALIZE_WITH_CHRISTOFIDES = True
 # Timeout settings (all in seconds)
