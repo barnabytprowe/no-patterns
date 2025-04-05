@@ -34,7 +34,7 @@ TIMEOUT_LK = 30  # total timeout
 ngrid = 28
 
 # Pickle file output
-output_pickle = f"tsp_grid_2d_{ngrid}x{ngrid}_{NPROC}_{TIMEOUT_2OPT}.pkl"
+output_pickle = f"tsp_grid_2d_{ngrid}x{ngrid}_{NRUNS}_{TIMEOUT_2OPT}.pkl"
 
 
 # Pool starmap utilities
