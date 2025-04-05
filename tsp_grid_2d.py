@@ -191,12 +191,14 @@ def multiprocess_local_search(
     return {_p: _result for _p, _result in enumerate(results)}
 
 
-def multiprocess_lk(distance_matrix, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
+def multiprocess_lk(distance_matrix, nruns, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
     """Launch and gather results from multiprocessing of approximate TSP
     solutions using the Lin-Kernighan algorithm.
 
     Args:
         distance_matrix: passed to python_tsp.heuristics.process_lin_kernighan
+        nruns:
+            number of runs to attempt in total, probably some multiple of nproc
         x0:
             if set, a length nproc iterable of previous TSP path approximations
             to use as starting points for local search, an element of which is
@@ -215,40 +217,49 @@ def multiprocess_lk(distance_matrix, x0=None, max_processing_time=TIMEOUT_LK, np
     manager = multiprocessing.Manager()
     results_storage = manager.dict()
     if x0 is None:
-        x0 = [None] * nproc
+        x0 = [None] * nruns
 
-    for ip in range(nproc):
-        print(f"Launching process {ip} for Lin-Kernighan TSP")
-        processes[ip] = multiprocessing.Process(
-            target=process_lin_kernighan,
-            args=(ip, results_storage),
-            kwargs={"distance_matrix": distance_matrix, "x0": x0[ip]},
-        )
-        processes[ip].start()
+    nepochs = 1 + (nruns - 1) // NPROC
+    run = 0
+    for epoch in range(nepochs):
+        for ip in range(nproc):
+            print(f"Launching {epoch=}, {run=}, process={ip} for Lin-Kernighan TSP")
+            processes[ip] = multiprocessing.Process(
+                target=process_lin_kernighan,
+                args=(run, results_storage),
+                kwargs={"distance_matrix": distance_matrix, "x0": x0[run]},
+            )
+            processes[ip].start()
+            run += 1  # increment run counter for next process launch
+            if run == nruns:
+                break
 
-    # collect results
-    t0 = time.time()
-    marked_completed = [False] * nproc
-    incomplete = list(range(nproc))
-    while len(incomplete) > 0:
-        time.sleep(CYCLE_LK)
-        for ip in incomplete:
-            if processes[ip].exitcode == 0:
-                processes[ip].join(1)
-                incomplete.remove(ip)
-                print(f"Success: process={ip}, {len(incomplete)=}, elapsed={time.time() - t0}s")
-
-        time_exceeded = (time.time() - t0) >= max_processing_time
-        if time_exceeded:
+        # collect results
+        t0 = time.time()
+        marked_completed = [False] * nproc
+        incomplete = list(range(nproc))
+        while len(incomplete) > 0:
+            time.sleep(CYCLE_LK)
             for ip in incomplete:
-                if processes[ip].is_alive():
-                    processes[ip].terminate()
+                if processes[ip].exitcode == 0:
+                    processes[ip].join(1)
+                    incomplete.remove(ip)
                     print(
-                        f"Failure: process={ip} terminated incomplete, {len(incomplete)=}, "
+                        f"Success: {epoch=}, process={ip}, {len(incomplete)=}, "
                         f"elapsed={time.time() - t0}s"
                     )
-                processes[ip].join(1)
-            break
+
+            time_exceeded = (time.time() - t0) >= max_processing_time
+            if time_exceeded:
+                for ip in incomplete:
+                    if processes[ip].is_alive():
+                        processes[ip].terminate()
+                        print(
+                            f"Failure: {epoch=}, process={ip} terminated incomplete, "
+                            f"{len(incomplete)=}, elapsed={time.time() - t0}s"
+                        )
+                    processes[ip].join(1)
+                break
 
     return results_storage
 
@@ -265,6 +276,8 @@ if __name__ == "__main__":
     t0 = time.time()
     G = add_edges_from_distance_matrix(G, dm)
     print(f"Time taken: {time.time() - t0:.2f}s")
+    print(f"{NRUNS=}")
+    print(f"{NPROC=}")
 
     # Initialize
     odict = {}
@@ -296,11 +309,9 @@ if __name__ == "__main__":
     print("Total weights after two_opt local search:")
     print(pd.Series(total_weights_2opt))
 
-    import ipdb; ipdb.set_trace()
-
     # Refine with Lin-Kernighan
     results_lk = multiprocess_lk(
-        dm=dm, x0=p2opt, max_processing_time=TIMEOUT_LK, nproc=NPROC)
+        distance_matrix=dm, nruns=NRUNS, x0=p2opt, max_processing_time=TIMEOUT_LK, nproc=NPROC)
     plk, total_weights_lk = zip(*results_lk.values())
     odict["results_lk"] = results_lk
     odict["plk"] = plk
