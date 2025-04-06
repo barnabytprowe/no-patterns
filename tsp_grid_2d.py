@@ -19,7 +19,7 @@ import fitting_polynomials_2d
 
 
 # Number of processes to run simultaneously, and total runs to attempt
-NPROC = 7
+NPROC = 6
 NRUNS = 256
 
 # Number of top (i.e. shortest path) runs to plot, set 0 to disable all plotting
@@ -42,9 +42,9 @@ output_pickle = f"tsp_grid_2d_{ngrid}x{ngrid}_{NRUNS}_{TIMEOUT_2OPT}.pkl"
 
 # Pool starmap utilities
 
-def starmap_with_kwargs(pool, fn, args_iter, kwargs_iter):
+def starmap_with_kwargs(pool, fn, args_iter, kwargs_iter, chunksize=None):
     args_for_starmap = zip(repeat(fn), args_iter, kwargs_iter)
-    return pool.starmap(apply_args_and_kwargs, args_for_starmap)
+    return pool.starmap(apply_args_and_kwargs, args_for_starmap, chunksize=chunksize)
 
 
 def apply_args_and_kwargs(fn, args, kwargs):
@@ -189,6 +189,7 @@ def multiprocess_local_search(
                 }
                 for _p in range(nruns)
             ],
+            chunksize=1,
         )
 
     return {_p: _result for _p, _result in enumerate(results)}
