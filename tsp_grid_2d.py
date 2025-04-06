@@ -19,16 +19,19 @@ import fitting_polynomials_2d
 
 
 # Number of processes to run simultaneously, and total runs to attempt
-NPROC = 8
-NRUNS = 32
+NPROC = 7
+NRUNS = 256
+
+# Number of top (i.e. shortest path) runs to plot, set 0 to disable all plotting
+PLOT_TOP_N = 5
 
 INITIALIZE_WITH_CHRISTOFIDES = True
 # Timeout settings (all in seconds)
 # 2-opt initial optimization
-TIMEOUT_2OPT = 300
+TIMEOUT_2OPT = 500
 # Lin-Kernighan
 CYCLE_LK = 1  # checks for completion every cycle
-TIMEOUT_LK = 30  # total timeout
+TIMEOUT_LK = 10  # timeout after which to give up on possibly stuck LK
 
 # Grid dimensions
 ngrid = 28
@@ -307,7 +310,7 @@ if __name__ == "__main__":
     odict["p2opt"] = p2opt
     odict["total_weights_2opt"] = total_weights_2opt
     print("Total weights after two_opt local search:")
-    print(pd.Series(total_weights_2opt))
+    print(pd.Series(total_weights_2opt).describe())
 
     # Refine with Lin-Kernighan
     results_lk = multiprocess_lk(
@@ -317,20 +320,20 @@ if __name__ == "__main__":
     odict["plk"] = plk
     odict["total_weights_lk"] = total_weights_lk
     print("Total weights after Lin-Kernighan:")
-    print(pd.Series(total_weights_lk))
+    print(pd.Series(total_weights_lk).describe())
 
     print(f"Saving results to {output_pickle}")
     with open(output_pickle, "wb") as fout:
         pickle.dump(odict, fout)
 
-    if INITIALIZE_WITH_CHRISTOFIDES:
+    if INITIALIZE_WITH_CHRISTOFIDES and PLOT_TOP_N > 0:
         ax = plot_path(grid_points, p0, title="Christofides approximation")
         plt.show()
 
-    for i, _p2opt in enumerate(p2opt):
-        ax = plot_path(grid_points, _p2opt, title=f"2-opt local search")
+    for _index in pd.Series(total_weights_2opt).sort_values(ascending=True).index[:PLOT_TOP_N]:
+        ax = plot_path(grid_points, p2opt[_index], title=f"2-opt local search")
         plt.show()
 
-    for i, _plk in enumerate(plk):
-        ax = plot_path(grid_points, _plk, title=f"2-opt, Lin-Kernighan algorithm")
+    for _index in pd.Series(total_weights_lk).sort_values(ascending=True).index[:PLOT_TOP_N]:
+        ax = plot_path(grid_points, plk[_index], title=f"2-opt, Lin-Kernighan algorithm")
         plt.show()
