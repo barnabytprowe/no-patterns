@@ -1,4 +1,4 @@
-plots/*
+fitting/plots/*
 old code/*
 *.pkl
 *.tmp.driveupload/
