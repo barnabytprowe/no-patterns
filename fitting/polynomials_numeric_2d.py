@@ -10,7 +10,17 @@ polynomial surfaces on a regular 2D grid.
 Rather than solving for OLS regression via Singular Value Decomposition, this
 script uses numeric, gradient descent-based optimization schemes provided by
 pytorch (e.g. Adam batch gradient descent, L-BFGS) rather than solving for the
-exact linear algebra solution.
+exact linear algebra solution.  Mini-batches are not used, since we are
+interested in establishing whether or not non-stochastic gradient descent has
+difficulty finding OLS model solutions, and the additional stochasticity of
+randomly-selected minibatches must make it extremely hard for the OLS model
+to be found (one of the reasons they are used in practice).
+
+We find that gradient descent does indeed find it hard to locate the OLS model
+in the overspecified regression examples, although Adam seems to get closest,
+depending on hyperparameter selection.  Our hypothesis is that this is due to
+the flatness of the loss function close in parameter to space to what must be a
+very narrow spike in the vicinity of the OLS model.
 
 Saves output from each simulated regression into a uniquely timestamped
 subfolder of ./plots/polynomials_numeric_2d/.
@@ -137,6 +147,7 @@ if __name__ == "__main__":
 
         # Initialize pytorch elements
         _dataset = TensorDataset(torch.from_numpy(_design_matrix).to(device), ztensor)
+        # Note no mini-batches, which add stochasticity inherently use full gradient descent
         _loader = DataLoader(_dataset, batch_size=len(ztensor))
         _model = torch.nn.Linear(_design_matrix.shape[-1], 1, bias=False).double()
         _model.to(device)
