@@ -1,15 +1,16 @@
 """
-fitting_polynomials_numeric_2d.py
-=================================
+no_patterns/fitting/polynomials_numeric_2d.py
+=============================================
 
-Examples of regression of in two dimensions, described in the paper "No
-patterns in regression residuals," illustrating underspecified, correctly
-specified, and overspecified regression of randomly-generated polynomial
-surfaces on a regular 2D grid.
+Exploratory script investigating regression of in two dimensions, described in
+the paper "No patterns in regression residuals," illustrating underspecified,
+correctly specified, and overspecified regression of randomly-generated
+polynomial surfaces on a regular 2D grid.
 
-Uses numeric gradient descent-based optimization schemes provided by pytorch
-(e.g. batch gradient descent, Adam, L-BFGS) rather than solving for the exact
-linear algebra solution.
+Rather than solving for OLS regression via Singular Value Decomposition, this
+script uses numeric, gradient descent-based optimization schemes provided by
+pytorch (e.g. Adam batch gradient descent, L-BFGS) rather than solving for the
+exact linear algebra solution.
 
 Saves output from each simulated regression into a uniquely timestamped
 subfolder of ./plots/polynomials_numeric_2d/.
@@ -24,9 +25,9 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-import fitting_polynomials_2d
+import polynomials_2d
 import further_analysis_polynomials_2d
-from fitting_polynomials_2d import (  # all parameters defined in core fitting module
+from polynomials_2d import (  # all parameters defined in core fitting module
     x0x1_min,
     x0x1_max,
     nx,
@@ -54,7 +55,7 @@ run_specifications = ("lo", "true", "hi", "vhi")
 # Use existing timestamp?
 tstmp_exists = True
 if tstmp_exists:
-    # change this to use a referenced pre-run regression example output by fitting_polynomials_2d.py
+    # change this to use a referenced pre-run regression example output by fitting/polynomials_2d.py
     tstmp = "2024-05-10T112411.980432"
     tstmp_project_dir = os.path.join(PLTDIR, "polynomials_2d")
     tsfolder, tsfile = further_analysis_polynomials_2d.pathfile(tstmp, projdir=tstmp_project_dir)
@@ -75,7 +76,7 @@ lbfgs_optim = {
 }
 early_exit_rtol = 1e-13
 
-# use graphics card if available
+# use CUDA graphics card if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -88,19 +89,19 @@ if __name__ == "__main__":
     output = {}
 
     # Prepare two independent variables on a grid
-    x0, x1 = fitting_polynomials_2d.square_grid(
+    x0, x1 = polynomials_2d.square_grid(
         min_val=x0x1_min, max_val=x0x1_max, nside=nx, endpoint=True, flatten_order="C")
 
     # Design matrices
     design_matrices = {
-        _spec: fitting_polynomials_2d.chebyshev_design_matrix(x0, x1, degree=_deg)
+        _spec: polynomials_2d.chebyshev_design_matrix(x0, x1, degree=_deg)
         for _spec, _deg in zip(
             all_specifications, (fit_degree_lo, fit_degree_true, fit_degree_hi, fit_degree_vhi))
     }
 
     # Build the true / ideal 2D contour, and the noise-added data, and plot
     if tstmp_exists:
-        print(f"Loading fitting_polynomials_2d output data from {tsfile}")
+        print(f"Loading fitting/polynomials_2d output data from {tsfile}")
         with open(tsfile, "rb") as fin:
             tsdata = pickle.load(fin)
         ctrue = tsdata["ctrue"]
@@ -113,10 +114,10 @@ if __name__ == "__main__":
         ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((nx, nx), order="C")
         zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
 
-    outdir = fitting_polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
-    fitting_polynomials_2d.plot_image(
+    outdir = polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
+    polynomials_2d.plot_image(
         ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True)
-    fitting_polynomials_2d.plot_image(
+    polynomials_2d.plot_image(
         zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"), show=True)
     output["ctrue"] = ctrue
     output["ztrue"] = ztrue
@@ -207,28 +208,28 @@ if __name__ == "__main__":
     # Calculate and plot residuals
     for _optim in ("gd", "lbfgs"):
         rlo = zdata - output[f"{_optim}_pred_lo"]
-        fitting_polynomials_2d.plot_image(
+        polynomials_2d.plot_image(
             rlo,
             "Low degree polynomial residuals",
             filename=os.path.join(outdir, "lo_"+tstmp+".png"),
             clim=CLIM,
         )
         rtrue = zdata - output[f"{_optim}_pred_true"]
-        fitting_polynomials_2d.plot_image(
+        polynomials_2d.plot_image(
             rtrue,
             "Matching degree polynomial residuals",
             filename=os.path.join(outdir, "matching_"+tstmp+".png"),
             clim=CLIM,
         )
         rhi = zdata - output[f"{_optim}_pred_hi"]
-        fitting_polynomials_2d.plot_image(
+        polynomials_2d.plot_image(
             rhi,
             "High degree polynomial residuals",
             filename=os.path.join(outdir, "hi_"+tstmp+".png"),
             clim=CLIM,
         )
         rvhi = zdata - output[f"{_optim}_pred_vhi"]
-        fitting_polynomials_2d.plot_image(
+        polynomials_2d.plot_image(
             rvhi,
             "Very high degree polynomial residuals",
             filename=os.path.join(outdir, "vhi_"+tstmp+".png"),
