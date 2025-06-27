@@ -1,26 +1,26 @@
 """
-large_sample_polynomials_2d.py
-==============================
+no_patterns/fitting/large_sample_polynomials_2d.py
+==================================================
 
 Analysis of a large sample of polynomial regressions in two dimensions,
 described in the paper "No patterns in regression residuals."
 """
 
-import os
 import functools
 import multiprocessing
+import os
 import pickle
 
-import numpy as np
-import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 import sklearn.linear_model
 import sklearn.preprocessing
 
-import fitting_polynomials_2d
-from fitting_polynomials_2d import nx, x0x1_min, x0x1_max, coeff_signal_to_noise, noise_sigma
+import polynomials_2d
+from polynomials_2d import nx, x0x1_min, x0x1_max, coeff_signal_to_noise, noise_sigma
 from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
 
 
@@ -47,12 +47,12 @@ if NRUNS not in NRUNS_STRS:
 NCORES = 2
 
 
-# Gather module scope degrees into an array for convenience, use values from fitting_polynomials_2d
+# Gather module scope degrees into an array for convenience, use values from fitting.polynomials_2d
 degree_values = (
-    fitting_polynomials_2d.fit_degree_lo,
-    fitting_polynomials_2d.fit_degree_true,
-    fitting_polynomials_2d.fit_degree_hi,
-    fitting_polynomials_2d.fit_degree_vhi,
+    polynomials_2d.fit_degree_lo,
+    polynomials_2d.fit_degree_true,
+    polynomials_2d.fit_degree_hi,
+    polynomials_2d.fit_degree_vhi,
 )
 degree_titles = {
     _d: DEGREE_STRS[_d].title()+" (G="+str(_dv)+")" for _d, _dv in zip(DEGREES, degree_values)}
@@ -62,7 +62,7 @@ degree_titles = {
 # =========
 
 def _fit_predict(data_flat, design_matrix=None):
-    """Perform regression on input fitting_polynomial_2d.py-style dataset using
+    """Perform regression on input fitting/polynomial_2d.py-style dataset using
     input features, returning regression prediction
     """
     coeffs = np.linalg.lstsq(design_matrix, data_flat, rcond=None)[0].T
