@@ -1,9 +1,9 @@
 """
-further_analysis_polynomials_2d.py
-==================================
+no_patterns/fitting/further_analysis_polynomials_2d.py
+======================================================
 
 Further analysis and additional plots of regressions performed by
-fitting_polynomials_2d.py, described in the paper "No patterns in regression
+fitting/polynomials_2d.py, described in the paper "No patterns in regression
 residuals."
 """
 
@@ -13,16 +13,12 @@ import os
 import pickle
 import yaml
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
-import fitting_polynomials_2d
-from fitting_polynomials_2d import PROJDIR
-from fitting_polynomials_2d import FIGSIZE
-from fitting_polynomials_2d import CLIM
-from fitting_polynomials_2d import CMAP
-from fitting_polynomials_2d import TITLE_SIZE
+import polynomials_2d
+from polynomials_2d import PROJDIR, FIGSIZE, CLIM, CMAP, TITLE_SIZE
 
 
 # Parameters
@@ -52,7 +48,7 @@ NRUNS = 1000
 
 def pathfile(timestamp, projdir=PROJDIR):
     """Returns the folder and output pickle filename corresponding to a run
-    of fitting_polynomials_2d.py for the given timestamp.
+    of fitting/polynomials_2d.py for the given timestamp.
     """
     tfolder = os.path.join(projdir, timestamp)
     if not os.path.isdir(tfolder):
@@ -63,7 +59,7 @@ def pathfile(timestamp, projdir=PROJDIR):
 
 def get_data_stats(timestamp):
     """Gets data, then calculates and returns some second order stats from a
-    fitting_polynomials_2d.py output pickle file for the given timestamp.
+    fitting/polynomials_2d.py output pickle file for the given timestamp.
     """
     tfolder, tsfile = pathfile(timestamp, projdir=PROJDIR)
     print(f"Building stats from {tsfile}")
@@ -130,14 +126,14 @@ def plot_shuffled_residuals(stats, rng=None):
         _shuffled_res = _res_flattened.reshape(_res.shape, order="C")
 
         _timestamp = stats[_degree]["timestamp"]
-        if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
+        if _degree == "true":  # annoyingly fitting/polynomials_2d saved images down as matching_*
             _outfile = os.path.join(
                 stats[_degree]["folder"], f"matching_shuffled_{_timestamp}.png")
         else:
             _outfile = os.path.join(
                 stats[_degree]["folder"], f"{_degree}_shuffled_{_timestamp}.png")
 
-        fitting_polynomials_2d.plot_image(
+        polynomials_2d.plot_image(
             _shuffled_res,
             title=f"Shuffled {DEGREE_STRS[_degree]} degree polynomial residuals",
             filename=_outfile,
@@ -172,7 +168,7 @@ def plot_histogram_residuals(stats):
         plt.tight_layout()
 
         timestamp = stats[_degree]["timestamp"]
-        if _degree == "true":  # annoyingly fitting_polynomials_2d saved images down as matching_*
+        if _degree == "true":  # annoyingly fitting/polynomials_2d saved images down as matching_*
             outfile = os.path.join(stats[_degree]["folder"], f"hist_matching_{timestamp}.png")
         else:
             outfile = os.path.join(stats[_degree]["folder"], f"hist_{_degree}_{timestamp}.png")
@@ -197,7 +193,7 @@ def plot_predictions(data):
             _outfile = os.path.join(data["folder"], f"matching_prediction_{timestamp}.png")
         else:
             _outfile = os.path.join(data["folder"], f"{_degree}_prediction_{timestamp}.png")
-        fitting_polynomials_2d.plot_image(
+        polynomials_2d.plot_image(
             _prediction,
             title=f"{DEGREE_STRS[_degree].title()} degree polynomial prediction",
             filename=_outfile,
@@ -219,7 +215,7 @@ def mean_squared_cross_validation_residual(data, rng=None, nruns=NRUNS):
     print(f"Generating {nruns} new datasets for {timestamp}")
     imshape = data["ztrue"].shape
     new_errors = rng.normal(
-        loc=0., scale=fitting_polynomials_2d.noise_sigma, size=(nruns, imshape[0], imshape[1]))
+        loc=0., scale=polynomials_2d.noise_sigma, size=(nruns, imshape[0], imshape[1]))
     new_datasets = data["ztrue"] + new_errors
 
     mean_squared_xvr = {}
