@@ -5,6 +5,11 @@ no_patterns/fitting/further_analysis_polynomials_2d.py
 Further analysis and additional plots of regressions performed by
 fitting/polynomials_2d.py, described in the paper "No patterns in regression
 residuals."
+
+Uses glob to locate all timestamped output generated so far by
+fitting/polynomials_2d.py, then generates histograms (including shuffled) of
+residuals for each regression simulation suite, along with images of predictions
+and other statistics.
 """
 
 import collections
