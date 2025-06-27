@@ -31,7 +31,7 @@ from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
 # ==========
 
 # Number of simulated regression, out-of-sample datasets
-NRUNS = 1000
+NRUNS = 10000
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
