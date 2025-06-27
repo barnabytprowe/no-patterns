@@ -1,10 +1,15 @@
 """
-oos_rss_polynomials_2d.py
-=========================
+no_patterns/fitting/oos_rss_polynomials_2d.py
+=============================================
 
 Analysis of out-of-sample (OOS) residual sums of squares (RSS) of regression
-predictions from fitting_polynomials_2d.py, described in the paper "No patterns
+predictions from fitting/polynomials_2d.py, described in the paper "No patterns
 in regression residuals."
+
+Uses the regression simulation parameters set in fitting/polynomials_2d.py,
+including nx, x0x1_min, x0x1_max, coeff_signal_to_noise and noise_sigma; and
+the four polynomial degrees fit_degree_lo, fit_degree_true, fit_degree_hi and
+fit_degree_vhi.
 """
 
 import functools
@@ -17,7 +22,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import fitting_polynomials_2d
+import polynomials_2d
+from polynomials_2d import PROJDIR
 from further_analysis_polynomials_2d import DEGREES, DEGREE_STRS
 
 
@@ -30,14 +36,14 @@ NRUNS = 1000
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
 # laptop) works best, perhaps due to some under-the-hood parallelization
-NCORES = 1
+NCORES = 2
 
 # Gather module scope degrees into an array for convenience, use values from fitting_polynomials_2d
 _dvals = (
-    fitting_polynomials_2d.fit_degree_lo,
-    fitting_polynomials_2d.fit_degree_true,
-    fitting_polynomials_2d.fit_degree_hi,
-    fitting_polynomials_2d.fit_degree_vhi,
+    polynomials_2d.fit_degree_lo,
+    polynomials_2d.fit_degree_true,
+    polynomials_2d.fit_degree_hi,
+    polynomials_2d.fit_degree_vhi,
 )
 DEGREE_VALS = {
     _d: _dval for _d, _dval in zip(DEGREES, _dvals)
@@ -51,8 +57,11 @@ DEGREE_TITLES = {
     for _d, _dval in DEGREE_VALS.items()
 }
 
-# Pickle cache file location
-PICKLE_CACHE = f"oos_rss_n{NRUNS}.pkl"
+# Pickle cache file location setup
+PKLDIR = os.path.join(".", "pickles")
+if not os.path.isdir(PKLDIR):
+    os.mkdir(PKLDIR)
+PICKLE_CACHE = os.path.join(PKLDIR, f"oos_rss_n{NRUNS}.pkl")
 CLOBBER = False  # overwrite any existing pickle cache
 
 # Figure size
@@ -62,15 +71,15 @@ FIGSIZE = (6, 7)
 SHOW_PLOTS = True
 
 # Output plot files
-INS_OUTFILE = os.path.join(fitting_polynomials_2d.PROJDIR, f"in-sample_rss_n{NRUNS}.pdf")
-OOS_OUTFILE = os.path.join(fitting_polynomials_2d.PROJDIR, f"out-of-sample_rss_n{NRUNS}.pdf")
-MR_OUTFILE = os.path.join(fitting_polynomials_2d.PROJDIR, f"matched-relative_rss_n{NRUNS}.pdf")
+INS_OUTFILE = os.path.join(PROJDIR, f"in-sample_rss_n{NRUNS}.pdf")
+OOS_OUTFILE = os.path.join(PROJDIR, f"out-of-sample_rss_n{NRUNS}.pdf")
+MR_OUTFILE = os.path.join(PROJDIR, f"matched-relative_rss_n{NRUNS}.pdf")
 
 
 # Functions
 # =========
 
-def _fit_predict(data_flat, design_matrix=None, nx=fitting_polynomials_2d.nx, order="C"):
+def _fit_predict(data_flat, design_matrix=None, nx=polynomials_2d.nx, order="C"):
     """Perform regression on input fitting_polynomial_2d.py-style dataset using
     input features, returning regression prediction
     """
@@ -81,12 +90,12 @@ def _fit_predict(data_flat, design_matrix=None, nx=fitting_polynomials_2d.nx, or
 def build_regression_sample(
     rng,
     degree_vals=DEGREE_VALS,
-    nx=fitting_polynomials_2d.nx,
+    nx=polynomials_2d.nx,
     nruns=NRUNS,
-    x0x1_min=fitting_polynomials_2d.x0x1_min,
-    x0x1_max=fitting_polynomials_2d.x0x1_max,
-    coeff_signal_to_noise=fitting_polynomials_2d.coeff_signal_to_noise,
-    noise_sigma=fitting_polynomials_2d.noise_sigma,
+    x0x1_min=polynomials_2d.x0x1_min,
+    x0x1_max=polynomials_2d.x0x1_max,
+    coeff_signal_to_noise=polynomials_2d.coeff_signal_to_noise,
+    noise_sigma=polynomials_2d.noise_sigma,
 ):
     """Run full large sample analysis and return results in a dictionary"""
     output = {}
@@ -101,7 +110,7 @@ def build_regression_sample(
     # Design matrices
     for _d in degree_vals:
 
-        output[feature_labels[_d]] = fitting_polynomials_2d.chebyshev_design_matrix(
+        output[feature_labels[_d]] = polynomials_2d.chebyshev_design_matrix(
             x0, x1, degree=degree_vals[_d])
 
     # Ideal model coefficients and corresponding images on the coordinate grid
@@ -152,12 +161,12 @@ if __name__ == "__main__":
         results = build_regression_sample(
             rng,
             degree_vals=DEGREE_VALS,
-            nx=fitting_polynomials_2d.nx,
+            nx=polynomials_2d.nx,
             nruns=NRUNS,
-            x0x1_min=fitting_polynomials_2d.x0x1_min,
-            x0x1_max=fitting_polynomials_2d.x0x1_max,
-            coeff_signal_to_noise=fitting_polynomials_2d.coeff_signal_to_noise,
-            noise_sigma=fitting_polynomials_2d.noise_sigma,
+            x0x1_min=polynomials_2d.x0x1_min,
+            x0x1_max=polynomials_2d.x0x1_max,
+            coeff_signal_to_noise=polynomials_2d.coeff_signal_to_noise,
+            noise_sigma=polynomials_2d.noise_sigma,
         )
         t1 = time.time()
         print(f"Wall time: {(t1 - t0):.2f}s")
