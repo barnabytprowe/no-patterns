@@ -22,7 +22,6 @@ import pandas as pd
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import polynomials_2d
-from polynomials_2d import PLTDIR
 
 
 # Parameters
@@ -81,7 +80,7 @@ PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 ACF_MAX_LAG = 10
 
 # Output folder structure: project dir
-PROJDIR = os.path.join(PLTDIR, "polynomials_fourier_1d")
+PROJDIR = os.path.join(polynomials_2d.PLTDIR, "polynomials_fourier_1d")
 
 # Output file types
 OUTFILE_EXTENSIONS = (".png", ".pdf")
