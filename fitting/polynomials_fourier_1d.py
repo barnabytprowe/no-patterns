@@ -16,13 +16,13 @@ import os
 import pickle
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import numpy.polynomial.chebyshev
 import pandas as pd
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import fitting_polynomials_2d
-from fitting_polynomials_2d import PLTDIR
+import polynomials_2d
+from polynomials_2d import PLTDIR
 
 
 # Parameters
@@ -332,7 +332,7 @@ if __name__ == "__main__":
 
     # Current timestamp, used in I/0
     tstmp = pd.Timestamp.now().isoformat().replace(":", "")
-    outdir = fitting_polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
+    outdir = polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
 
     # Output dict - will be pickled
     output = {}
