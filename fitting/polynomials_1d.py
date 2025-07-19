@@ -37,11 +37,11 @@ noise_sigma = 1.
 # series model degrees to use as model sets for the ideal model and fitting
 fit_degree = {}
 
-# real signal (ideal model) degree in the simulations (1D polynomial / Fourier series) will also
-# be used as a model set for regression
+# Real signal (ideal model) degree in the simulations (1D polynomial / Fourier series) will also
+# be used as a model set for regression for each curve family
 fit_degree["true"] = {"cheb": 8, "sinu": 4}
 
-fit_degree["lo"] = {"cheb": 4, "sinu": 2}  # underspecified model sets
+fit_degree["lo"] = {"cheb": 2, "sinu": 2}  # underspecified model sets
 fit_degree["hi"] = {"cheb": 16, "sinu": 8}  # overspecified model sets
 fit_degree["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme behaviour clearly
 
@@ -50,6 +50,7 @@ fit_degree["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme
 coeff_signal_to_noise = 1.
 
 # Define x coordinates as linearly spaced points on the some interval, e.g. [0, 1), [-1, 1)
+# depending on curve family
 x = {
     "cheb": np.linspace(-1., 1., num=nx, endpoint=False),
     "sinu": np.linspace(0., 1., num=nx, endpoint=False),
@@ -61,6 +62,7 @@ FIGSIZE = (10, 4)
 FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
+XLIM = {_cf: (x[_cf].min() - 0.02, x[_cf].max() + 0.02) for _cf in ("cheb", "sinu")}
 TITLE_SIZE = "x-large"
 
 # Title display strings for plots
@@ -77,7 +79,7 @@ PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
 PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 
 # Autocorrelation function chart settings
-ACF_MAX_LAG = 10
+ACF_MAX_LAG = 12
 
 # Output folder structure: project dir
 PROJDIR = os.path.join(polynomials_2d.PLTDIR, "polynomials_fourier_1d")
@@ -102,7 +104,7 @@ def chebyshev_design_matrix(x, degree):
     return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
 
 
-def plot_regressions(xarr, yarrs, curve_family_display, tstmp, outdir, show=True):
+def plot_regressions(xarr, yarrs, curve_family, tstmp, outdir, show=True):
     """Makes and saves scatter and line plots of 1D regressions.
 
     Args:
@@ -118,11 +120,12 @@ def plot_regressions(xarr, yarrs, curve_family_display, tstmp, outdir, show=True
             - Matching degree model set set OLS prediction
             - High degree model set set OLS prediction
             - Very high degree model set set OLS prediction
-        curve_family_display: one of {'polynomial', 'Fourier'}
+        curve_family: one of {'cheb', 'sinu'}
         tstmp: timestamp used in folder structure
         outdir: output folder
         show: plt.show()?
     """
+    curve_family_display = CURVE_FAMILY_DISPLAY[curve_family]
     fig, ax = plt.subplots(figsize=FIGSIZE)
     ax.set_title(
         f"{curve_family_display.title()} series regression simulation", size=TITLE_SIZE)
@@ -135,6 +138,7 @@ def plot_regressions(xarr, yarrs, curve_family_display, tstmp, outdir, show=True
     ax.set_xlabel(r"$x$")
     ax.grid()
     ax.legend()
+    ax.set_xlim(XLIM[curve_family])
     fig.tight_layout()
     for _suffix in OUTFILE_EXTENSIONS:
 
@@ -376,7 +380,7 @@ if __name__ == "__main__":
                 output[f"ypred_{_cf}_hi"],
                 output[f"ypred_{_cf}_vhi"]
             ],
-            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
+            curve_family=_cf,
             tstmp=tstmp,
             outdir=outdir,
             show=True,
