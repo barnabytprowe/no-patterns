@@ -46,4 +46,3 @@ class SquareRadiator(IDesignPath):
 
     def path(self):
         return self.i, self.j
-
