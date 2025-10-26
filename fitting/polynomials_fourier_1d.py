@@ -104,7 +104,7 @@ def chebyshev_design_matrix(x, degree):
     return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
 
 
-def plot_regressions(xarr, yarrs, curve_family, tstmp, outdir, show=True):
+def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, show=True):
     """Makes and saves scatter and line plots of 1D regressions.
 
     Args:
@@ -120,15 +120,15 @@ def plot_regressions(xarr, yarrs, curve_family, tstmp, outdir, show=True):
             - Matching degree model set set OLS prediction
             - High degree model set set OLS prediction
             - Very high degree model set set OLS prediction
-        curve_family: one of {'cheb', 'sinu'}
+        xlim: length-2 iterable for input to plot axis set_xlim
+        curve_family_display: one of {'polynomial', 'Fourier'}
         tstmp: timestamp used in folder structure
         outdir: output folder
         show: plt.show()?
     """
-    curve_family_display = CURVE_FAMILY_DISPLAY[curve_family]
     fig, ax = plt.subplots(figsize=FIGSIZE)
     ax.set_title(
-        f"{curve_family_display.title()} series regression simulation", size=TITLE_SIZE)
+        f"{curve_family_display.title()} series regression", size=TITLE_SIZE)
     ax.plot(xarr, yarrs[0], color="k", ls="-", linewidth=2, label="Ideal model")
     ax.plot(xarr, yarrs[1], "k+", markersize=15, label="Data")
     ax.plot(xarr, yarrs[2], color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"])
@@ -138,12 +138,14 @@ def plot_regressions(xarr, yarrs, curve_family, tstmp, outdir, show=True):
     ax.set_xlabel(r"$x$")
     ax.grid()
     ax.legend()
-    ax.set_xlim(XLIM[curve_family])
+    ax.set_xlim(xlim)
     fig.tight_layout()
     for _suffix in OUTFILE_EXTENSIONS:
 
         outfile = os.path.join(
-            outdir, f"curves_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}")
+            outdir,
+            curve_family_display.lower(),
+            f"curves_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}")
         print(f"Saving to {outfile}")
         fig.savefig(outfile)
 
@@ -177,7 +179,9 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
     for _suffix in OUTFILE_EXTENSIONS:
 
         outfile = os.path.join(
-            outdir, (
+            outdir,
+            curve_family_display.lower(),
+            (
                 f"residuals_{fit_display.lower().replace(' ', '_')}_"
                 f"{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}"
             ),
@@ -248,6 +252,7 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
 
         outfile = os.path.join(
             outdir,
+            curve_family_display.lower(),
             f"periodograms_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}",
         )
         print(f"Saving to {outfile}")
@@ -318,6 +323,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
 
         outfile = os.path.join(
             outdir,
+            curve_family_display.lower(),
             f"acfs_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}",
         )
         print(f"Saving to {outfile}")
@@ -375,6 +381,10 @@ if __name__ == "__main__":
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_cf}_{_fit}"] = _yfit
 
+        # Prep output folder
+        if not os.path.isdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_cf].lower())):
+            os.mkdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_cf].lower()))
+
         # Plot ideal model, data, and ordinary least squares regression predictions
         plot_regressions(
             xarr=x[_cf],
@@ -386,7 +396,8 @@ if __name__ == "__main__":
                 output[f"ypred_{_cf}_hi"],
                 output[f"ypred_{_cf}_vhi"]
             ],
-            curve_family=_cf,
+            xlim=XLIM[_cf],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
             show=True,
