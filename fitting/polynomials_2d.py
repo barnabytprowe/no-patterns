@@ -211,6 +211,7 @@ if __name__ == "__main__":
 
     # Calculate and plot residuals
     rlo = zdata - pred_lo
+    print(f"Low degree polynomial n_coeffs = {design_lo.shape[1]}")
     plot_image(
         rlo,
         "Low degree polynomial residuals",
@@ -218,6 +219,7 @@ if __name__ == "__main__":
         clim=CLIM,
     )
     rtrue = zdata - pred_true
+    print(f"Matching degree polynomial n_coeffs = {design_true.shape[1]}")
     plot_image(
         rtrue,
         "Matching degree polynomial residuals",
@@ -225,6 +227,7 @@ if __name__ == "__main__":
         clim=CLIM,
     )
     rhi = zdata - pred_hi
+    print(f"High degree polynomial n_coeffs = {design_hi.shape[1]}")
     plot_image(
         rhi,
         "High degree polynomial residuals",
@@ -232,6 +235,7 @@ if __name__ == "__main__":
         clim=CLIM,
     )
     rvhi = zdata - pred_vhi
+    print(f"Very high degree polynomial n_coeffs = {design_vhi.shape[1]}")
     plot_image(
         rvhi,
         "Very high degree polynomial residuals",
