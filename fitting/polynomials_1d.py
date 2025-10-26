@@ -41,7 +41,7 @@ fit_degree = {}
 # be used as a model set for regression for each curve family
 fit_degree["true"] = {"cheb": 8, "sinu": 4}
 
-fit_degree["lo"] = {"cheb": 2, "sinu": 2}  # underspecified model sets
+fit_degree["lo"] = {"cheb": 2, "sinu": 1}  # underspecified model sets
 fit_degree["hi"] = {"cheb": 16, "sinu": 8}  # overspecified model sets
 fit_degree["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme behaviour clearly
 
