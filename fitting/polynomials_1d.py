@@ -368,7 +368,7 @@ if __name__ == "__main__":
             print(
                 # note the sinu design matrix contains an inactive feature for sin(0 * x), handled
                 # without issue to within machine precision by the SVD leastsq solution
-                f"{_cf} {_fit} n_coeffs = {_design_matrix.shape[1] - (1 if _cf == "sinu" else 0)}"
+                f"{_cf} {_fit} n_coeffs = {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
             )
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
             print(_coeffs)
