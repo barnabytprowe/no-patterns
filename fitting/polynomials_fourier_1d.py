@@ -64,6 +64,7 @@ CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
 XLIM = {_cf: (x[_cf].min() - 0.02, x[_cf].max() + 0.02) for _cf in ("cheb", "sinu")}
 TITLE_SIZE = "x-large"
+LABEL_SIZE = "large"
 
 # Title display strings for plots
 FIT_DISPLAY = {
@@ -135,7 +136,8 @@ def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, sho
     ax.plot(xarr, yarrs[3], color="k", ls="-", linewidth=1, label=FIT_DISPLAY["true"])
     ax.plot(xarr, yarrs[4], color="blue", ls="-.", linewidth=1, label=FIT_DISPLAY["hi"])
     ax.plot(xarr, yarrs[5], color="purple", ls=":", linewidth=1.25, label=FIT_DISPLAY["vhi"])
-    ax.set_xlabel(r"$x$")
+    ax.set_xlabel(r"$x$", size=LABEL_SIZE)
+    ax.set_ylabel(r"$y$", size=LABEL_SIZE)
     ax.grid()
     ax.legend()
     ax.set_xlim(xlim)
