@@ -1,6 +1,6 @@
 """
-no_patterns/fitting/polynomials_1d.py
-=====================================
+no_patterns/fitting/polynomials_fourier_1d.py
+=============================================
 
 Examples of regression of in one dimension, described in the paper "No patterns
 in regression residuals," illustrating underspecified, correctly specified, and
