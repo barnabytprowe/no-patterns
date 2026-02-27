@@ -420,10 +420,14 @@ if __name__ == "__main__":
                 show=True,
             )
             # Calculate residual periodogram via FFT and store
-            output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / len(_res)
+            output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / nx
+            # Pad by zeros to 2x length and store zero-padded periodogram also
+            _zpres = np.zeros(2 * nx, dtype=float)
+            _zpres[:nx] = _res
+            output[f"zprp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * nx)
 
         # Calculate periodograms of just the errors for plotting
-        output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / len(output[f"e_{_cf}"])
+        output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / nx
 
         # Now we plot error and residual periodograms
         plot_periodograms(
@@ -444,10 +448,25 @@ if __name__ == "__main__":
         # Calculate (circular) autocorrelation functions via inverse FFT of residual periodograms
         for _fit in ("lo", "true", "hi", "vhi"):
 
+            nhalf = len(output[f"rp_{_cf}_{_fit}"])  # first n//2 + 1 elements matter only, symmetry
             output[f"racf_{_cf}_{_fit}"] = np.fft.irfft(output[f"rp_{_cf}_{_fit}"])
+            print(f"racf_{_cf}_{_fit}[0] = {output[f'racf_{_cf}_{_fit}'][0]}")
             output[f"racf_{_cf}_{_fit}"] /= output[f"racf_{_cf}_{_fit}"][0]  # variance normalize
-            output[f"racf_{_cf}_{_fit}"] = (  # take only first n // 2 + 1 elements due to symmetry
-                output[f"racf_{_cf}_{_fit}"][:len(output[f"rp_{_cf}_{_fit}"])])
+            output[f"racf_{_cf}_{_fit}"] = output[f"racf_{_cf}_{_fit}"][:nhalf]
+            # then calculate the unbiased (non-circular) equivalent for comparison from the
+            # zero-padded periodograms
+            output[f"uracf_{_cf}_{_fit}"] = np.fft.irfft(output[f"zprp_{_cf}_{_fit}"])
+            output[f"uracf_{_cf}_{_fit}"] /= output[f"uracf_{_cf}_{_fit}"][0]  # variance normalize
+            output[f"uracf_{_cf}_{_fit}"] = output[f"uracf_{_cf}_{_fit}"][:nhalf]
+
+            print_differences = False
+            if print_differences:
+                print(f"biased - unbiased difference for racf_{_cf}_{_fit} up to {ACF_MAX_LAG=}:")
+                _difference = (
+                    output[f"uracf_{_cf}_{_fit}"] - output[f"racf_{_cf}_{_fit}"]
+                )[1:(1 + ACF_MAX_LAG)]
+                print(_difference)
+                print(pd.Series(_difference).describe())
 
         # Calculate (circular) autocorrelation function of just the errors for plotting
         output[f"eacf_{_cf}"] = np.fft.irfft(output[f"ep_{_cf}"])
@@ -459,10 +478,10 @@ if __name__ == "__main__":
         plot_acfs(
             [
                 output[f"eacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors periodogram for comparison
-                output[f"racf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
-                output[f"racf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
-                output[f"racf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
-                output[f"racf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
+                output[f"uracf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
+                output[f"uracf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
+                output[f"uracf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
+                output[f"uracf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
             ],
             nfull=nx,
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
