@@ -429,7 +429,7 @@ if __name__ == "__main__":
             _rmean = _res.mean()
             assert np.isclose(_rmean, 0, atol=1.e-14, rtol=0.)
             _zpres = np.zeros(2 * nx, dtype=float)  # zero-padded storage array
-            _zpres[:nx] = _res  # - _rmean
+            _zpres[:nx] = _res  - _rmean
             output[f"zprp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * nx)
 
         # Calculate periodograms of just the errors for plotting
