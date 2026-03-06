@@ -434,6 +434,10 @@ if __name__ == "__main__":
 
         # Calculate periodograms of just the errors for plotting
         output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / nx
+        # also calc 2x length zero padded, mean subtracted errors periodogram
+        _zperrs = np.zeros(2 * nx, dtype=float)  # zero-padded storage array
+        _zperrs[:nx] = output[f"e_{_cf}"] - output[f"e_{_cf}"].mean()  # mean subtract
+        output[f"zpep_{_cf}"] = np.abs(np.fft.rfft(_zperrs))**2 / (2 * nx)
 
         # Now we plot error and residual periodograms
         plot_periodograms(
@@ -454,17 +458,21 @@ if __name__ == "__main__":
         # Calculate (circular) autocorrelation functions via inverse FFT of residual periodograms
         for _fit in ("lo", "true", "hi", "vhi"):
 
-            nhalf = len(output[f"rp_{_cf}_{_fit}"])  # first n//2 + 1 elements matter only, symmetry
+            _nhalf = len(output[f"rp_{_cf}_{_fit}"])  # first n//2 + 1 elements matter only, symmetry
             output[f"racf_{_cf}_{_fit}"] = np.fft.irfft(output[f"rp_{_cf}_{_fit}"])
             print(f"racf_{_cf}_{_fit}[0] = {output[f'racf_{_cf}_{_fit}'][0]}")
             output[f"racf_{_cf}_{_fit}"] /= output[f"racf_{_cf}_{_fit}"][0]  # variance normalize
-            output[f"racf_{_cf}_{_fit}"] = output[f"racf_{_cf}_{_fit}"][:nhalf]
+            # take non-redundant first _nhalf elements only
+            output[f"racf_{_cf}_{_fit}"] = output[f"racf_{_cf}_{_fit}"][:_nhalf]
             # then calculate the unbiased (non-circular) equivalent for comparison from the
             # zero-padded periodograms
             output[f"uracf_{_cf}_{_fit}"] = np.fft.irfft(output[f"zprp_{_cf}_{_fit}"])
             output[f"uracf_{_cf}_{_fit}"] /= output[f"uracf_{_cf}_{_fit}"][0]  # variance normalize
-            output[f"uracf_{_cf}_{_fit}"] = output[f"uracf_{_cf}_{_fit}"][:nhalf]
-
+            # take non-redundant first _nhalf elements only, apply the debiasing factor
+            output[f"uracf_{_cf}_{_fit}"] = (
+                output[f"uracf_{_cf}_{_fit}"][:_nhalf] * nx / (nx - np.arange(_nhalf, dtype=float))
+            )
+            # print info to stdout?
             print_differences = False
             if print_differences:
                 print(f"biased - unbiased difference for racf_{_cf}_{_fit} up to {ACF_MAX_LAG=}:")
@@ -474,16 +482,23 @@ if __name__ == "__main__":
                 print(_difference)
                 print(pd.Series(_difference).describe())
 
-        # Calculate (circular) autocorrelation function of just the errors for plotting
+        # Calculate circular autocorrelation and unbiased equivalent function of just the errors,
+        # for plotting
+        _nhalf = len(output[f"ep_{_cf}"])
         output[f"eacf_{_cf}"] = np.fft.irfft(output[f"ep_{_cf}"])
         output[f"eacf_{_cf}"] /= output[f"eacf_{_cf}"][0]  # variance normalize
-        # take only first n // 2 + 1 elements due to symmetry
-        output[f"eacf_{_cf}"] = output[f"eacf_{_cf}"][:len(output[f"ep_{_cf}"])]
+        output[f"eacf_{_cf}"] = output[f"eacf_{_cf}"][:_nhalf]
+        output[f"ueacf_{_cf}"] = np.fft.irfft(output[f"zpep_{_cf}"])
+        output[f"ueacf_{_cf}"] /= output[f"ueacf_{_cf}"][0]  # variance normalize
+        # take non-redundant first _nhalf elements only, apply the debiasing factor
+        output[f"ueacf_{_cf}"] = (
+            output[f"ueacf_{_cf}"][:_nhalf] * nx / (nx - np.arange(_nhalf, dtype=float))
+        )
 
         # Now plot autocorrelation functions
         plot_acfs(
             [
-                output[f"eacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors periodogram for comparison
+                output[f"ueacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors ACF for comparison
                 output[f"uracf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
                 output[f"uracf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
                 output[f"uracf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
