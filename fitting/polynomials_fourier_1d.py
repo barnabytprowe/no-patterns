@@ -421,9 +421,14 @@ if __name__ == "__main__":
             )
             # Calculate residual periodogram via FFT and store
             output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / nx
-            # Pad by zeros to 2x length and store zero-padded periodogram also
-            _zpres = np.zeros(2 * nx, dtype=float)
-            _zpres[:nx] = _res
+            # Residuals from OLS should be ~ 0 anyhow so we won't mean subtract, but for comparison
+            # and a more standard ACF calculation (e.g. Box et al 15, also Wikipedia) we will pad
+            # residuals with zeros to 2x length then calculate and store the resulting periodogram;
+            # in practice the two ACF definitions will be ~close at lag << nx
+            _rmean = _res.mean()
+            assert np.isclose(_rmean, 0, atol=1.e-14, rtol=0.)
+            _zpres = np.zeros(2 * nx, dtype=float)  # zero-padded storage array
+            _zpres[:nx] = _res  # - _rmean
             output[f"zprp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * nx)
 
         # Calculate periodograms of just the errors for plotting
