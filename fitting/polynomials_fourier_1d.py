@@ -326,6 +326,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     ax.axhline(+1. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
     ax.axhline(+2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
     ax.set_xlabel(r"Lag $\ell$")
+    ax.set_ylabel(r"$r_u[\ell]$")
     ax.grid()
     ax.legend()
     fig.tight_layout()
