@@ -59,6 +59,7 @@ x = {
 
 # Plot settings
 FIGSIZE = (10, 4)
+FIGSIZE_PERIODOGRAMS = (10, 6)
 FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
@@ -218,37 +219,44 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
         outdir: output folder
         show: plt.show()?
     """
-    fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.set_title(
+    fig, (ax0, ax1) = plt.subplots(2, figsize=FIGSIZE_PERIODOGRAMS)
+    fig.suptitle(
         curve_family_display.title()+" series regression residual periodograms", size=TITLE_SIZE)
 
-    ax.plot(
-        np.arange(len(periodograms[0])) / nfull, periodograms[0], color="k", ls="--",
-        linewidth=1, label="iid errors",
-    )
-    ax.plot(
-        np.arange(len(periodograms[1])) / nfull, periodograms[1], color="red", ls="--",
-        linewidth=1.5, label=FIT_DISPLAY["lo"],
-    )
-    ax.plot(
-        np.arange(len(periodograms[2])) / nfull, periodograms[2], color="k", ls="-",
-        linewidth=1.5, label=FIT_DISPLAY["true"],
-    )
-    ax.plot(
-        np.arange(len(periodograms[3])) / nfull, periodograms[3], color="blue", ls="-.",
-        linewidth=1.5, label=FIT_DISPLAY["hi"],
-    )
-    ax.plot(
-        np.arange(len(periodograms[4])) / nfull, periodograms[4], color="purple", ls=":",
-        linewidth=1.5, label=FIT_DISPLAY["vhi"],
-    )
+    for _ax, _method in zip((ax0, ax1), ("semilogy", "plot")):
+        _plt = getattr(_ax, _method)
+        _plt(
+            np.arange(len(periodograms[0])) / nfull, periodograms[0], color="k", ls="--",
+            linewidth=1, label="iid errors"
+        )
+        _plt(
+            np.arange(len(periodograms[1])) / nfull, periodograms[1], color="red", ls="--",
+            linewidth=1.5, label=FIT_DISPLAY["lo"],
+        )
+        _plt(
+            np.arange(len(periodograms[2])) / nfull, periodograms[2], color="k", ls="-",
+            linewidth=1.5, label=FIT_DISPLAY["true"],
+        )
+        _plt(
+            np.arange(len(periodograms[3])) / nfull, periodograms[3], color="blue", ls="-.",
+            linewidth=1.5, label=FIT_DISPLAY["hi"],
+        )
+        _plt(
+            np.arange(len(periodograms[4])) / nfull, periodograms[4], color="purple", ls=":",
+            linewidth=1.5, label=FIT_DISPLAY["vhi"],
+        )
+        if _method == "plot":
+            _ax.set_yscale("log")
+            _ax.set_yticks(PERIODOGRAM_YTICKS)
+            _ax.set_ylim(PERIODOGRAM_YLIM)
+            _ax.set_xlabel(r"Frequency $k/N$")
+            _ax.legend()
+        else:
+            _ax.set_ylim((1.e-3, 1.e3))
 
-    ax.set_yscale("log")
-    ax.set_yticks(PERIODOGRAM_YTICKS)
-    ax.set_ylim(PERIODOGRAM_YLIM)
-    ax.set_xlabel(r"Frequency $k/N$")
-    ax.grid()
-    ax.legend()
+        _ax.set_ylabel(f"$\iota[k]$")
+        _ax.grid()
+
     fig.tight_layout()
     for _suffix in OUTFILE_EXTENSIONS:
 
