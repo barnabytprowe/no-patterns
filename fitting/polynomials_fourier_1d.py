@@ -249,12 +249,12 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
             _ax.set_yscale("log")
             _ax.set_yticks(PERIODOGRAM_YTICKS)
             _ax.set_ylim(PERIODOGRAM_YLIM)
-            _ax.set_xlabel(r"Frequency $k/N$")
+            _ax.set_xlabel(r"Frequency $k/N$", size=LABEL_SIZE)
             _ax.legend()
         else:
             _ax.set_ylim((1.e-3, 1.e3))
 
-        _ax.set_ylabel(f"$\iota[k]$")
+        _ax.set_ylabel(f"$\iota[k]$", size=LABEL_SIZE)
         _ax.grid()
 
     fig.tight_layout()
@@ -325,8 +325,8 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     ax.axhline(+0., ls="-", linewidth=1, color="k")
     ax.axhline(+1. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
     ax.axhline(+2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
-    ax.set_xlabel(r"Lag $\ell$")
-    ax.set_ylabel(r"$r_u[\ell]$")
+    ax.set_xlabel(r"Lag $\ell$", size=LABEL_SIZE)
+    ax.set_ylabel(r"$r_u[\ell]$", size=LABEL_SIZE)
     ax.grid()
     ax.legend()
     fig.tight_layout()
