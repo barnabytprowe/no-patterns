@@ -493,8 +493,8 @@ if __name__ == "__main__":
                 print(_difference)
                 print(pd.Series(_difference).describe())
 
-        # Calculate circular autocorrelation and unbiased equivalent function of just the errors,
-        # for plotting
+        # Calculate circular autocorrelation and unbiased (e.g. Smith 2007) equivalent function of
+        # just the errors, for plotting
         _nhalf = len(output[f"ep_{_cf}"])
         output[f"eacf_{_cf}"] = np.fft.irfft(output[f"ep_{_cf}"])
         output[f"eacf_{_cf}"] /= output[f"eacf_{_cf}"][0]  # variance normalize
@@ -509,11 +509,11 @@ if __name__ == "__main__":
         # Now plot autocorrelation functions
         plot_acfs(
             [
-                output[f"ueacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors ACF for comparison
-                output[f"uracf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
-                output[f"uracf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
-                output[f"uracf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
-                output[f"uracf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
+                output[f"eacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors ACF for comparison
+                output[f"racf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
             ],
             nfull=nx,
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
