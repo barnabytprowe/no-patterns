@@ -56,6 +56,7 @@ x = {
     "sinu": np.linspace(0., 1., num=nx, endpoint=False),
 }
 
+verbose = False
 
 # Plot settings
 FIGSIZE = (10, 4)
@@ -382,13 +383,15 @@ if __name__ == "__main__":
         for _fit in ("lo", "true", "hi", "vhi"):
 
             _design_matrix = features[_fit][_cf]
-            print(
-                # note the sinu design matrix contains an inactive feature for sin(0 * x), handled
-                # without issue to within machine precision by the SVD leastsq solution
-                f"{_cf} {_fit} n_coeffs = {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
-            )
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
-            print(_coeffs)
+            if verbose:
+                print(
+                    # note the sinusoidal design matrix contains an inactive feature for sin(0 * x)
+                    # (handled without issue to machine precision by the SVD leastsq solution)
+                    f"{_cf} {_fit} n_coeffs = {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
+                )
+                print(_coeffs)
+
             _yfit = _design_matrix.dot(_coeffs.T)
             output[f"ypred_{_cf}_{_fit}"] = _yfit
 
@@ -469,7 +472,8 @@ if __name__ == "__main__":
 
             _nhalf = len(output[f"rp_{_cf}_{_fit}"])  # first n//2 + 1 elements matter only, symmetry
             output[f"racf_{_cf}_{_fit}"] = np.fft.irfft(output[f"rp_{_cf}_{_fit}"])
-            print(f"racf_{_cf}_{_fit}[0] = {output[f'racf_{_cf}_{_fit}'][0]}")
+            if verbose:
+                print(f"racf_{_cf}_{_fit}[0] = {output[f'racf_{_cf}_{_fit}'][0]}")
             output[f"racf_{_cf}_{_fit}"] /= output[f"racf_{_cf}_{_fit}"][0]  # variance normalize
             # take non-redundant first _nhalf elements only
             output[f"racf_{_cf}_{_fit}"] = output[f"racf_{_cf}_{_fit}"][:_nhalf]
@@ -481,9 +485,7 @@ if __name__ == "__main__":
             output[f"uracf_{_cf}_{_fit}"] = (
                 output[f"uracf_{_cf}_{_fit}"][:_nhalf] * nx / (nx - np.arange(_nhalf, dtype=float))
             )
-            # print info to stdout?
-            print_differences = False
-            if print_differences:
+            if verbose:
                 print(f"biased - unbiased difference for racf_{_cf}_{_fit} up to {ACF_MAX_LAG=}:")
                 _difference = (
                     output[f"uracf_{_cf}_{_fit}"] - output[f"racf_{_cf}_{_fit}"]
