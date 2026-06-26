@@ -116,7 +116,10 @@ def build_regression_sample(
     # Ideal model coefficients and corresponding images on the coordinate grid
     print("Generating ideal model coefficients")
     output["ctrue"] = rng.normal(
-        loc=0., scale=coeff_signal_to_noise, size=(nruns, output["features_true"].shape[-1]))
+        loc=0.,
+        scale=coeff_signal_to_noise * noise_sigma,
+        size=(nruns, output["features_true"].shape[-1]),
+    )
     output["ztrue"] = (
         np.matmul(output["features_true"], output["ctrue"].T).T).reshape((nruns, nx, nx), order="C")
 
