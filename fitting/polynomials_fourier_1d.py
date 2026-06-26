@@ -35,15 +35,15 @@ noise_sigma = 1.
 
 # Settings for the ideal model, underspecified, overspecified and highly overspecified
 # series model degrees to use as model sets for the ideal model and fitting
-fit_degree = {}
+fit_degrees = {}
 
 # Real signal (ideal model) degree in the simulations (1D polynomial / Fourier series) will also
 # be used as a model set for regression for each curve family
-fit_degree["true"] = {"cheb": 8, "sinu": 4}
+fit_degrees["true"] = {"cheb": 8, "sinu": 4}
 
-fit_degree["lo"] = {"cheb": 2, "sinu": 1}  # underspecified model sets
-fit_degree["hi"] = {"cheb": 16, "sinu": 8}  # overspecified model sets
-fit_degree["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme behaviour clearly
+fit_degrees["lo"] = {"cheb": 2, "sinu": 1}  # underspecified model sets
+fit_degrees["hi"] = {"cheb": 16, "sinu": 8}  # overspecified model sets
+fit_degrees["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme behaviour clearly
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
 # of true curve coefficient values to noise_sigma
@@ -51,9 +51,11 @@ coeff_signal_to_noise = 1.
 
 # Define x coordinates as linearly spaced points on the some interval, e.g. [0, 1), [-1, 1)
 # depending on curve family
+xmin = {"cheb": -1., "sinu": 0.}
+xmax = {"cheb":  1., "sinu": 1.}
 x = {
-    "cheb": np.linspace(-1., 1., num=nx, endpoint=False),
-    "sinu": np.linspace(0., 1., num=nx, endpoint=False),
+    _family: np.linspace(xmin[_family], xmax[_family], num=nx, endpoint=False)
+    for _family in ("cheb", "sinu")
 }
 
 verbose = False
@@ -105,6 +107,19 @@ def chebyshev_design_matrix(x, degree):
     """Returns the Chebyshev polynomial design matrix up to input degree"""
     i1n = np.eye(1 + degree)
     return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
+
+
+def features():
+    """Returns a dict containing the Sinusoid and Chebyshev design matrices for
+    all series degrees in the module scope fit_degrees dict.
+    """
+    return {
+        _degree: {
+            "cheb": chebyshev_design_matrix(x=x["cheb"], degree=fit_degrees[_degree]["cheb"]),
+            "sinu": sinusoid_design_matrix(x=x["sinu"], degree=fit_degrees[_degree]["sinu"]),
+        }
+        for _degree in fit_degrees
+    }
 
 
 def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, show=True):
@@ -351,6 +366,8 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
 
 if __name__ == "__main__":
 
+    design_matrices = features()
+
     # Current timestamp, used in I/0
     tstmp = pd.Timestamp.now().isoformat().replace(":", "")
     outdir = polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
@@ -358,22 +375,16 @@ if __name__ == "__main__":
     # Output dict - will be pickled
     output = {}
 
-    # Design matrices for the different model sets
-    features = {
-        _degree: {
-            _k: _f(x=x[_k], degree=fit_degree[_degree][_k])
-            for _k, _f in (("cheb", chebyshev_design_matrix), ("sinu", sinusoid_design_matrix))
-        }
-        for _degree in ("lo", "true", "hi", "vhi")
-    }
-
     for _cf in ("cheb", "sinu"):  # Big outer loop over curve family
 
         # Build the true 1d curve coefficients
-        output[f"{_cf}_coeffs_true"] = coeff_signal_to_noise * np.random.randn(
-            features["true"][_cf].shape[-1])
+        output[f"{_cf}_coeffs_true"] = coeff_signal_to_noise * noise_sigma * np.random.randn(
+            design_matrices["true"][_cf].shape[-1])
         # Build the true 1d curves from these coefficients
-        output[f"ytrue_{_cf}"] = np.matmul(features["true"][_cf], output[f"{_cf}_coeffs_true"])
+        output[f"ytrue_{_cf}"] = np.matmul(
+            design_matrices["true"][_cf],
+            output[f"{_cf}_coeffs_true"],
+        )
         # Add random Gaussian iid errors to generate our simulation dataset y values
         output[f"e_{_cf}"] = noise_sigma * np.random.randn(nx)
         output[f"y_{_cf}"] = output[f"ytrue_{_cf}"] + output[f"e_{_cf}"]
@@ -382,7 +393,7 @@ if __name__ == "__main__":
         # First perform regression at different degrees to generate predictions
         for _fit in ("lo", "true", "hi", "vhi"):
 
-            _design_matrix = features[_fit][_cf]
+            _design_matrix = design_matrices[_fit][_cf]
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
             if verbose:
                 print(
