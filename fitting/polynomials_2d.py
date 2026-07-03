@@ -184,7 +184,7 @@ if __name__ == "__main__":
     }
 
     # Build the true / ideal 2D contour, plot and save
-    ctrue = np.random.randn(design_matrices["true"].shape[-1]) * COEFF_SIGNAL_TO_NOISE
+    ctrue = COEFF_SIGNAL_TO_NOISE * NOISE_SIGMA * np.random.randn(design_matrices["true"].shape[-1])
     ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((NX, NX), order="C")
 
     plot_image(
