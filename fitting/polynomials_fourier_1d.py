@@ -21,44 +21,45 @@ import numpy.polynomial.chebyshev
 import pandas as pd
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import polynomials_2d
+from polynomials_2d import PLTDIR, build_output_folder_structure
 
 
 # Parameters
 # ==========
 
 # Number of data points
-nx = 100
+NX = 100
 
 # Sigma of iid pixel noise
-noise_sigma = 1.
+NOISE_SIGMA = 1.
 
 # Settings for the ideal model, underspecified, overspecified and highly overspecified
 # series model degrees to use as model sets for the ideal model and fitting
-fit_degrees = {}
+FIT_DEGREES = {}
+
+FIT_DEGREES["lo"] = {"cheb": 2, "sinu": 1}  # underspecified model sets
 
 # Real signal (ideal model) degree in the simulations (1D polynomial / Fourier series) will also
 # be used as a model set for regression for each curve family
-fit_degrees["true"] = {"cheb": 8, "sinu": 4}
+FIT_DEGREES["true"] = {"cheb": 8, "sinu": 4}
 
-fit_degrees["lo"] = {"cheb": 2, "sinu": 1}  # underspecified model sets
-fit_degrees["hi"] = {"cheb": 16, "sinu": 8}  # overspecified model sets
-fit_degrees["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme behaviour clearly
+FIT_DEGREES["hi"] = {"cheb": 16, "sinu": 8}  # overspecified model sets
+FIT_DEGREES["vhi"] = {"cheb": 32, "sinu": 16}  # added to illustrate more extreme behaviour clearly
 
 # Per coefficient "signal to noise" in random true pattern, i.e. ratio of standard deviation
-# of true curve coefficient values to noise_sigma
-coeff_signal_to_noise = 1.
+# of true curve coefficient values to NOISE_SIGMA
+COEFF_SIGNAL_TO_NOISE = 1.
 
 # Define x coordinates as linearly spaced points on the some interval, e.g. [0, 1), [-1, 1)
 # depending on curve family
-xmin = {"cheb": -1., "sinu": 0.}
-xmax = {"cheb":  1., "sinu": 1.}
-x = {
-    _family: np.linspace(xmin[_family], xmax[_family], num=nx, endpoint=False)
+XMINS = {"cheb": -1., "sinu": 0.}
+XMAXS = {"cheb":  1., "sinu": 1.}
+XARRS = {
+    _family: np.linspace(XMINS[_family], XMAXS[_family], num=NX, endpoint=False)
     for _family in ("cheb", "sinu")
 }
 
-verbose = False
+VERBOSE = False
 
 # Plot settings
 FIGSIZE = (10, 4)
@@ -66,7 +67,8 @@ FIGSIZE_PERIODOGRAMS = (10, 6)
 FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
-XLIM = {_cf: (x[_cf].min() - 0.02, x[_cf].max() + 0.02) for _cf in ("cheb", "sinu")}
+# set plotting XLIMS depending on XARRS
+XLIMS = {_cf: (XARRS[_cf].min() - 0.02, XARRS[_cf].max() + 0.02) for _cf in ("cheb", "sinu")}
 TITLE_SIZE = "x-large"
 LABEL_SIZE = "large"
 
@@ -87,7 +89,7 @@ PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 ACF_MAX_LAG = 12
 
 # Output folder structure: project dir
-PROJDIR = os.path.join(polynomials_2d.PLTDIR, "polynomials_fourier_1d")
+PROJDIR = os.path.join(PLTDIR, "polynomials_fourier_1d")
 
 # Output file types
 OUTFILE_EXTENSIONS = (".png", ".pdf")
@@ -96,29 +98,29 @@ OUTFILE_EXTENSIONS = (".png", ".pdf")
 # Functions
 # =========
 
-def sinusoid_design_matrix(x, degree):
+def sinusoid_design_matrix(xarr, degree):
     """Returns the sinusoid [cosx, sinx] design matrix up to input degree"""
-    sinx = np.asarray([np.sin(2. * np.pi * float(j) * x) for j in range(0, 1 + degree)]).T
-    cosx = np.asarray([np.cos(2. * np.pi * float(j) * x) for j in range(0, 1 + degree)]).T
+    sinx = np.asarray([np.sin(2. * np.pi * float(j) * xarr) for j in range(0, 1 + degree)]).T
+    cosx = np.asarray([np.cos(2. * np.pi * float(j) * xarr) for j in range(0, 1 + degree)]).T
     return np.hstack([cosx, sinx])
 
 
-def chebyshev_design_matrix(x, degree):
+def chebyshev_design_matrix(xarr, degree):
     """Returns the Chebyshev polynomial design matrix up to input degree"""
     i1n = np.eye(1 + degree)
-    return np.asarray([numpy.polynomial.chebyshev.chebval(x, _row) for _row in i1n]).T
+    return np.asarray([numpy.polynomial.chebyshev.chebval(xarr, _row) for _row in i1n]).T
 
 
-def features():
+def features(xarrs=XARRS, fit_degrees=FIT_DEGREES):
     """Returns a dict containing the Sinusoid and Chebyshev design matrices for
-    all series degrees in the module scope fit_degrees dict.
+    all series degrees in the input fit_degrees dict.
     """
     return {
-        _degree: {
-            "cheb": chebyshev_design_matrix(x=x["cheb"], degree=fit_degrees[_degree]["cheb"]),
-            "sinu": sinusoid_design_matrix(x=x["sinu"], degree=fit_degrees[_degree]["sinu"]),
+        _degree_label: {
+            "cheb": chebyshev_design_matrix(xarr=xarrs["cheb"], degree=_degree_dict["cheb"]),
+            "sinu": sinusoid_design_matrix(xarr=xarrs["sinu"], degree=_degree_dict["sinu"]),
         }
-        for _degree in fit_degrees
+        for _degree_label, _degree_dict in fit_degrees.items()
     }
 
 
@@ -370,7 +372,7 @@ if __name__ == "__main__":
 
     # Current timestamp, used in I/0
     tstmp = pd.Timestamp.now().isoformat().replace(":", "")
-    outdir = polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
+    outdir = build_output_folder_structure(tstmp, project_dir=PROJDIR)
 
     # Output dict - will be pickled
     output = {}
@@ -378,15 +380,16 @@ if __name__ == "__main__":
     for _cf in ("cheb", "sinu"):  # Big outer loop over curve family
 
         # Build the true 1d curve coefficients
-        output[f"{_cf}_coeffs_true"] = coeff_signal_to_noise * noise_sigma * np.random.randn(
-            design_matrices["true"][_cf].shape[-1])
+        output[f"{_cf}_coeffs_true"] = COEFF_SIGNAL_TO_NOISE * NOISE_SIGMA * np.random.randn(
+            design_matrices["true"][_cf].shape[-1]
+        )
         # Build the true 1d curves from these coefficients
         output[f"ytrue_{_cf}"] = np.matmul(
             design_matrices["true"][_cf],
             output[f"{_cf}_coeffs_true"],
         )
         # Add random Gaussian iid errors to generate our simulation dataset y values
-        output[f"e_{_cf}"] = noise_sigma * np.random.randn(nx)
+        output[f"e_{_cf}"] = NOISE_SIGMA * np.random.randn(NX)
         output[f"y_{_cf}"] = output[f"ytrue_{_cf}"] + output[f"e_{_cf}"]
 
         # Plot scatter plots of data, ideal model and predictions
@@ -395,10 +398,10 @@ if __name__ == "__main__":
 
             _design_matrix = design_matrices[_fit][_cf]
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
-            if verbose:
+            if VERBOSE:
                 print(
                     # note the sinusoidal design matrix contains an inactive feature for sin(0 * x)
-                    # (handled without issue to machine precision by the SVD leastsq solution)
+                    # (but this is handled without issue to machine eps by the SVD leastsq solution)
                     f"{_cf} {_fit} n_coeffs = {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
                 )
                 print(_coeffs)
@@ -412,7 +415,7 @@ if __name__ == "__main__":
 
         # Plot ideal model, data, and ordinary least squares regression predictions
         plot_regressions(
-            xarr=x[_cf],
+            xarr=XARRS[_cf],
             yarrs=[
                 output[f"ytrue_{_cf}"],  # ideal model
                 output[f"y_{_cf}"],  # data
@@ -421,7 +424,7 @@ if __name__ == "__main__":
                 output[f"ypred_{_cf}_hi"],
                 output[f"ypred_{_cf}_vhi"]
             ],
-            xlim=XLIM[_cf],
+            xlim=XLIMS[_cf],
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
@@ -443,24 +446,24 @@ if __name__ == "__main__":
                 show=True,
             )
             # Calculate residual periodogram via FFT and store
-            output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / nx
-            assert len(output[f"rp_{_cf}_{_fit}"]) == (nx // 2 + 1)
+            output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / NX
+            assert len(output[f"rp_{_cf}_{_fit}"]) == (NX // 2 + 1)
             # Residuals from OLS should be ~ 0 anyhow so we whether to mean subtract is moot, but
             # for comparison (and a more standard_ ACF calculation (e.g. Box et al 15, also
             # Wikipedia) we will pad residuals with zeros to 2x length then calculate and store the
             # resulting periodogram; in practice the two ACF definitions will be ~close at lag << nx
             _rmean = _res.mean()
             assert np.isclose(_rmean, 0, atol=1.e-14, rtol=0.)
-            _zpres = np.zeros(2 * nx, dtype=float)  # zero-padded storage array
-            _zpres[:nx] = _res  - _rmean
-            output[f"zprp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * nx)
+            _zpres = np.zeros(2 * NX, dtype=float)  # zero-padded storage array
+            _zpres[:NX] = _res  - _rmean
+            output[f"zprp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * NX)
 
         # Calculate periodograms of just the errors for plotting
-        output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / nx
+        output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / NX
         # also calc 2x length zero padded, mean subtracted errors periodogram
-        _zperrs = np.zeros(2 * nx, dtype=float)  # zero-padded storage array
-        _zperrs[:nx] = output[f"e_{_cf}"] - output[f"e_{_cf}"].mean()  # mean subtract
-        output[f"zpep_{_cf}"] = np.abs(np.fft.rfft(_zperrs))**2 / (2 * nx)
+        _zperrs = np.zeros(2 * NX, dtype=float)  # zero-padded storage array
+        _zperrs[:NX] = output[f"e_{_cf}"] - output[f"e_{_cf}"].mean()  # mean subtract
+        output[f"zpep_{_cf}"] = np.abs(np.fft.rfft(_zperrs))**2 / (2 * NX)
 
         # Now we plot error and residual periodograms
         plot_periodograms(
@@ -471,7 +474,7 @@ if __name__ == "__main__":
                 output[f"rp_{_cf}_hi"],
                 output[f"rp_{_cf}_vhi"],
             ],
-            nfull=nx,
+            nfull=NX,
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
@@ -483,7 +486,7 @@ if __name__ == "__main__":
 
             _nhalf = len(output[f"rp_{_cf}_{_fit}"])  # first n//2 + 1 elements matter only, symmetry
             output[f"racf_{_cf}_{_fit}"] = np.fft.irfft(output[f"rp_{_cf}_{_fit}"])
-            if verbose:
+            if VERBOSE:
                 print(f"racf_{_cf}_{_fit}[0] = {output[f'racf_{_cf}_{_fit}'][0]}")
             output[f"racf_{_cf}_{_fit}"] /= output[f"racf_{_cf}_{_fit}"][0]  # variance normalize
             # take non-redundant first _nhalf elements only
@@ -494,9 +497,9 @@ if __name__ == "__main__":
             output[f"uracf_{_cf}_{_fit}"] /= output[f"uracf_{_cf}_{_fit}"][0]  # variance normalize
             # take non-redundant first _nhalf elements only, apply the debiasing factor
             output[f"uracf_{_cf}_{_fit}"] = (
-                output[f"uracf_{_cf}_{_fit}"][:_nhalf] * nx / (nx - np.arange(_nhalf, dtype=float))
+                output[f"uracf_{_cf}_{_fit}"][:_nhalf] * NX / (NX - np.arange(_nhalf, dtype=float))
             )
-            if verbose:
+            if VERBOSE:
                 print(f"biased - unbiased difference for racf_{_cf}_{_fit} up to {ACF_MAX_LAG=}:")
                 _difference = (
                     output[f"uracf_{_cf}_{_fit}"] - output[f"racf_{_cf}_{_fit}"]
@@ -514,7 +517,7 @@ if __name__ == "__main__":
         output[f"ueacf_{_cf}"] /= output[f"ueacf_{_cf}"][0]  # variance normalize
         # take non-redundant first _nhalf elements only, apply the debiasing factor
         output[f"ueacf_{_cf}"] = (
-            output[f"ueacf_{_cf}"][:_nhalf] * nx / (nx - np.arange(_nhalf, dtype=float))
+            output[f"ueacf_{_cf}"][:_nhalf] * NX / (NX - np.arange(_nhalf, dtype=float))
         )
 
         # Now plot autocorrelation functions
@@ -526,7 +529,7 @@ if __name__ == "__main__":
                 output[f"racf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
                 output[f"racf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
             ],
-            nfull=nx,
+            nfull=NX,
             curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
             tstmp=tstmp,
             outdir=outdir,
