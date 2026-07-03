@@ -378,7 +378,6 @@ if __name__ == "__main__":
     output = {}
 
     for _cf in ("cheb", "sinu"):  # Big outer loop over curve family
-
         # Build the true 1d curve coefficients
         output[f"{_cf}_coeffs_true"] = COEFF_SIGNAL_TO_NOISE * NOISE_SIGMA * np.random.randn(
             design_matrices["true"][_cf].shape[-1]
@@ -394,20 +393,20 @@ if __name__ == "__main__":
 
         # Plot scatter plots of data, ideal model and predictions
         # First perform regression at different degrees to generate predictions
-        for _fit in ("lo", "true", "hi", "vhi"):
-
-            _design_matrix = design_matrices[_fit][_cf]
+        for _degree_label in FIT_DEGREES:
+            _design_matrix = design_matrices[_degree_label][_cf]
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
             if VERBOSE:
                 print(
                     # note the sinusoidal design matrix contains an inactive feature for sin(0 * x)
                     # (but this is handled without issue to machine eps by the SVD leastsq solution)
-                    f"{_cf} {_fit} n_coeffs = {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
+                    f"{_cf} {_design_matrix} n_coeffs "
+                    f"= {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
                 )
                 print(_coeffs)
 
             _yfit = _design_matrix.dot(_coeffs.T)
-            output[f"ypred_{_cf}_{_fit}"] = _yfit
+            output[f"ypred_{_cf}_{_degree_label}"] = _yfit
 
         # Prep output folder
         if not os.path.isdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_cf].lower())):
@@ -432,22 +431,21 @@ if __name__ == "__main__":
         )
 
         # Now plot residuals, but using imaging to bring out patterns
-        for _fit in ("lo", "true", "hi", "vhi"):
-
+        for _degree_label in FIT_DEGREES:
             # Residuals = data - model
-            _res = output[f"y_{_cf}"] - output[f"ypred_{_cf}_{_fit}"]
-            output[f"res_{_cf}_{_fit}"] = _res.copy()  # store residuals
+            _res = output[f"y_{_cf}"] - output[f"ypred_{_cf}_{_degree_label}"]
+            output[f"res_{_cf}_{_degree_label}"] = _res.copy()  # store residuals
             plot_residuals(
                 residuals=_res,
-                fit_display=FIT_DISPLAY[_fit],
+                fit_display=FIT_DISPLAY[_degree_label],
                 curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
                 tstmp=tstmp,
                 outdir=outdir,
                 show=True,
             )
             # Calculate residual periodogram via FFT and store
-            output[f"rp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_res))**2 / NX
-            assert len(output[f"rp_{_cf}_{_fit}"]) == (NX // 2 + 1)
+            output[f"rp_{_cf}_{_degree_label}"] = np.abs(np.fft.rfft(_res))**2 / NX
+            assert len(output[f"rp_{_cf}_{_degree_label}"]) == (NX // 2 + 1)
             # Residuals from OLS should be ~ 0 anyhow so we whether to mean subtract is moot, but
             # for comparison (and a more standard_ ACF calculation (e.g. Box et al 15, also
             # Wikipedia) we will pad residuals with zeros to 2x length then calculate and store the
@@ -456,7 +454,7 @@ if __name__ == "__main__":
             assert np.isclose(_rmean, 0, atol=1.e-14, rtol=0.)
             _zpres = np.zeros(2 * NX, dtype=float)  # zero-padded storage array
             _zpres[:NX] = _res  - _rmean
-            output[f"zprp_{_cf}_{_fit}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * NX)
+            output[f"zprp_{_cf}_{_degree_label}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * NX)
 
         # Calculate periodograms of just the errors for plotting
         output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / NX
@@ -482,27 +480,34 @@ if __name__ == "__main__":
         )
 
         # Calculate (circular) autocorrelation functions via inverse FFT of residual periodograms
-        for _fit in ("lo", "true", "hi", "vhi"):
-
-            _nhalf = len(output[f"rp_{_cf}_{_fit}"])  # first n//2 + 1 elements matter only, symmetry
-            output[f"racf_{_cf}_{_fit}"] = np.fft.irfft(output[f"rp_{_cf}_{_fit}"])
-            if VERBOSE:
-                print(f"racf_{_cf}_{_fit}[0] = {output[f'racf_{_cf}_{_fit}'][0]}")
-            output[f"racf_{_cf}_{_fit}"] /= output[f"racf_{_cf}_{_fit}"][0]  # variance normalize
-            # take non-redundant first _nhalf elements only
-            output[f"racf_{_cf}_{_fit}"] = output[f"racf_{_cf}_{_fit}"][:_nhalf]
-            # then calculate the unbiased (non-circular) equivalent for comparison from the
-            # zero-padded periodograms
-            output[f"uracf_{_cf}_{_fit}"] = np.fft.irfft(output[f"zprp_{_cf}_{_fit}"])
-            output[f"uracf_{_cf}_{_fit}"] /= output[f"uracf_{_cf}_{_fit}"][0]  # variance normalize
-            # take non-redundant first _nhalf elements only, apply the debiasing factor
-            output[f"uracf_{_cf}_{_fit}"] = (
-                output[f"uracf_{_cf}_{_fit}"][:_nhalf] * NX / (NX - np.arange(_nhalf, dtype=float))
+        for _degree_label in FIT_DEGREES:
+            _nhalf = len(output[f"rp_{_cf}_{_degree_label}"])  # only first n//2 + 1 elements matter by symmetry
+            output[f"racf_{_cf}_{_degree_label}"] = np.fft.irfft(
+                output[f"rp_{_cf}_{_degree_label}"]
             )
             if VERBOSE:
-                print(f"biased - unbiased difference for racf_{_cf}_{_fit} up to {ACF_MAX_LAG=}:")
+                print(f"racf_{_cf}_{_degree_label}[0] = {output[f'racf_{_cf}_{_degree_label}'][0]}")
+            output[f"racf_{_cf}_{_degree_label}"] /= output[f"racf_{_cf}_{_degree_label}"][0]  # variance normalize
+            # take non-redundant first _nhalf elements only
+            output[f"racf_{_cf}_{_degree_label}"] = output[f"racf_{_cf}_{_degree_label}"][:_nhalf]
+            # then calculate the unbiased (non-circular) equivalent for comparison from the
+            # zero-padded periodograms
+            output[f"uracf_{_cf}_{_degree_label}"] = np.fft.irfft(
+                output[f"zprp_{_cf}_{_degree_label}"]
+            )
+            output[f"uracf_{_cf}_{_degree_label}"] /= output[f"uracf_{_cf}_{_degree_label}"][0]  # variance normalize
+            # take non-redundant first _nhalf elements only, apply the debiasing factor
+            output[f"uracf_{_cf}_{_degree_label}"] = (
+                output[f"uracf_{_cf}_{_degree_label}"][:_nhalf] * NX
+                / (NX - np.arange(_nhalf, dtype=float))
+            )
+            if VERBOSE:
+                print(
+                    f"biased - unbiased difference for racf_{_cf}_{_degree_label} "
+                    "up to {ACF_MAX_LAG=}:"
+                )
                 _difference = (
-                    output[f"uracf_{_cf}_{_fit}"] - output[f"racf_{_cf}_{_fit}"]
+                    output[f"uracf_{_cf}_{_degree_label}"] - output[f"racf_{_cf}_{_degree_label}"]
                 )[1:(1 + ACF_MAX_LAG)]
                 print(_difference)
                 print(pd.Series(_difference).describe())
