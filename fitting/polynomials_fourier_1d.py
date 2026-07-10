@@ -68,7 +68,7 @@ FIGSIZE_RESIDUALS = (10, 1.25)
 CLIM = [-2.5, 2.5]
 CMAP = "Greys_r"
 # set plotting XLIMS depending on XARRS
-XLIMS = {_cf: (XARRS[_cf].min() - 0.02, XARRS[_cf].max() + 0.02) for _cf in ("cheb", "sinu")}
+XLIMS = {_fam: (XARRS[_fam].min() - 0.02, XARRS[_fam].max() + 0.02) for _fam in ("cheb", "sinu")}
 TITLE_SIZE = "x-large"
 LABEL_SIZE = "large"
 
@@ -122,6 +122,90 @@ def features(xarrs=XARRS, fit_degrees=FIT_DEGREES):
         }
         for _degree_label, _degree_dict in fit_degrees.items()
     }
+
+
+def nhalf_dft(n):
+    """Returns the non-redundant half array size for DFTs on real sequences, 1 + floor(N / 2)"""
+    return 1 + (n // 2)
+
+
+def sample_spectrum(yarr):
+    """Calculates the sample spectrum of the input real-valued yarr as
+    np.abs(np.fft.rfft(yarr))**2 / len(yarr), of length nhalf_dft(len(yarr))
+    """
+    _nx = len(yarr)
+    ssarr = np.abs(np.fft.rfft(yarr))**2 / _nx  # input is real-valued so rfft
+    assert len(ssarr) == nhalf_dft(_nx)
+    return ssarr
+
+
+def zero_pad(yarr, mult=2, dtype=float):
+    """Zero-pads the input yarr to be length len(yarr) * mult"""
+    yret = np.zeros(len(yarr) * 2, dtype=dtype)
+    yret[:len(yarr)] = yarr
+    return yret
+
+
+def circular_acf(yarr, real_sample_spectrum=None):
+    """Calculates the circular autocorrelation function of the input real-valued
+    yarr via
+
+        np.fft.irfft(sample_spectrum(yarr))
+
+    with variance normalization, of final length nhalf_dft(len(yarr)).
+
+    An input
+
+        real_sample_spectrum == sample_spectrum(yarr)
+
+    can be passed if available, to avoid repeating DFT operations: this will be
+    checked for length (only).
+    """
+    _nhalf = nhalf_dft(len(yarr))
+    if real_sample_spectrum is None:
+        real_sample_spectrum = sample_spectrum(yarr)
+    else:
+        if len(real_sample_spectrum) != _nhalf:
+            raise ValueError(
+                f"{len(real_sample_spectrum)=} not expected {_nhalf}, given {len(yarr)=}"
+            )
+
+    cacf = np.fft.irfft(real_sample_spectrum)
+    return cacf[:_nhalf] / cacf[0]  # return non-redundant first nhalf_dft of acf, var normalized
+
+
+def unbiased_acf(yarr, zero_mean_padded_sample_spectrum=None):
+    """Calculates the unbiased autocorrelation function of the input real-valued
+    yarr per the Smith (2007) definition, via
+
+        np.fft.irfft(sample_spectrum(zero_pad(yarr - yarr.mean(), mult=2)))
+
+    with variance normalization, of final length nhalf_dft(len(yarr)).
+
+    An input
+
+        zero_mean_padded_sample_spectrum ==
+        sample_spectrum(zero_pad(yarr - yarr.mean(), mult=2))
+
+    can be passed if available, to avoid repeating DFT operations: this will be
+    checked for length (only).
+    """
+
+    _nhalf = nhalf_dft(len(yarr))
+    if zero_mean_padded_sample_spectrum is None:
+        zero_mean_padded_sample_spectrum = sample_spectrum(zero_pad(yarr - yarr.mean(), mult=2))
+    else:
+        _padded_nhalf = nhalf_dft(2 * len(yarr))
+        if len(zero_mean_padded_sample_spectrum) != _padded_nhalf:
+            raise ValueError(
+                f"{len(zero_mean_padded_sample_spectrum)=} not expected {_padded_nhalf}, "
+                f"given 2 * ({len(yarr)=}) == {2 * len(yarr)}"
+            )
+
+    uacf = np.fft.irfft(zero_mean_padded_sample_spectrum)
+    uacf /= uacf[0]  # variance normalize
+    # return non-redundant first _nhalf elements only, apply the debiasing factor
+    return uacf[:_nhalf] * len(yarr) / (len(yarr) - np.arange(_nhalf, dtype=float))
 
 
 def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, show=True):
@@ -368,7 +452,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
 
 if __name__ == "__main__":
 
-    design_matrices = features()
+    design_matrices = features(xarrs=XARRS, fit_degrees=FIT_DEGREES)
 
     # Current timestamp, used in I/0
     tstmp = pd.Timestamp.now().isoformat().replace(":", "")
@@ -377,54 +461,54 @@ if __name__ == "__main__":
     # Output dict - will be pickled
     output = {}
 
-    for _cf in ("cheb", "sinu"):  # Big outer loop over curve family
+    for _fam in ("cheb", "sinu"):  # Big outer loop over curve family
         # Build the true 1d curve coefficients
-        output[f"{_cf}_coeffs_true"] = COEFF_SIGNAL_TO_NOISE * NOISE_SIGMA * np.random.randn(
-            design_matrices["true"][_cf].shape[-1]
+        output[f"{_fam}_coeffs_true"] = COEFF_SIGNAL_TO_NOISE * NOISE_SIGMA * np.random.randn(
+            design_matrices["true"][_fam].shape[-1]
         )
         # Build the true 1d curves from these coefficients
-        output[f"ytrue_{_cf}"] = np.matmul(
-            design_matrices["true"][_cf],
-            output[f"{_cf}_coeffs_true"],
+        output[f"ytrue_{_fam}"] = np.matmul(
+            design_matrices["true"][_fam],
+            output[f"{_fam}_coeffs_true"],
         )
         # Add random Gaussian iid errors to generate our simulation dataset y values
-        output[f"e_{_cf}"] = NOISE_SIGMA * np.random.randn(NX)
-        output[f"y_{_cf}"] = output[f"ytrue_{_cf}"] + output[f"e_{_cf}"]
+        output[f"e_{_fam}"] = NOISE_SIGMA * np.random.randn(NX)
+        output[f"y_{_fam}"] = output[f"ytrue_{_fam}"] + output[f"e_{_fam}"]
 
         # Plot scatter plots of data, ideal model and predictions
         # First perform regression at different degrees to generate predictions
         for _degree_label in FIT_DEGREES:
-            _design_matrix = design_matrices[_degree_label][_cf]
-            _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_cf}"], rcond=None)[0]
+            _design_matrix = design_matrices[_degree_label][_fam]
+            _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_fam}"], rcond=None)[0]
             if VERBOSE:
                 print(
                     # note the sinusoidal design matrix contains an inactive feature for sin(0 * x)
                     # (but this is handled without issue to machine eps by the SVD leastsq solution)
-                    f"{_cf} {_design_matrix} n_coeffs "
-                    f"= {_design_matrix.shape[1] - (1 if _cf == 'sinu' else 0)}"
+                    f"{_fam} {_design_matrix} n_coeffs "
+                    f"= {_design_matrix.shape[1] - (1 if _fam == 'sinu' else 0)}"
                 )
                 print(_coeffs)
 
             _yfit = _design_matrix.dot(_coeffs.T)
-            output[f"ypred_{_cf}_{_degree_label}"] = _yfit
+            output[f"ypred_{_fam}_{_degree_label}"] = _yfit
 
         # Prep output folder
-        if not os.path.isdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_cf].lower())):
-            os.mkdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_cf].lower()))
+        if not os.path.isdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_fam].lower())):
+            os.mkdir(os.path.join(outdir, CURVE_FAMILY_DISPLAY[_fam].lower()))
 
         # Plot ideal model, data, and ordinary least squares regression predictions
         plot_regressions(
-            xarr=XARRS[_cf],
+            xarr=XARRS[_fam],
             yarrs=[
-                output[f"ytrue_{_cf}"],  # ideal model
-                output[f"y_{_cf}"],  # data
-                output[f"ypred_{_cf}_lo"],
-                output[f"ypred_{_cf}_true"],
-                output[f"ypred_{_cf}_hi"],
-                output[f"ypred_{_cf}_vhi"]
+                output[f"ytrue_{_fam}"],  # ideal model
+                output[f"y_{_fam}"],  # data
+                output[f"ypred_{_fam}_lo"],
+                output[f"ypred_{_fam}_true"],
+                output[f"ypred_{_fam}_hi"],
+                output[f"ypred_{_fam}_vhi"]
             ],
-            xlim=XLIMS[_cf],
-            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
+            xlim=XLIMS[_fam],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
             tstmp=tstmp,
             outdir=outdir,
             show=True,
@@ -433,47 +517,49 @@ if __name__ == "__main__":
         # Now plot residuals, but using imaging to bring out patterns
         for _degree_label in FIT_DEGREES:
             # Residuals = data - model
-            _res = output[f"y_{_cf}"] - output[f"ypred_{_cf}_{_degree_label}"]
-            output[f"res_{_cf}_{_degree_label}"] = _res.copy()  # store residuals
+            _res = output[f"y_{_fam}"] - output[f"ypred_{_fam}_{_degree_label}"]
+            output[f"res_{_fam}_{_degree_label}"] = _res  # store residuals
             plot_residuals(
                 residuals=_res,
                 fit_display=FIT_DISPLAY[_degree_label],
-                curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
+                curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
                 tstmp=tstmp,
                 outdir=outdir,
                 show=True,
             )
-            # Calculate residual periodogram via FFT and store
-            output[f"rp_{_cf}_{_degree_label}"] = np.abs(np.fft.rfft(_res))**2 / NX
-            assert len(output[f"rp_{_cf}_{_degree_label}"]) == (NX // 2 + 1)
-            # Residuals from OLS should be ~ 0 anyhow so we whether to mean subtract is moot, but
-            # for comparison (and a more standard_ ACF calculation (e.g. Box et al 15, also
-            # Wikipedia) we will pad residuals with zeros to 2x length then calculate and store the
-            # resulting periodogram; in practice the two ACF definitions will be ~close at lag << nx
+            # Calculate residual sample spectrum / periodogram via FFT and store
+            output[f"rp_{_fam}_{_degree_label}"] = sample_spectrum(_res)
+
+            # Residuals from OLS should be ~ 0 anyhow so we whether to mean subtract is moot.
+            # But a de-meaned sample spectrum can be used in a calculation of common definitions
+            # of the autocorrelation function (ACF e.g. Box et al 15, also Wikipedia, which also
+            # requires we pad residuals with zeros to 2x length then calculate and store the
+            # resulting periodogram: in practice the similar ACF defs will be ~close at lag << nx)
             _rmean = _res.mean()
-            assert np.isclose(_rmean, 0, atol=1.e-14, rtol=0.)
-            _zpres = np.zeros(2 * NX, dtype=float)  # zero-padded storage array
-            _zpres[:NX] = _res  - _rmean
-            output[f"zprp_{_cf}_{_degree_label}"] = np.abs(np.fft.rfft(_zpres))**2 / (2 * NX)
+            assert np.isclose(_rmean, 0., atol=1.e-14, rtol=0.)  # residuals already mean=0 from OLS
+            output[f"zprp_{_fam}_{_degree_label}"] = sample_spectrum(
+                zero_pad(_res - _rmean, mult=2)
+            )
 
         # Calculate periodograms of just the errors for plotting
-        output[f"ep_{_cf}"] = np.abs(np.fft.rfft(output[f"e_{_cf}"]))**2 / NX
+        output[f"ep_{_fam}"] = sample_spectrum(output[f"e_{_fam}"])
+
         # also calc 2x length zero padded, mean subtracted errors periodogram
-        _zperrs = np.zeros(2 * NX, dtype=float)  # zero-padded storage array
-        _zperrs[:NX] = output[f"e_{_cf}"] - output[f"e_{_cf}"].mean()  # mean subtract
-        output[f"zpep_{_cf}"] = np.abs(np.fft.rfft(_zperrs))**2 / (2 * NX)
+        output[f"zpep_{_fam}"] = sample_spectrum(
+            zero_pad(output[f"e_{_fam}"] - output[f"e_{_fam}"].mean(), mult=2)
+        )
 
         # Now we plot error and residual periodograms
         plot_periodograms(
             [
-                output[f"ep_{_cf}"],  # iid errors periodogram for comparison
-                output[f"rp_{_cf}_lo"],
-                output[f"rp_{_cf}_true"],
-                output[f"rp_{_cf}_hi"],
-                output[f"rp_{_cf}_vhi"],
+                output[f"ep_{_fam}"],  # iid errors periodogram for comparison
+                output[f"rp_{_fam}_lo"],
+                output[f"rp_{_fam}_true"],
+                output[f"rp_{_fam}_hi"],
+                output[f"rp_{_fam}_vhi"],
             ],
             nfull=NX,
-            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
             tstmp=tstmp,
             outdir=outdir,
             show=True,
@@ -481,61 +567,67 @@ if __name__ == "__main__":
 
         # Calculate (circular) autocorrelation functions via inverse FFT of residual periodograms
         for _degree_label in FIT_DEGREES:
-            _nhalf = len(output[f"rp_{_cf}_{_degree_label}"])  # only first n//2 + 1 elements matter by symmetry
-            output[f"racf_{_cf}_{_degree_label}"] = np.fft.irfft(
-                output[f"rp_{_cf}_{_degree_label}"]
+            output[f"racf_{_fam}_{_degree_label}"] = circular_acf(
+                output[f"res_{_fam}_{_degree_label}"],
+                real_sample_spectrum=output[f"rp_{_fam}_{_degree_label}"],
             )
-            if VERBOSE:
-                print(f"racf_{_cf}_{_degree_label}[0] = {output[f'racf_{_cf}_{_degree_label}'][0]}")
-            output[f"racf_{_cf}_{_degree_label}"] /= output[f"racf_{_cf}_{_degree_label}"][0]  # variance normalize
-            # take non-redundant first _nhalf elements only
-            output[f"racf_{_cf}_{_degree_label}"] = output[f"racf_{_cf}_{_degree_label}"][:_nhalf]
-            # then calculate the unbiased (non-circular) equivalent for comparison from the
-            # zero-padded periodograms
-            output[f"uracf_{_cf}_{_degree_label}"] = np.fft.irfft(
-                output[f"zprp_{_cf}_{_degree_label}"]
-            )
-            output[f"uracf_{_cf}_{_degree_label}"] /= output[f"uracf_{_cf}_{_degree_label}"][0]  # variance normalize
-            # take non-redundant first _nhalf elements only, apply the debiasing factor
-            output[f"uracf_{_cf}_{_degree_label}"] = (
-                output[f"uracf_{_cf}_{_degree_label}"][:_nhalf] * NX
-                / (NX - np.arange(_nhalf, dtype=float))
+            # check the internal consistency of our periodogram-reusing calcs vs a full redo, once
+            np.testing.assert_allclose(
+                output[f"racf_{_fam}_{_degree_label}"],
+                circular_acf(output[f"res_{_fam}_{_degree_label}"]),
+                atol=1.e-16,
+                rtol=1.e-16,
             )
             if VERBOSE:
                 print(
-                    f"biased - unbiased difference for racf_{_cf}_{_degree_label} "
+                    f"racf_{_fam}_{_degree_label}[0] = {output[f'racf_{_fam}_{_degree_label}'][0]}"
+                )
+
+            # then calculate the unbiased (e.g. Smith 2007, non-circular) equivalent for comparison,
+            # using the zero-padded periodograms
+            output[f"uracf_{_fam}_{_degree_label}"] = unbiased_acf(
+                output[f"res_{_fam}_{_degree_label}"],
+                zero_mean_padded_sample_spectrum=output[f"zprp_{_fam}_{_degree_label}"],
+            )
+            # check the internal consistency of our periodogram-reusing calcs vs a full redo, once
+            np.testing.assert_allclose(
+                output[f"uracf_{_fam}_{_degree_label}"],
+                unbiased_acf(output[f"res_{_fam}_{_degree_label}"]),
+                atol=1.e-16,
+                rtol=1.e-16,
+            )
+            if VERBOSE:
+                print(
+                    f"biased - unbiased difference for racf_{_fam}_{_degree_label} "
                     "up to {ACF_MAX_LAG=}:"
                 )
                 _difference = (
-                    output[f"uracf_{_cf}_{_degree_label}"] - output[f"racf_{_cf}_{_degree_label}"]
+                    output[f"uracf_{_fam}_{_degree_label}"] - output[f"racf_{_fam}_{_degree_label}"]
                 )[1:(1 + ACF_MAX_LAG)]
                 print(_difference)
                 print(pd.Series(_difference).describe())
 
         # Calculate circular autocorrelation and unbiased (e.g. Smith 2007) equivalent function of
         # just the errors, for plotting
-        _nhalf = len(output[f"ep_{_cf}"])
-        output[f"eacf_{_cf}"] = np.fft.irfft(output[f"ep_{_cf}"])
-        output[f"eacf_{_cf}"] /= output[f"eacf_{_cf}"][0]  # variance normalize
-        output[f"eacf_{_cf}"] = output[f"eacf_{_cf}"][:_nhalf]
-        output[f"ueacf_{_cf}"] = np.fft.irfft(output[f"zpep_{_cf}"])
-        output[f"ueacf_{_cf}"] /= output[f"ueacf_{_cf}"][0]  # variance normalize
-        # take non-redundant first _nhalf elements only, apply the debiasing factor
-        output[f"ueacf_{_cf}"] = (
-            output[f"ueacf_{_cf}"][:_nhalf] * NX / (NX - np.arange(_nhalf, dtype=float))
+        _nhalf = len(output[f"ep_{_fam}"])
+        output[f"eacf_{_fam}"] = circular_acf(
+            output[f"e_{_fam}"], real_sample_spectrum=output[f"ep_{_fam}"]
+        )
+        output[f"ueacf_{_fam}"] = unbiased_acf(
+            output[f"e_{_fam}"], zero_mean_padded_sample_spectrum=output[f"zpep_{_fam}"]
         )
 
         # Now plot autocorrelation functions
         plot_acfs(
             [
-                output[f"eacf_{_cf}"][:(1 + ACF_MAX_LAG)],  # iid errors ACF for comparison
-                output[f"racf_{_cf}_lo"][:(1 + ACF_MAX_LAG)],
-                output[f"racf_{_cf}_true"][:(1 + ACF_MAX_LAG)],
-                output[f"racf_{_cf}_hi"][:(1 + ACF_MAX_LAG)],
-                output[f"racf_{_cf}_vhi"][:(1 + ACF_MAX_LAG)],
+                output[f"eacf_{_fam}"][:(1 + ACF_MAX_LAG)],  # iid errors ACF for comparison
+                output[f"racf_{_fam}_lo"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_fam}_true"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_fam}_hi"][:(1 + ACF_MAX_LAG)],
+                output[f"racf_{_fam}_vhi"][:(1 + ACF_MAX_LAG)],
             ],
             nfull=NX,
-            curve_family_display=CURVE_FAMILY_DISPLAY[_cf],
+            curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
             tstmp=tstmp,
             outdir=outdir,
             show=True,
