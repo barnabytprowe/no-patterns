@@ -78,7 +78,7 @@ def build_regression_sample(
             scale=coeff_signal_to_noise * noise_sigma,
             size=(nruns, design_matrices["true"][_fam].shape[-1]),
         )
-        output[_fam]["ztrue"] = (
+        output[_fam]["ytrue"] = (
             np.matmul(design_matrices["true"][_fam], output[_fam]["ctrue"].T).T
         ).reshape((nruns, len(xarrs[_fam])), order="C")
 
@@ -87,18 +87,20 @@ def build_regression_sample(
         output[_fam]["errors"] = rng.normal(
             loc=0., scale=noise_sigma, size=(nruns, len(xarrs[_fam]))
         )
-        output[_fam]["zdata"] = output[_fam]["ztrue"] + output[_fam]["errors"]
+        output[_fam]["ydata"] = output[_fam]["ytrue"] + output[_fam]["errors"]
 
         # Perform too low, matching, too high, and very much too high degree regressions on data
         output[_fam]["predictions"] = {}
+        output[_fam]["residuals"] = {}
         for _d in fit_degrees:
             _design_matrix = design_matrices[_d][_fam]
             _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix)
             print(f"Regressing {nruns} {_d} {_fam} runs using {NCORES=}")
             with multiprocessing.Pool(NCORES) as p:
                 output[_fam]["predictions"][_d] = np.asarray(
-                    p.map(_pfunc, [_zf for _zf in output[_fam]["zdata"]]), dtype=float
+                    p.map(_pfunc, [_zf for _zf in output[_fam]["ydata"]]), dtype=float
                 )
+            output[_fam]["residuals"][_d] = output[_fam]["ydata"] - output[_fam]["predictions"][_d]
 
     return output
 
