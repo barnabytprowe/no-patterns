@@ -20,10 +20,9 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.polynomial.chebyshev
-import pandas as pd
 
 import polynomials_fourier_1d
+from polynomials_fourier_1d import FIT_DEGREES, XARRS, NOISE_SIGMA, COEFF_SIGNAL_TO_NOISE
 
 
 # Parameters
@@ -41,54 +40,64 @@ NCORES = 2
 PKLDIR = os.path.join(".", "pickles")
 if not os.path.isdir(PKLDIR):
     os.mkdir(PKLDIR)
-PICKLE_CACHE = os.path.join(PKLDIR, f"correlations_n{NRUNS}.pkl")
+PICKLE_CACHE = os.path.join(PKLDIR, f"correlations_regressions_1d_n{NRUNS}.pkl")
 CLOBBER = False  # overwrite any existing pickle cache
 
 
-def _fit_predict(data, design_matrix=None):
-    """Perform OLS regression on input data using design_matrix, returning prediction
+def _fit_predict(data, design_matrix):
+    """Perform OLS regression on input data using the input design_matrix,
+    returning predictions
     """
     coeffs = np.linalg.lstsq(design_matrix, data, rcond=None)[0].T
     return design_matrix.dot(coeffs)
 
 
-def build_regression_sample(rng, nruns=NRUNS, families=("cheb", "sinu")):
+def build_regression_sample(
+    rng,
+    families=("cheb", "sinu"),
+    nruns=NRUNS,
+    fit_degrees=FIT_DEGREES,
+    xarrs=XARRS,
+    noise_sigma=NOISE_SIGMA,
+    coeff_signal_to_noise=COEFF_SIGNAL_TO_NOISE,
+):
     """Run full large sample analysis and return results in a dictionary, keyed
-    by curve family ("cheb", "sinu")
+    by the curve family keys in the second layer of the fit_degrees
+    [default: ("cheb", "sinu")]
     """
-    design_matrices = polynomials_fourier_1d.features()
-    output = {_family: {} for _family in families}
+    design_matrices = polynomials_fourier_1d.features(xarrs=xarrs, fit_degrees=fit_degrees)
+    for _matrices in design_matrices.values():
+        assert set(_matrices.keys()) == set(families)
+    output = {_fam: {} for _fam in families}
 
     # Ideal model coefficients and corresponding images on the coordinate grid
-    for _family in families:
-        print(f"Generating {_family} ideal model coefficients")
-        output[_family]["ctrue"] = rng.normal(
+    for _fam in families:
+        print(f"Generating {_fam} ideal model coefficients")
+        output[_fam]["ctrue"] = rng.normal(
             loc=0.,
-            scale=polynomials_fourier_1d.coeff_signal_to_noise * polynomials_fourier_1d.noise_sigma,
-            size=(nruns, design_matrices["true"][_family].shape[-1]),
+            scale=coeff_signal_to_noise * noise_sigma,
+            size=(nruns, design_matrices["true"][_fam].shape[-1]),
         )
-        output[_family]["ztrue"] = (
-            np.matmul(design_matrices["true"][_family], output[_family]["ctrue"].T).T
-        ).reshape((nruns, polynomials_fourier_1d.nx), order="C")
+        output[_fam]["ztrue"] = (
+            np.matmul(design_matrices["true"][_fam], output[_fam]["ctrue"].T).T
+        ).reshape((nruns, len(xarrs[_fam])), order="C")
 
         # Generate the errors we will add to create simulated data
-        print(f"Generating {_family} errors, data")
-        output[_family]["errors"] = rng.normal(
-            loc=0.,
-            scale=polynomials_fourier_1d.noise_sigma,
-            size=(nruns, polynomials_fourier_1d.nx),
+        print(f"Generating {_fam} errors, data")
+        output[_fam]["errors"] = rng.normal(
+            loc=0., scale=noise_sigma, size=(nruns, len(xarrs[_fam]))
         )
-        output[_family]["zdata"] = output[_family]["ztrue"] + output[_family]["errors"]
+        output[_fam]["zdata"] = output[_fam]["ztrue"] + output[_fam]["errors"]
 
         # Perform too low, matching, too high, and very much too high degree regressions on data
-        output[_family]["predictions"] = {}
-        for _d in polynomials_fourier_1d.fit_degrees:
-            _design_matrix = design_matrices[_d][_family]
+        output[_fam]["predictions"] = {}
+        for _d in fit_degrees:
+            _design_matrix = design_matrices[_d][_fam]
             _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix)
-            print(f"Regressing {nruns} {_d} {_family} runs using multiprocessing with {NCORES=}")
+            print(f"Regressing {nruns} {_d} {_fam} runs using {NCORES=}")
             with multiprocessing.Pool(NCORES) as p:
-                output[_family]["predictions"][_d] = np.asarray(
-                    p.map(_pfunc, [_zf for _zf in output[_family]["zdata"]]), dtype=float
+                output[_fam]["predictions"][_d] = np.asarray(
+                    p.map(_pfunc, [_zf for _zf in output[_fam]["zdata"]]), dtype=float
                 )
 
     return output
@@ -104,12 +113,18 @@ if __name__ == "__main__":
     if not CLOBBER and os.path.isfile(PICKLE_CACHE):
         print(f"Loading from {PICKLE_CACHE=}")
         with open(PICKLE_CACHE, "rb") as funit:
-            results = pickle.load(funit)
+            regressions = pickle.load(funit)
     else:
         t0 = time.time()
-        results = build_regression_sample(rng=rng, nruns=NRUNS, families=("cheb", "sinu"))
+        regressions = build_regression_sample(
+            rng=rng,
+            fit_degrees=FIT_DEGREES,
+            xarrs=XARRS,
+            noise_sigma=NOISE_SIGMA,
+            coeff_signal_to_noise=COEFF_SIGNAL_TO_NOISE,
+        )
         t1 = time.time()
         print(f"Wall time: {(t1 - t0):.2f}s")
         print(f"Saving results to {PICKLE_CACHE=}")
         with open(PICKLE_CACHE, "wb") as fout:
-            pickle.dump(results, fout)
+            pickle.dump(regressions, fout)
