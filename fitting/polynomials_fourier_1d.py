@@ -131,28 +131,32 @@ def nhalf_dft(n):
 
 def sample_spectrum(yarr):
     """Calculates the sample spectrum of the input real-valued yarr as
-    np.abs(np.fft.rfft(yarr))**2 / len(yarr), of length nhalf_dft(len(yarr))
+    np.abs(np.fft.rfft(yarr))**2 / yarr.shape(-1), of trailing dimension length
+    nhalf_dft(yarr.shape[-1])
     """
-    _nx = len(yarr)
-    ssarr = np.abs(np.fft.rfft(yarr))**2 / _nx  # input is real-valued so rfft
+    _nx = yarr.shape[-1]
+    ssarr = np.abs(np.fft.rfft(yarr, axis=-1))**2 / _nx  # input is real-valued so rfft
     assert len(ssarr) == nhalf_dft(_nx)
     return ssarr
 
 
-def zero_pad(yarr, mult=2, dtype=float):
-    """Zero-pads the input yarr to be length len(yarr) * mult"""
-    yret = np.zeros(len(yarr) * 2, dtype=dtype)
-    yret[:len(yarr)] = yarr
+def zero_pad(yarr, mult=2):
+    """Zero-pads the input yarr's trailing dimension to be length yarr.shape[-1] * mult"""
+    _padded_shape = list(yarr.shape)
+    _padded_shape[-1] *= mult
+    yret = np.zeros(_padded_shape, dtype=yarr.dtype)
+    yret[..., :yarr.shape[-1]] = yarr
     return yret
 
 
 def circular_acf(yarr, real_sample_spectrum=None):
-    """Calculates the circular autocorrelation function of the input real-valued
-    yarr via
+    """Calculates the circular autocorrelation function along the trailing
+    dimension of the input real-valued yarr via
 
-        np.fft.irfft(sample_spectrum(yarr))
+        np.fft.irfft(sample_spectrum(yarr), axis=-1)
 
-    with variance normalization, of final length nhalf_dft(len(yarr)).
+    with variance normalization, of final trailing dimension length
+    nhalf_dft(yarr.shape[-1]).
 
     An input
 
@@ -161,17 +165,17 @@ def circular_acf(yarr, real_sample_spectrum=None):
     can be passed if available, to avoid repeating DFT operations: this will be
     checked for length (only).
     """
-    _nhalf = nhalf_dft(len(yarr))
+    _nhalf = nhalf_dft(yarr.shape[-1])
     if real_sample_spectrum is None:
         real_sample_spectrum = sample_spectrum(yarr)
     else:
-        if len(real_sample_spectrum) != _nhalf:
+        if real_sample_spectrum.shape[-1] != _nhalf:
             raise ValueError(
-                f"{len(real_sample_spectrum)=} not expected {_nhalf}, given {len(yarr)=}"
+                f"{len(real_sample_spectrum)=} not expected {_nhalf}, given {yarr.shape[-1]=}"
             )
 
-    cacf = np.fft.irfft(real_sample_spectrum)
-    return cacf[:_nhalf] / cacf[0]  # return non-redundant first nhalf_dft of acf, var normalized
+    cacf = np.fft.irfft(real_sample_spectrum, axis=-1)
+    return cacf[..., :_nhalf] / cacf[0]  # return non-redundant first nhalf_dft of acf, var normed
 
 
 def unbiased_acf(yarr, zero_mean_padded_sample_spectrum=None):
@@ -191,21 +195,21 @@ def unbiased_acf(yarr, zero_mean_padded_sample_spectrum=None):
     checked for length (only).
     """
 
-    _nhalf = nhalf_dft(len(yarr))
+    _nhalf = nhalf_dft(yarr.shape[-1])
     if zero_mean_padded_sample_spectrum is None:
         zero_mean_padded_sample_spectrum = sample_spectrum(zero_pad(yarr - yarr.mean(), mult=2))
     else:
-        _padded_nhalf = nhalf_dft(2 * len(yarr))
-        if len(zero_mean_padded_sample_spectrum) != _padded_nhalf:
+        _padded_nhalf = nhalf_dft(2 * yarr.shape[-1])
+        if zero_mean_padded_sample_spectrum.shape[-1] != _padded_nhalf:
             raise ValueError(
-                f"{len(zero_mean_padded_sample_spectrum)=} not expected {_padded_nhalf}, "
-                f"given 2 * ({len(yarr)=}) == {2 * len(yarr)}"
+                f"{zero_mean_padded_sample_spectrum.shape[-1]=} not expected {_padded_nhalf}, "
+                f"given 2 * ({yarr.shape[-1]=}) == {2 * yarr.shape[-1]}"
             )
 
-    uacf = np.fft.irfft(zero_mean_padded_sample_spectrum)
+    uacf = np.fft.irfft(zero_mean_padded_sample_spectrum, axis=-1)
     uacf /= uacf[0]  # variance normalize
     # return non-redundant first _nhalf elements only, apply the debiasing factor
-    return uacf[:_nhalf] * len(yarr) / (len(yarr) - np.arange(_nhalf, dtype=float))
+    return uacf[:_nhalf] * yarr.shape[-1] / (yarr.shape[-1] - np.arange(_nhalf, dtype=float))
 
 
 def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, show=True):
