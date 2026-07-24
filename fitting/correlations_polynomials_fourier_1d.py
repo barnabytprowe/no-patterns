@@ -22,14 +22,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import polynomials_fourier_1d
-from polynomials_fourier_1d import FIT_DEGREES, XARRS, NOISE_SIGMA, COEFF_SIGNAL_TO_NOISE
+from polynomials_fourier_1d import (
+    sample_spectrum,
+    circular_acf,
+    unbiased_acf,
+    FIT_DEGREES,
+    XARRS,
+    NOISE_SIGMA,
+    COEFF_SIGNAL_TO_NOISE,
+)
 
 
 # Parameters
 # ==========
 
 # Number of simulated regression, out-of-sample datasets
-NRUNS = 100000
+NRUNS = 10000
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
@@ -130,3 +138,17 @@ if __name__ == "__main__":
         print(f"Saving results to {PICKLE_CACHE=}")
         with open(PICKLE_CACHE, "wb") as fout:
             pickle.dump(regressions, fout)
+
+    sample_spectra = {_family: {} for _family in XARRS}
+    circular_acfs = {_family: {} for _family in XARRS}
+    unbiased_acfs = {_family: {} for _family in XARRS}
+    for _family in XARRS:
+        for _degree_label in FIT_DEGREES:
+            _residuals = regressions[_family]["residuals"][_degree_label]
+            print(f"Running spectral analysis: {_family}, {_degree_label}")
+            _ss = sample_spectrum(_residuals)
+            sample_spectra[_family][_degree_label] = _ss
+            circular_acfs[_family][_degree_label] = circular_acf(
+                _residuals, real_sample_spectrum=_ss
+            )
+            unbiased_acfs[_family][_degree_label] = unbiased_acf(_residuals)
