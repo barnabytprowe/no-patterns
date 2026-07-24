@@ -136,7 +136,7 @@ def sample_spectrum(yarr):
     """
     _nx = yarr.shape[-1]
     ssarr = np.abs(np.fft.rfft(yarr, axis=-1))**2 / _nx  # input is real-valued so rfft
-    assert len(ssarr) == nhalf_dft(_nx)
+    assert ssarr.shape[-1] == nhalf_dft(_nx)
     return ssarr
 
 
@@ -171,11 +171,14 @@ def circular_acf(yarr, real_sample_spectrum=None):
     else:
         if real_sample_spectrum.shape[-1] != _nhalf:
             raise ValueError(
-                f"{len(real_sample_spectrum)=} not expected {_nhalf}, given {yarr.shape[-1]=}"
+                f"{real_sample_spectrum.shape[-1]=} not expected {_nhalf}, given {yarr.shape[-1]=}"
             )
 
     cacf = np.fft.irfft(real_sample_spectrum, axis=-1)
-    return cacf[..., :_nhalf] / cacf[0]  # return non-redundant first nhalf_dft of acf, var normed
+    if len(cacf.shape) == 1:
+        return cacf[:_nhalf] / cacf[0]  # return non-redundant first nhalf_dft of acf, var normed
+    else:
+        return (cacf[..., :_nhalf].T / cacf[..., 0]).T  # np broadcasting
 
 
 def unbiased_acf(yarr, zero_mean_padded_sample_spectrum=None):
@@ -207,9 +210,22 @@ def unbiased_acf(yarr, zero_mean_padded_sample_spectrum=None):
             )
 
     uacf = np.fft.irfft(zero_mean_padded_sample_spectrum, axis=-1)
-    uacf /= uacf[0]  # variance normalize
-    # return non-redundant first _nhalf elements only, apply the debiasing factor
-    return uacf[:_nhalf] * yarr.shape[-1] / (yarr.shape[-1] - np.arange(_nhalf, dtype=float))
+    if len(uacf.shape) == 1:
+        # return non-redundant first _nhalf elements only, apply the variance normalization and
+        # debiasing factor
+        return (
+            uacf[:_nhalf]
+            * yarr.shape[-1]
+            / uacf[0]
+            / (yarr.shape[-1] - np.arange(_nhalf, dtype=float))
+        )
+    else:
+        return (  # np broadcasting
+            (uacf[..., :_nhalf].T / uacf[..., 0]).T * (
+                yarr.shape[-1]
+                / (yarr.shape[-1] - np.arange(_nhalf, dtype=float)).T
+            )
+        )
 
 
 def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, show=True):
