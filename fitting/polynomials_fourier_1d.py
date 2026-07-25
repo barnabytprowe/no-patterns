@@ -35,6 +35,7 @@ NOISE_SIGMA = 1.
 
 # Settings for the ideal model, underspecified, overspecified and highly overspecified
 # series model degrees to use as model sets for the ideal model and fitting
+SUPPORTED_CURVE_FAMILIES = ("cheb", "sinu")
 FIT_DEGREES = {}
 
 FIT_DEGREES["lo"] = {"cheb": 2, "sinu": 1}  # underspecified model sets
@@ -56,7 +57,7 @@ XMINS = {"cheb": -1., "sinu": 0.}
 XMAXS = {"cheb":  1., "sinu": 1.}
 XARRS = {
     _family: np.linspace(XMINS[_family], XMAXS[_family], num=NX, endpoint=False)
-    for _family in ("cheb", "sinu")
+    for _family in SUPPORTED_CURVE_FAMILIES
 }
 
 VERBOSE = False
@@ -112,16 +113,34 @@ def chebyshev_design_matrix(xarr, degree):
 
 
 def features(xarrs=XARRS, fit_degrees=FIT_DEGREES):
-    """Returns a dict containing the Sinusoid and Chebyshev design matrices for
-    all series degrees in the input fit_degrees dict.
+    """Returns a nested dict containing the Sinusoid and Chebyshev design matrices
+    for all series degrees in the input fit_degrees dict, keyed by curve family
+    and fit_degree label.
     """
-    return {
-        _degree_label: {
-            "cheb": chebyshev_design_matrix(xarr=xarrs["cheb"], degree=_degree_dict["cheb"]),
-            "sinu": sinusoid_design_matrix(xarr=xarrs["sinu"], degree=_degree_dict["sinu"]),
-        }
-        for _degree_label, _degree_dict in fit_degrees.items()
-    }
+    if not set(xarrs).issubset(SUPPORTED_CURVE_FAMILIES):
+        unsupported_families = set(xarrs) - set(SUPPORTED_CURVE_FAMILIES)
+        raise NotImplementedError(f"{unsupported_families=} in input xarrs")
+
+    design_matrices = {}
+    for _family in xarrs:
+        if _family == "cheb":
+            design_matrices[_family] = {
+                _degree_label: chebyshev_design_matrix(
+                    xarr=xarrs["cheb"], degree=_degree_dict["cheb"]
+                )
+                for _degree_label, _degree_dict in fit_degrees.items()
+            }
+        elif _family == "sinu":
+            design_matrices[_family] = {
+                _degree_label: sinusoid_design_matrix(
+                    xarr=xarrs["sinu"], degree=_degree_dict["sinu"]
+                )
+                for _degree_label, _degree_dict in fit_degrees.items()
+            }
+        else:
+            raise RuntimeError()
+
+    return design_matrices
 
 
 def nhalf_dft(n):
@@ -481,15 +500,14 @@ if __name__ == "__main__":
     # Output dict - will be pickled
     output = {}
 
-    for _fam in ("cheb", "sinu"):  # Big outer loop over curve family
+    for _fam in SUPPORTED_CURVE_FAMILIES:  # Big outer loop over curve family
         # Build the true 1d curve coefficients
         output[f"{_fam}_coeffs_true"] = COEFF_SIGNAL_TO_NOISE * NOISE_SIGMA * np.random.randn(
-            design_matrices["true"][_fam].shape[-1]
+            design_matrices[_fam]["true"].shape[-1]
         )
         # Build the true 1d curves from these coefficients
         output[f"ytrue_{_fam}"] = np.matmul(
-            design_matrices["true"][_fam],
-            output[f"{_fam}_coeffs_true"],
+            design_matrices[_fam]["true"], output[f"{_fam}_coeffs_true"]
         )
         # Add random Gaussian iid errors to generate our simulation dataset y values
         output[f"e_{_fam}"] = NOISE_SIGMA * np.random.randn(NX)
@@ -498,7 +516,7 @@ if __name__ == "__main__":
         # Plot scatter plots of data, ideal model and predictions
         # First perform regression at different degrees to generate predictions
         for _degree_label in FIT_DEGREES:
-            _design_matrix = design_matrices[_degree_label][_fam]
+            _design_matrix = design_matrices[_fam][_degree_label]
             _coeffs = np.linalg.lstsq(_design_matrix, output[f"y_{_fam}"], rcond=None)[0]
             if VERBOSE:
                 print(
