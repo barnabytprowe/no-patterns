@@ -20,16 +20,20 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.linalg
 
 import polynomials_fourier_1d
 from polynomials_fourier_1d import (
     sample_spectrum,
     circular_acf,
     unbiased_acf,
+    SUPPORTED_CURVE_FAMILIES,
     FIT_DEGREES,
     XARRS,
     NOISE_SIGMA,
     COEFF_SIGNAL_TO_NOISE,
+    FIT_DISPLAY,
+    CURVE_FAMILY_DISPLAY,
 )
 
 
@@ -37,7 +41,7 @@ from polynomials_fourier_1d import (
 # ==========
 
 # Number of simulated regression, out-of-sample datasets
-NRUNS = 10000
+NRUNS = 100000
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
@@ -51,6 +55,12 @@ if not os.path.isdir(PKLDIR):
 PICKLE_CACHE = os.path.join(PKLDIR, f"correlations_regressions_1d_n{NRUNS}.pkl")
 CLOBBER = False  # overwrite any existing pickle cache
 
+# Parameters for example matrix display using imshow
+CMAP = "magma" # "gray_r"
+VMIN = -1.
+VMAX = 1.
+ZOOM_NDIM = 10
+
 
 def _fit_predict(data, design_matrix):
     """Perform OLS regression on input data using the input design_matrix,
@@ -62,7 +72,6 @@ def _fit_predict(data, design_matrix):
 
 def build_regression_sample(
     rng,
-    families=("cheb", "sinu"),
     nruns=NRUNS,
     fit_degrees=FIT_DEGREES,
     xarrs=XARRS,
@@ -70,24 +79,22 @@ def build_regression_sample(
     coeff_signal_to_noise=COEFF_SIGNAL_TO_NOISE,
 ):
     """Run full large sample analysis and return results in a dictionary, keyed
-    by the curve family keys in the second layer of the fit_degrees
-    [default: ("cheb", "sinu")]
+    by the curve family keys in the second layer of the fit_degrees, which must
+    be a subset of {"cheb", "sinu"}.
     """
     design_matrices = polynomials_fourier_1d.features(xarrs=xarrs, fit_degrees=fit_degrees)
-    for _matrices in design_matrices.values():
-        assert set(_matrices.keys()) == set(families)
-    output = {_fam: {} for _fam in families}
 
+    output = {_fam: {} for _fam in xarrs}
     # Ideal model coefficients and corresponding images on the coordinate grid
-    for _fam in families:
+    for _fam in xarrs:
         print(f"Generating {_fam} ideal model coefficients")
         output[_fam]["ctrue"] = rng.normal(
             loc=0.,
             scale=coeff_signal_to_noise * noise_sigma,
-            size=(nruns, design_matrices["true"][_fam].shape[-1]),
+            size=(nruns, design_matrices[_fam]["true"].shape[-1]),
         )
         output[_fam]["ytrue"] = (
-            np.matmul(design_matrices["true"][_fam], output[_fam]["ctrue"].T).T
+            np.matmul(design_matrices[_fam]["true"], output[_fam]["ctrue"].T).T
         ).reshape((nruns, len(xarrs[_fam])), order="C")
 
         # Generate the errors we will add to create simulated data
@@ -98,20 +105,22 @@ def build_regression_sample(
         output[_fam]["ydata"] = output[_fam]["ytrue"] + output[_fam]["errors"]
 
         # Perform too low, matching, too high, and very much too high degree regressions on data
-        output[_fam]["predictions"] = {}
-        output[_fam]["residuals"] = {}
         for _d in fit_degrees:
-            _design_matrix = design_matrices[_d][_fam]
+            output[_fam][_d] = {}
+            _design_matrix = design_matrices[_fam][_d]
             _pfunc = functools.partial(_fit_predict, design_matrix=_design_matrix)
             print(f"Regressing {nruns} {_d} {_fam} runs using {NCORES=}")
             with multiprocessing.Pool(NCORES) as p:
-                output[_fam]["predictions"][_d] = np.asarray(
+                output[_fam][_d]["predictions"] = np.asarray(
                     p.map(_pfunc, [_zf for _zf in output[_fam]["ydata"]]), dtype=float
                 )
-            output[_fam]["residuals"][_d] = output[_fam]["ydata"] - output[_fam]["predictions"][_d]
+            output[_fam][_d]["residuals"] = output[_fam]["ydata"] - output[_fam][_d]["predictions"]
 
     return output
 
+
+def build_spectra_acfs(regressions, families=tuple(XARRS), fit_degrees=FIT_DEGREES):
+    pass
 
 # Main script
 # ===========
@@ -144,7 +153,7 @@ if __name__ == "__main__":
     unbiased_acfs = {_family: {} for _family in XARRS}
     for _family in XARRS:
         for _degree_label in FIT_DEGREES:
-            _residuals = regressions[_family]["residuals"][_degree_label]
+            _residuals = regressions[_family][_degree_label]["residuals"]
             print(f"Running spectral analysis: {_family}, {_degree_label}")
             _ss = sample_spectrum(_residuals)
             sample_spectra[_family][_degree_label] = _ss
@@ -152,3 +161,44 @@ if __name__ == "__main__":
                 _residuals, real_sample_spectrum=_ss
             )
             unbiased_acfs[_family][_degree_label] = unbiased_acf(_residuals)
+            # Plot the symmetric Toeplitz unbiased ACF
+            fig, ax = plt.subplots(figsize=(8, 6))
+            im = ax.imshow(
+                scipy.linalg.toeplitz(unbiased_acfs[_family][_degree_label].mean(axis=0)),
+                cmap=CMAP,
+                vmin=VMIN,
+                vmax=VMAX,
+            )
+            cbar = fig.colorbar(im)
+            ax.set_title(
+                (
+                    f"Mean unbiased ACF from {NRUNS} {FIT_DISPLAY[_degree_label].lower()} "
+                    f"{CURVE_FAMILY_DISPLAY[_family]} regressions"
+                ),
+                size=12,
+            )
+            ax.tick_params(axis="both", labelsize=10)
+            cbar.ax.tick_params(axis="both", labelsize=10)
+            fig.tight_layout()
+            plt.show()
+
+            # Plot the symmetric circulant circulat ACF
+            fig, ax = plt.subplots(figsize=(8, 6))
+            im = ax.imshow(
+                scipy.linalg.circulant(circular_acfs[_family][_degree_label].mean(axis=0)),
+                cmap=CMAP,
+                vmin=VMIN,
+                vmax=VMAX,
+            )
+            cbar = fig.colorbar(im)
+            ax.set_title(
+                (
+                    f"Circular ACF from {NRUNS} {FIT_DISPLAY[_degree_label].lower()} "
+                    f"{CURVE_FAMILY_DISPLAY[_family]} regressions"
+                ),
+                size=12,
+            )
+            ax.tick_params(axis="both", labelsize=10)
+            cbar.ax.tick_params(axis="both", labelsize=10)
+            fig.tight_layout()
+            plt.show()
