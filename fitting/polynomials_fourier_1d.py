@@ -228,21 +228,21 @@ def unbiased_acf(yarr, zero_mean_padded_sample_spectrum=None):
                 f"given 2 * ({yarr.shape[-1]=}) == {2 * yarr.shape[-1]}"
             )
 
-    uacf = np.fft.irfft(zero_mean_padded_sample_spectrum, axis=-1)
+    uacf = np.fft.irfft(zero_mean_padded_sample_spectrum, axis=-1)[..., :yarr.shape[-1]]
     if len(uacf.shape) == 1:
         # return non-redundant first _nhalf elements only, apply the variance normalization and
         # debiasing factor
         return (
-            uacf[:_nhalf]
-            * yarr.shape[-1]
-            / uacf[0]
-            / (yarr.shape[-1] - np.arange(_nhalf, dtype=float))
+            uacf *
+            yarr.shape[-1] /
+            uacf[0] / (
+                yarr.shape[-1] - np.arange(yarr.shape[-1], dtype=float)
+            )
         )
     else:
         return (  # np broadcasting
-            (uacf[..., :_nhalf].T / uacf[..., 0]).T * (
-                yarr.shape[-1]
-                / (yarr.shape[-1] - np.arange(_nhalf, dtype=float)).T
+            (uacf.T / uacf[..., 0]).T * (
+                yarr.shape[-1] / (yarr.shape[-1] - np.arange(yarr.shape[-1], dtype=float)).T
             )
         )
 
