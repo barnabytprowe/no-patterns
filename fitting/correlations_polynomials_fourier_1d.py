@@ -27,6 +27,7 @@ from polynomials_fourier_1d import (
     sample_spectrum,
     circular_acf,
     unbiased_acf,
+    nhalf_dft,
     SUPPORTED_CURVE_FAMILIES,
     FIT_DEGREES,
     XARRS,
@@ -119,8 +120,61 @@ def build_regression_sample(
     return output
 
 
-def build_spectra_acfs(regressions, families=tuple(XARRS), fit_degrees=FIT_DEGREES):
-    pass
+def build_spectra_acfs(
+    regressions,
+    families=SUPPORTED_CURVE_FAMILIES,
+    degree_labels=tuple(FIT_DEGREES),
+):
+    """
+    """
+    sample_spectra = {_family: {} for _family in families}
+    circular_acfs = {_family: {} for _family in families}
+    unbiased_acfs = {_family: {} for _family in families}
+    for _family in families:
+        for _degree_label in degree_labels:
+            _residuals = regressions[_family][_degree_label]["residuals"]
+            print(f"Running spectral analysis: {_family}, {_degree_label}")
+            _ss = sample_spectrum(_residuals)
+            sample_spectra[_family][_degree_label] = _ss
+            circular_acfs[_family][_degree_label] = circular_acf(
+                _residuals, real_sample_spectrum=_ss
+            )
+            unbiased_acfs[_family][_degree_label] = unbiased_acf(_residuals)
+
+    return sample_spectra, circular_acfs, unbiased_acfs
+
+
+def symmetric_extend(nfull, yhalf):
+    """Symmetrically extends yhalf, an ndarray of trailing dimension
+    nhalf_dft(nfull), to int nfull.
+
+    Suited for when yhalf comes from symmetric spectral analysis output such as:
+    sample_spectra, circular_acfs, unbiased_acfs
+    """
+    nhalf = nhalf_dft(nfull)
+    assert yhalf.shape[-1] == nhalf
+
+    # construct full shape vector and allocate output yfull
+    full_shape = list(yhalf.shape)
+    full_shape[-1] = nfull
+    yfull = np.zeros(full_shape, dtype=float)
+
+    # allocate first ~half of nfull, assigning yhalf
+    yfull[..., :yhalf.shape[-1]] = yhalf.copy()
+
+    # second half has a slightly different treatment based on the parity of nfull
+    neven = ((nfull % 2) == 0)
+    if neven:
+        yhalf_complement = yhalf[..., 1:yhalf.shape[-1]-1][..., ::-1].copy()
+        assert yfull[..., yhalf.shape[-1]:].shape[-1] == yhalf_complement.shape[-1]
+    else:
+        yhalf_complement = yhalf[..., 1:yhalf.shape[-1]][..., ::-1].copy()
+        assert yfull[..., yhalf.shape[-1]:].shape[-1] == yhalf_complement.shape[-1]
+        raise NotImplementedError("odd nfull not tested")
+    yfull[..., yhalf.shape[-1]:] = yhalf_complement
+
+    return yfull
+
 
 # Main script
 # ===========
@@ -148,23 +202,25 @@ if __name__ == "__main__":
         with open(PICKLE_CACHE, "wb") as fout:
             pickle.dump(regressions, fout)
 
-    sample_spectra = {_family: {} for _family in XARRS}
-    circular_acfs = {_family: {} for _family in XARRS}
-    unbiased_acfs = {_family: {} for _family in XARRS}
-    for _family in XARRS:
+    sample_spectra, circular_acfs, unbiased_acfs = build_spectra_acfs(
+        regressions, families=SUPPORTED_CURVE_FAMILIES, degree_labels=tuple(FIT_DEGREES)
+    )
+
+    _family = "sinu"
+    _degree = "lo"
+    _result = symmetric_extend(len(XARRS[_family]), sample_spectra[_family][_degree].mean(axis=-2))
+
+    for _family in SUPPORTED_CURVE_FAMILIES:
         for _degree_label in FIT_DEGREES:
-            _residuals = regressions[_family][_degree_label]["residuals"]
-            print(f"Running spectral analysis: {_family}, {_degree_label}")
-            _ss = sample_spectrum(_residuals)
-            sample_spectra[_family][_degree_label] = _ss
-            circular_acfs[_family][_degree_label] = circular_acf(
-                _residuals, real_sample_spectrum=_ss
-            )
-            unbiased_acfs[_family][_degree_label] = unbiased_acf(_residuals)
             # Plot the symmetric Toeplitz unbiased ACF
             fig, ax = plt.subplots(figsize=(8, 6))
             im = ax.imshow(
-                scipy.linalg.toeplitz(unbiased_acfs[_family][_degree_label].mean(axis=0)),
+                scipy.linalg.toeplitz(
+                    symmetric_extend(
+                        len(XARRS[_family]),
+                        unbiased_acfs[_family][_degree_label].mean(axis=0),
+                    )
+                ),
                 cmap=CMAP,
                 vmin=VMIN,
                 vmax=VMAX,
@@ -182,10 +238,15 @@ if __name__ == "__main__":
             fig.tight_layout()
             plt.show()
 
-            # Plot the symmetric circulant circulat ACF
+            # Plot the symmetric circulant circular ACF
             fig, ax = plt.subplots(figsize=(8, 6))
             im = ax.imshow(
-                scipy.linalg.circulant(circular_acfs[_family][_degree_label].mean(axis=0)),
+                scipy.linalg.circulant(
+                    symmetric_extend(
+                        len(XARRS[_family]),
+                        circular_acfs[_family][_degree_label].mean(axis=0),
+                    )
+                ),
                 cmap=CMAP,
                 vmin=VMIN,
                 vmax=VMAX,
