@@ -42,7 +42,7 @@ from polynomials_fourier_1d import (
 # ==========
 
 # Number of simulated regression, out-of-sample datasets
-NRUNS = 100000
+NRUNS = 10000
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
@@ -206,21 +206,12 @@ if __name__ == "__main__":
         regressions, families=SUPPORTED_CURVE_FAMILIES, degree_labels=tuple(FIT_DEGREES)
     )
 
-    _family = "sinu"
-    _degree = "lo"
-    _result = symmetric_extend(len(XARRS[_family]), sample_spectra[_family][_degree].mean(axis=-2))
-
-    for _family in SUPPORTED_CURVE_FAMILIES:
+    for _family in ("sinu",):  #SUPPORTED_CURVE_FAMILIES:
         for _degree_label in FIT_DEGREES:
             # Plot the symmetric Toeplitz unbiased ACF
             fig, ax = plt.subplots(figsize=(8, 6))
             im = ax.imshow(
-                scipy.linalg.toeplitz(
-                    symmetric_extend(
-                        len(XARRS[_family]),
-                        unbiased_acfs[_family][_degree_label].mean(axis=0),
-                    )
-                ),
+                scipy.linalg.toeplitz(unbiased_acfs[_family][_degree_label][0, :]),  #.mean(axis=0)),
                 cmap=CMAP,
                 vmin=VMIN,
                 vmax=VMAX,
@@ -244,7 +235,7 @@ if __name__ == "__main__":
                 scipy.linalg.circulant(
                     symmetric_extend(
                         len(XARRS[_family]),
-                        circular_acfs[_family][_degree_label].mean(axis=0),
+                        circular_acfs[_family][_degree_label][0, :],  #.mean(axis=0)),
                     )
                 ),
                 cmap=CMAP,
