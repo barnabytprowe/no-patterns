@@ -23,6 +23,7 @@ import numpy as np
 import scipy.linalg
 
 import polynomials_fourier_1d
+from polynomials_2d import PLTDIR
 from polynomials_fourier_1d import (
     sample_spectrum,
     circular_acf,
@@ -35,6 +36,9 @@ from polynomials_fourier_1d import (
     COEFF_SIGNAL_TO_NOISE,
     FIT_DISPLAY,
     CURVE_FAMILY_DISPLAY,
+    LABEL_SIZE,
+    TITLE_SIZE,
+    OUTFILE_EXTENSIONS,
 )
 
 
@@ -42,7 +46,7 @@ from polynomials_fourier_1d import (
 # ==========
 
 # Number of simulated regression, out-of-sample datasets
-NRUNS = 10000
+NRUNS = 10**5
 
 # Number of cores to use in multiprocessing the regresssion - I find that on modern python
 # environments a number rather fewer than the number of actual cores on your machine (6 for my
@@ -61,6 +65,10 @@ CMAP = "magma" # "gray_r"
 VMIN = -1.
 VMAX = 1.
 ZOOM_NDIM = 10
+
+# Output folder structure: project dir
+PROJDIR = os.path.join(PLTDIR, "correlations_polynomials_fourier_1d")
+os.makedirs(PROJDIR, exist_ok=True)
 
 
 def _fit_predict(data, design_matrix):
@@ -206,20 +214,88 @@ if __name__ == "__main__":
         regressions, families=SUPPORTED_CURVE_FAMILIES, degree_labels=tuple(FIT_DEGREES)
     )
 
-    for _family in ("sinu",):  #SUPPORTED_CURVE_FAMILIES:
+    # Calculate mean values over the NRUNS samples
+    mean_unbiased_acfs = {
+        _family: {
+            _degree_label: unbiased_acfs[_family][_degree_label].mean(axis=0)
+            for _degree_label in FIT_DEGREES
+        }
+        for _family in SUPPORTED_CURVE_FAMILIES
+    }
+    mean_circular_acfs = {
+        _family: {
+            _degree_label: circular_acfs[_family][_degree_label].mean(axis=0)
+            for _degree_label in FIT_DEGREES
+        }
+        for _family in SUPPORTED_CURVE_FAMILIES
+    }
+    # stderr_unbiased_acfs = {
+    #     _family: {
+    #         _degree_label: unbiased_acfs[_family][_degree_label].std(axis=0) / np.sqrt(NRUNS)
+    #         for _degree_label in FIT_DEGREES
+    #     }
+    #     for _family in SUPPORTED_CURVE_FAMILIES
+    # }
+    # stderr_circular_acfs = {
+    #     _family: {
+    #         _degree_label: circular_acfs[_family][_degree_label].std(axis=0) / np.sqrt(NRUNS)
+    #         for _degree_label in FIT_DEGREES
+    #     }
+    #     for _family in SUPPORTED_CURVE_FAMILIES
+    # }
+
+    # Plot mean acfs, both "unbiased" and circular
+    linestyles = ["--", "-", "-.", ":"]
+    colors = ["red", "k", "blue", "purple"]
+    for _circularity, _acfs_dict in (("", mean_unbiased_acfs), (" circular", mean_circular_acfs)):
+        for _family in SUPPORTED_CURVE_FAMILIES:
+            fig, ax = plt.subplots(figsize=(12, 4))
+            ax.set_title(
+                (
+                    f"Mean {CURVE_FAMILY_DISPLAY[_family].lower()} regression residual"
+                    f"{_circularity} autocorrelation functions from {NRUNS} runs"
+                ),
+                size=TITLE_SIZE,
+            )
+            for i, _degree_label in enumerate(FIT_DEGREES):
+                ax.plot(
+                    _acfs_dict[_family][_degree_label] if _circularity == "" else (
+                        symmetric_extend(len(XARRS[_family]), _acfs_dict[_family][_degree_label])
+                    ),
+                    color=colors[i],
+                    ls=linestyles[i],
+                    label=FIT_DISPLAY[_degree_label],
+                )
+
+            ax.set_xlabel(r"Lag $\ell$", size=LABEL_SIZE)
+            ax.set_ylabel(r"$\left. r[\ell] ~ \middle/ ~ r[0] \right. $", size=LABEL_SIZE)
+            ax.legend()
+            ax.grid()
+            fig.tight_layout()
+            for _suffix in OUTFILE_EXTENSIONS:
+                _outfile = os.path.join(
+                    PROJDIR, f"mean{_circularity.replace(' ', '_')}_acf_{_family}_n{NRUNS}{_suffix}"
+                )
+                print(f"Saving to {_outfile}")
+                fig.savefig(_outfile)
+
+            plt.show()
+
+    for _family in ("cheb",):  # SUPPORTED_CURVE_FAMILIES:
         for _degree_label in FIT_DEGREES:
             # Plot the symmetric Toeplitz unbiased ACF
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(6, 4))
             im = ax.imshow(
-                scipy.linalg.toeplitz(unbiased_acfs[_family][_degree_label][0, :]),  #.mean(axis=0)),
+                scipy.linalg.toeplitz(mean_unbiased_acfs[_family][_degree_label]),
                 cmap=CMAP,
                 vmin=VMIN,
                 vmax=VMAX,
             )
             cbar = fig.colorbar(im)
+            nlog10_str = str(int(np.log10(NRUNS)))
             ax.set_title(
                 (
-                    f"Mean unbiased ACF from {NRUNS} {FIT_DISPLAY[_degree_label].lower()} "
+                    f"Mean unbiased ACF from\n{FIT_DISPLAY[_degree_label].lower()} "
                     f"{CURVE_FAMILY_DISPLAY[_family]} regressions"
                 ),
                 size=12,
@@ -230,12 +306,11 @@ if __name__ == "__main__":
             plt.show()
 
             # Plot the symmetric circulant circular ACF
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(6, 4))
             im = ax.imshow(
                 scipy.linalg.circulant(
                     symmetric_extend(
-                        len(XARRS[_family]),
-                        circular_acfs[_family][_degree_label][0, :],  #.mean(axis=0)),
+                        len(XARRS[_family]), mean_circular_acfs[_family][_degree_label]
                     )
                 ),
                 cmap=CMAP,
@@ -245,7 +320,7 @@ if __name__ == "__main__":
             cbar = fig.colorbar(im)
             ax.set_title(
                 (
-                    f"Circular ACF from {NRUNS} {FIT_DISPLAY[_degree_label].lower()} "
+                    f"Mean circular ACF from\n{FIT_DISPLAY[_degree_label].lower()} "
                     f"{CURVE_FAMILY_DISPLAY[_family]} regressions"
                 ),
                 size=12,
