@@ -61,10 +61,13 @@ PICKLE_CACHE = os.path.join(PKLDIR, f"correlations_regressions_1d_n{NRUNS}.pkl")
 CLOBBER = False  # overwrite any existing pickle cache
 
 # Parameters for example matrix display using imshow
-CMAP = "magma" # "gray_r"
+CMAP = "gray"  # "plasma"  # "magma" # "gray_r"
 VMIN = -1.
 VMAX = 1.
 ZOOM_NDIM = 10
+
+MEAN_ACF_FIGSIZE = (12, 4)
+MATRIX_FIGSIZE = (8, 12)
 
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "correlations_polynomials_fourier_1d")
@@ -249,11 +252,11 @@ if __name__ == "__main__":
     colors = ["red", "k", "blue", "purple"]
     for _circularity, _acfs_dict in (("", mean_unbiased_acfs), (" circular", mean_circular_acfs)):
         for _family in SUPPORTED_CURVE_FAMILIES:
-            fig, ax = plt.subplots(figsize=(12, 4))
+            fig, ax = plt.subplots(figsize=MEAN_ACF_FIGSIZE)
             ax.set_title(
                 (
-                    f"Mean {CURVE_FAMILY_DISPLAY[_family].lower()} regression residual"
-                    f"{_circularity} autocorrelation functions from {NRUNS} runs"
+                    f"Sample mean {CURVE_FAMILY_DISPLAY[_family].lower()} residual"
+                    f"{_circularity} autocorrelation functions over {NRUNS} simulations"
                 ),
                 size=TITLE_SIZE,
             )
@@ -278,35 +281,40 @@ if __name__ == "__main__":
                 )
                 print(f"Saving to {_outfile}")
                 fig.savefig(_outfile)
+            # fig.clear()
 
-            plt.show()
-
+    # Plot corresponding correlation matrices
     for _family in ("cheb",):  # SUPPORTED_CURVE_FAMILIES:
-        for _degree_label in FIT_DEGREES:
+
+        fig, axes = plt.subplots(nrows=4, ncols=2, figsize=MATRIX_FIGSIZE, layout="tight")
+        fig.suptitle(
+            f"Autocorrelation matrices from sample mean residual ACFs over {NRUNS} simulations"
+        )
+        for irow, _degree_label in enumerate(FIT_DEGREES):
             # Plot the symmetric Toeplitz unbiased ACF
-            fig, ax = plt.subplots(figsize=(6, 4))
+            icol = 0
+            ax = axes[irow, icol]
             im = ax.imshow(
                 scipy.linalg.toeplitz(mean_unbiased_acfs[_family][_degree_label]),
                 cmap=CMAP,
                 vmin=VMIN,
                 vmax=VMAX,
             )
-            cbar = fig.colorbar(im)
-            nlog10_str = str(int(np.log10(NRUNS)))
             ax.set_title(
                 (
-                    f"Mean unbiased ACF from\n{FIT_DISPLAY[_degree_label].lower()} "
-                    f"{CURVE_FAMILY_DISPLAY[_family]} regressions"
+                    f"Unbiased ACF: \n{FIT_DISPLAY[_degree_label].lower()} "
+                    f"{CURVE_FAMILY_DISPLAY[_family]}"
                 ),
                 size=12,
             )
             ax.tick_params(axis="both", labelsize=10)
+            cbar = fig.colorbar(im)
             cbar.ax.tick_params(axis="both", labelsize=10)
-            fig.tight_layout()
-            plt.show()
+
 
             # Plot the symmetric circulant circular ACF
-            fig, ax = plt.subplots(figsize=(6, 4))
+            icol = 1
+            ax = axes[irow, icol]
             im = ax.imshow(
                 scipy.linalg.circulant(
                     symmetric_extend(
@@ -317,15 +325,20 @@ if __name__ == "__main__":
                 vmin=VMIN,
                 vmax=VMAX,
             )
-            cbar = fig.colorbar(im)
             ax.set_title(
                 (
-                    f"Mean circular ACF from\n{FIT_DISPLAY[_degree_label].lower()} "
-                    f"{CURVE_FAMILY_DISPLAY[_family]} regressions"
+                    f"Circular ACF: \n{FIT_DISPLAY[_degree_label].lower()} "
+                    f"{CURVE_FAMILY_DISPLAY[_family]}"
                 ),
                 size=12,
             )
             ax.tick_params(axis="both", labelsize=10)
+            cbar = fig.colorbar(im)
             cbar.ax.tick_params(axis="both", labelsize=10)
-            fig.tight_layout()
-            plt.show()
+
+        for _suffix in OUTFILE_EXTENSIONS:
+            _outfile = os.path.join(PROJDIR, f"acf_matrices_{_family}_n{NRUNS}{_suffix}")
+            print(f"Saving to {_outfile}")
+            fig.savefig(_outfile)
+
+        plt.show()
