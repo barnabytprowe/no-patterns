@@ -291,7 +291,7 @@ if __name__ == "__main__":
             f"Autocorrelation matrices from sample mean residual ACFs over {NRUNS} simulations"
         )
         for irow, _degree_label in enumerate(FIT_DEGREES):
-            # Plot the symmetric Toeplitz unbiased ACF
+            # Plot the symmetric Toeplitz unbiased ACF matrices in the first column
             icol = 0
             ax = axes[irow, icol]
             im = ax.imshow(
@@ -311,8 +311,7 @@ if __name__ == "__main__":
             cbar = fig.colorbar(im)
             cbar.ax.tick_params(axis="both", labelsize=10)
 
-
-            # Plot the symmetric circulant circular ACF
+            # Plot the symmetric circulant circular ACF matrices
             icol = 1
             ax = axes[irow, icol]
             im = ax.imshow(
