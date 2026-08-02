@@ -29,6 +29,7 @@ from polynomials_fourier_1d import (
     circular_acf,
     unbiased_acf,
     nhalf_dft,
+    plot_periodograms,
     SUPPORTED_CURVE_FAMILIES,
     FIT_DEGREES,
     XARRS,
@@ -232,6 +233,13 @@ if __name__ == "__main__":
         }
         for _family in SUPPORTED_CURVE_FAMILIES
     }
+    mean_sample_spectra = {
+        _family: {
+            _degree_label: sample_spectra[_family][_degree_label].mean(axis=0)
+            for _degree_label in FIT_DEGREES
+        }
+        for _family in SUPPORTED_CURVE_FAMILIES
+    }
     # stderr_unbiased_acfs = {
     #     _family: {
     #         _degree_label: unbiased_acfs[_family][_degree_label].std(axis=0) / np.sqrt(NRUNS)
@@ -255,8 +263,9 @@ if __name__ == "__main__":
             fig, ax = plt.subplots(figsize=MEAN_ACF_FIGSIZE)
             ax.set_title(
                 (
-                    f"Sample mean {CURVE_FAMILY_DISPLAY[_family].lower()} residual"
-                    f"{_circularity} autocorrelation functions over {NRUNS} simulations"
+                    f"{CURVE_FAMILY_DISPLAY[_family].title()} series regression "
+                    f"residual{_circularity} autocorrelation functions: sample mean over {NRUNS} "
+                    "simulations"
                 ),
                 size=TITLE_SIZE,
             )
@@ -266,6 +275,7 @@ if __name__ == "__main__":
                         symmetric_extend(len(XARRS[_family]), _acfs_dict[_family][_degree_label])
                     ),
                     color=colors[i],
+                    linewidth=1.5,
                     ls=linestyles[i],
                     label=FIT_DISPLAY[_degree_label],
                 )
@@ -276,15 +286,44 @@ if __name__ == "__main__":
             ax.grid()
             fig.tight_layout()
             for _suffix in OUTFILE_EXTENSIONS:
+                os.makedirs(
+                    os.path.join(PROJDIR, CURVE_FAMILY_DISPLAY[_family].lower()), exist_ok=True
+                )
                 _outfile = os.path.join(
-                    PROJDIR, f"mean{_circularity.replace(' ', '_')}_acf_{_family}_n{NRUNS}{_suffix}"
+                    PROJDIR,
+                    CURVE_FAMILY_DISPLAY[_family].lower(),
+                    (
+                        f"acfs{_circularity.replace(' ', '_')}_"
+                        f"{CURVE_FAMILY_DISPLAY[_family].lower().replace(' ', '_')}"
+                        f"_n{NRUNS}{_suffix}"
+                    ),
                 )
                 print(f"Saving to {_outfile}")
                 fig.savefig(_outfile)
             # fig.clear()
 
+    # Plot sample spectra
+    for _family in SUPPORTED_CURVE_FAMILIES:
+        os.makedirs(
+            os.path.join(PROJDIR, CURVE_FAMILY_DISPLAY[_family]).lower(), exist_ok=True
+        )
+        plot_periodograms(
+            [
+                mean_sample_spectra[_family]["lo"],
+                mean_sample_spectra[_family]["true"],
+                mean_sample_spectra[_family]["hi"],
+                mean_sample_spectra[_family]["vhi"],
+            ],
+            nfull=len(XARRS[_family]),
+            tstmp=f"n{NRUNS}",
+            curve_family_display=CURVE_FAMILY_DISPLAY[_family],
+            outdir=PROJDIR,
+            title_suffix=f": sample mean over {NRUNS} simulations",
+            show=False,
+        )
+
     # Plot corresponding correlation matrices
-    for _family in ("cheb",):  # SUPPORTED_CURVE_FAMILIES:
+    for _family in SUPPORTED_CURVE_FAMILIES:
 
         fig, axes = plt.subplots(nrows=4, ncols=2, figsize=MATRIX_FIGSIZE, layout="tight")
         fig.suptitle(
@@ -336,8 +375,10 @@ if __name__ == "__main__":
             cbar.ax.tick_params(axis="both", labelsize=10)
 
         for _suffix in OUTFILE_EXTENSIONS:
-            _outfile = os.path.join(PROJDIR, f"acf_matrices_{_family}_n{NRUNS}{_suffix}")
+            _outfile = os.path.join(
+                PROJDIR, f"acf_matrices_{CURVE_FAMILY_DISPLAY[_family].lower()}_n{NRUNS}{_suffix}"
+            )
             print(f"Saving to {_outfile}")
             fig.savefig(_outfile)
 
-        plt.show()
+        # plt.show()
