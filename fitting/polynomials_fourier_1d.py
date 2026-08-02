@@ -339,15 +339,23 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
     return
 
 
-def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, show=True):
+def plot_periodograms(
+    periodograms,
+    nfull,
+    curve_family_display,
+    outdir,
+    tstmp=None,
+    iid_error_periodogram=None,
+    title_suffix=None,
+    show=True
+):
     """Makes and saves plots of error and residual periodograms from 1D
     regressions.
 
     Args:
         periodograms:
-            list of 5 array-likes containing the following 1d periodograms (in
+            list of 4 array-likes containing the following 1d periodograms (in
             order):
-            - iid errors
             - Low degree model set residuals
             - Matching degree model set residuals
             - High degree model set residuals
@@ -356,34 +364,51 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
             int full size of original dataset, such that
             len(p) = nfull // 2 + 1 for each for each p in the periodograms
         curve_family_display: one of {'polynomial', 'Fourier'}
-        tstmp: timestamp used in folder structure
         outdir: output folder
+        tstmp: timestamp used in output filename prior to file extension
+        iid_error_periodogram:
+            optional 1d periodogram array of the same shape as the contents of
+            periodograms, containing sample periodograms of iid errors
+        title_suffix:
+            optional text to add as a direct suffix to the default title:
+            curve_family_display.title()+' series regression residual periodograms'
         show: plt.show()?
     """
+    if iid_error_periodogram is not None:
+        periodograms = list(periodograms)
+        periodograms.insert(0, iid_error_periodogram)
     fig, (ax0, ax1) = plt.subplots(2, figsize=FIGSIZE_PERIODOGRAMS)
-    fig.suptitle(
-        curve_family_display.title()+" series regression residual periodograms", size=TITLE_SIZE)
+    _title = curve_family_display.title()+" series regression residual periodograms"
+    if title_suffix is not None:
+        _title += str(title_suffix)
+    fig.suptitle(_title, size=TITLE_SIZE)
 
     for _ax, _method in zip((ax0, ax1), ("semilogy", "plot")):
         _plt = getattr(_ax, _method)
+
+        if iid_error_periodogram is not None:
+            _plt(
+                np.arange(len(iid_error_periodogram)) / nfull, iid_error_periodogram[0],
+                color="k",
+                ls="--",
+                linewidth=1,
+                label="iid errors",
+            )
+
         _plt(
-            np.arange(len(periodograms[0])) / nfull, periodograms[0], color="k", ls="--",
-            linewidth=1, label="iid errors"
-        )
-        _plt(
-            np.arange(len(periodograms[1])) / nfull, periodograms[1], color="red", ls="--",
+            np.arange(len(periodograms[0])) / nfull, periodograms[0], color="red", ls="--",
             linewidth=1.5, label=FIT_DISPLAY["lo"],
         )
         _plt(
-            np.arange(len(periodograms[2])) / nfull, periodograms[2], color="k", ls="-",
+            np.arange(len(periodograms[1])) / nfull, periodograms[1], color="k", ls="-",
             linewidth=1.5, label=FIT_DISPLAY["true"],
         )
         _plt(
-            np.arange(len(periodograms[3])) / nfull, periodograms[3], color="blue", ls="-.",
+            np.arange(len(periodograms[2])) / nfull, periodograms[2], color="blue", ls="-.",
             linewidth=1.5, label=FIT_DISPLAY["hi"],
         )
         _plt(
-            np.arange(len(periodograms[4])) / nfull, periodograms[4], color="purple", ls=":",
+            np.arange(len(periodograms[3])) / nfull, periodograms[3], color="purple", ls=":",
             linewidth=1.5, label=FIT_DISPLAY["vhi"],
         )
         if _method == "plot":
@@ -401,11 +426,11 @@ def plot_periodograms(periodograms, nfull, curve_family_display, tstmp, outdir, 
     fig.tight_layout()
     for _suffix in OUTFILE_EXTENSIONS:
 
-        outfile = os.path.join(
-            outdir,
-            curve_family_display.lower(),
-            f"periodograms_{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}",
-        )
+        _outstem = f"periodograms_{curve_family_display.lower().replace(' ', '_')}"
+        if tstmp is not None:
+            _outstem += f"_{tstmp}"
+        _outstem += _suffix
+        outfile = os.path.join(outdir, curve_family_display.lower(), _outstem)
         print(f"Saving to {outfile}")
         fig.savefig(outfile)
 
@@ -590,7 +615,6 @@ if __name__ == "__main__":
         # Now we plot error and residual periodograms
         plot_periodograms(
             [
-                output[f"ep_{_fam}"],  # iid errors periodogram for comparison
                 output[f"rp_{_fam}_lo"],
                 output[f"rp_{_fam}_true"],
                 output[f"rp_{_fam}_hi"],
@@ -598,8 +622,9 @@ if __name__ == "__main__":
             ],
             nfull=NX,
             curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
-            tstmp=tstmp,
             outdir=outdir,
+            tstmp=tstmp,
+            iid_error_periodogram=output[f"ep_{_fam}"],  # iid errors periodogram for comparison
             show=True,
         )
 
