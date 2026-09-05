@@ -348,7 +348,7 @@ def plot_periodograms(
     curve_family_display,
     outdir,
     tstmp=None,
-    iid_error_periodogram=None,
+    additional_periodogram=None,
     title_suffix=None,
     show=True
 ):
@@ -369,17 +369,19 @@ def plot_periodograms(
         curve_family_display: one of {'polynomial', 'Fourier'}
         outdir: output folder
         tstmp: timestamp used in output filename prior to file extension
-        iid_error_periodogram:
-            optional 1d periodogram array of the same shape as the contents of
-            periodograms, containing sample periodograms of iid errors
+        additional_periodogram:
+            single item dict, keyed by legend label, containing an optional 1d
+            periodogram array of the same shape as the contents of
+            periodograms, containing e.g. sample periodograms of iid errors
         title_suffix:
             optional text to add as a direct suffix to the default title:
             curve_family_display.title()+' series regression residual periodograms'
         show: plt.show()?
     """
-    if iid_error_periodogram is not None:
-        periodograms = list(periodograms)
-        periodograms.insert(0, iid_error_periodogram)
+    if additional_periodogram is not None:
+        _additional_periodogram_label = list(additional_periodogram.keys())[0]
+        _additional_periodogram_array = list(additional_periodogram.values())[0]
+
     fig, (ax0, ax1) = plt.subplots(2, figsize=FIGSIZE_PERIODOGRAMS)
     _title = curve_family_display.title()+" series regression residual periodograms"
     if title_suffix is not None:
@@ -389,13 +391,14 @@ def plot_periodograms(
     for _ax, _method in zip((ax0, ax1), ("semilogy", "plot")):
         _plt = getattr(_ax, _method)
 
-        if iid_error_periodogram is not None:
+        if additional_periodogram is not None:
             _plt(
-                np.arange(len(iid_error_periodogram)) / nfull, iid_error_periodogram[0],
+                np.arange(len(_additional_periodogram_array)) / nfull,
+                _additional_periodogram_array,
                 color="k",
                 ls="--",
                 linewidth=1,
-                label="iid errors",
+                label=_additional_periodogram_label,
             )
 
         _plt(
@@ -627,8 +630,8 @@ if __name__ == "__main__":
             curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
             outdir=outdir,
             tstmp=tstmp,
-            iid_error_periodogram=output[f"ep_{_fam}"],  # iid errors periodogram for comparison
-            show=True,
+            additional_periodogram={"iid errors": output[f"ep_{_fam}"]},  # for comparison
+            show=PLT_SHOW,
         )
 
         # Calculate (circular) autocorrelation functions via inverse FFT of residual periodograms
