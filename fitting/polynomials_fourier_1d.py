@@ -89,6 +89,9 @@ PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 # Autocorrelation function chart settings
 ACF_MAX_LAG = 12
 
+# Whether to plt.show() as we go
+PLT_SHOW = False
+
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "polynomials_fourier_1d")
 
@@ -574,7 +577,7 @@ if __name__ == "__main__":
             curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
             tstmp=tstmp,
             outdir=outdir,
-            show=True,
+            show=PLT_SHOW,
         )
 
         # Now plot residuals, but using imaging to bring out patterns
@@ -588,7 +591,7 @@ if __name__ == "__main__":
                 curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
                 tstmp=tstmp,
                 outdir=outdir,
-                show=True,
+                show=PLT_SHOW,
             )
             # Calculate residual sample spectrum / periodogram via FFT and store
             output[f"rp_{_fam}_{_degree_label}"] = sample_spectrum(_res)
@@ -693,5 +696,5 @@ if __name__ == "__main__":
             curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
             tstmp=tstmp,
             outdir=outdir,
-            show=True,
+            show=PLT_SHOW,
         )
