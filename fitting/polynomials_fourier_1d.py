@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.polynomial.chebyshev
 import pandas as pd
+from matplotlib.ticker import MultipleLocator
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from polynomials_2d import PLTDIR, build_output_folder_structure
@@ -427,6 +428,7 @@ def plot_periodograms(
             _ax.set_ylim((1.e-3, 1.e3))
 
         _ax.set_ylabel(f"$\iota[k]$", size=LABEL_SIZE)
+        _ax.xaxis.set_minor_locator(MultipleLocator(0.01))
         _ax.grid()
 
     fig.tight_layout()
