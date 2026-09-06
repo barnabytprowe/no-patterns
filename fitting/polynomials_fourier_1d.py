@@ -383,14 +383,13 @@ def plot_periodograms(
         _additional_periodogram_array = list(additional_periodogram.values())[0]
 
     fig, (ax0, ax1) = plt.subplots(2, figsize=FIGSIZE_PERIODOGRAMS)
-    _title = curve_family_display.title()+" series regression residual periodograms"
+    _title = f"{curve_family_display.title()} series regression residual sample spectra"
     if title_suffix is not None:
         _title += str(title_suffix)
     fig.suptitle(_title, size=TITLE_SIZE)
 
     for _ax, _method in zip((ax0, ax1), ("semilogy", "plot")):
         _plt = getattr(_ax, _method)
-
         if additional_periodogram is not None:
             _plt(
                 np.arange(len(_additional_periodogram_array)) / nfull,
