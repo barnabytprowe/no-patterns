@@ -107,7 +107,7 @@ def sinusoid_design_matrix(xarr, degree):
     """Returns the sinusoid [cosx, sinx] design matrix up to input degree"""
     sinx = np.asarray([np.sin(2. * np.pi * float(j) * xarr) for j in range(0, 1 + degree)]).T
     cosx = np.asarray([np.cos(2. * np.pi * float(j) * xarr) for j in range(0, 1 + degree)]).T
-    return np.hstack([cosx, sinx])
+    return np.hstack([cosx, sinx])  # not same ordering as paper but end observations the same
 
 
 def chebyshev_design_matrix(xarr, degree):
