@@ -35,7 +35,7 @@ from polynomials_fourier_1d import (
     XARRS,
     NOISE_SIGMA,
     COEFF_SIGNAL_TO_NOISE,
-    FIT_DISPLAY,
+    DEGREE_DISPLAY,
     CURVE_FAMILY_DISPLAY,
     LABEL_SIZE,
     TITLE_SIZE,
@@ -277,7 +277,7 @@ if __name__ == "__main__":
                     color=colors[i],
                     linewidth=1.5,
                     ls=linestyles[i],
-                    label=FIT_DISPLAY[_degree_label],
+                    label=DEGREE_DISPLAY[_degree_label],
                 )
 
             ax.set_xlabel(r"Lag $\ell$", size=LABEL_SIZE)
@@ -341,7 +341,7 @@ if __name__ == "__main__":
             )
             ax.set_title(
                 (
-                    f"Unbiased ACF: \n{FIT_DISPLAY[_degree_label].lower()} "
+                    f"Unbiased ACF: \n{DEGREE_DISPLAY[_degree_label].lower()} "
                     f"{CURVE_FAMILY_DISPLAY[_family]}"
                 ),
                 size=12,
@@ -365,7 +365,7 @@ if __name__ == "__main__":
             )
             ax.set_title(
                 (
-                    f"Circular ACF: \n{FIT_DISPLAY[_degree_label].lower()} "
+                    f"Circular ACF: \n{DEGREE_DISPLAY[_degree_label].lower()} "
                     f"{CURVE_FAMILY_DISPLAY[_family]}"
                 ),
                 size=12,

@@ -74,7 +74,7 @@ TITLE_SIZE = "x-large"
 LABEL_SIZE = "large"
 
 # Title display strings for plots
-FIT_DISPLAY = {
+DEGREE_DISPLAY = {
     "lo": "Low degree",
     "true": "Matching degree",
     "hi": "High degree",
@@ -301,12 +301,12 @@ def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, sho
     plt.close(fig)
 
 
-def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, show=True):
+def plot_residuals(residuals, degree_display, curve_family_display, tstmp, outdir, show=True):
     """Makes and saves pcolor images plots of residuals in 1D regressions.
 
     Args:
         residuals: np.array-like
-        fit_display: display str for fit, e.g. Low degree, Matching degree etc.
+        degree_display: display str for fit degree, e.g. Low degree, Matching degree etc.
         curve_family_display: one of {'polynomial', 'Fourier'}
         tstmp: timestamp used in folder structure
         outdir: output folder
@@ -317,7 +317,8 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
     im = ax.pcolor(residuals.reshape((1, len(residuals))), cmap=CMAP, clim=CLIM)
     ax.set_yticklabels([])
     ax.set_title(
-        f"{fit_display} {curve_family_display} series regression residuals", size=TITLE_SIZE)
+        f"{degree_display} {curve_family_display} series regression residuals", size=TITLE_SIZE
+    )
 
     # See https://stackoverflow.com/a/39938019 for colormap handling
     divider = make_axes_locatable(ax)
@@ -329,7 +330,7 @@ def plot_residuals(residuals, fit_display, curve_family_display, tstmp, outdir, 
             outdir,
             curve_family_display.lower(),
             (
-                f"residuals_{fit_display.lower().replace(' ', '_')}_"
+                f"residuals_{degree_display.lower().replace(' ', '_')}_"
                 f"{curve_family_display.lower().replace(' ', '_')}_{tstmp}{_suffix}"
             ),
         )
@@ -471,19 +472,19 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     ax.plot(np.arange(len(acfs[0])), acfs[0], color="k", ls="--", linewidth=1, label="iid errors")
     ax.plot(
         1 * offset + np.arange(len(acfs[1])), acfs[1],
-        marker="o", color="red", ls="--", linewidth=1.5, label=FIT_DISPLAY["lo"],
+        marker="o", color="red", ls="--", linewidth=1.5, label=DEGREE_DISPLAY["lo"],
     )
     ax.plot(
         2 * offset + np.arange(len(acfs[2])), acfs[2],
-        marker="x", color="k", ls="-", linewidth=1.5, label=FIT_DISPLAY["true"],
+        marker="x", color="k", ls="-", linewidth=1.5, label=DEGREE_DISPLAY["true"],
     )
     ax.plot(
         3 * offset + np.arange(len(acfs[3])), acfs[3],
-        marker="+", color="blue", ls="-.", linewidth=1.5, label=FIT_DISPLAY["hi"],
+        marker="+", color="blue", ls="-.", linewidth=1.5, label=DEGREE_DISPLAY["hi"],
     )
     ax.plot(
         4 * offset + np.arange(len(acfs[4])), acfs[4],
-        marker=".", color="purple", ls=":", linewidth=1.5, label=FIT_DISPLAY["vhi"],
+        marker=".", color="purple", ls=":", linewidth=1.5, label=DEGREE_DISPLAY["vhi"],
     )
 
     ax.axhline(-2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
@@ -585,7 +586,7 @@ if __name__ == "__main__":
             output[f"res_{_fam}_{_degree_label}"] = _res  # store residuals
             plot_residuals(
                 residuals=_res,
-                fit_display=FIT_DISPLAY[_degree_label],
+                degree_display=DEGREE_DISPLAY[_degree_label],
                 curve_family_display=CURVE_FAMILY_DISPLAY[_fam],
                 tstmp=tstmp,
                 outdir=outdir,
