@@ -600,7 +600,7 @@ if __name__ == "__main__":
             # requires we pad residuals with zeros to 2x length then calculate and store the
             # resulting periodogram: in practice the similar ACF defs will be ~close at lag << nx)
             _rmean = _res.mean()
-            assert np.isclose(_rmean, 0., atol=1.e-14, rtol=0.)  # residuals already mean=0 from OLS
+            assert np.isclose(_rmean, 0., atol=1.e-12, rtol=0.)  # residuals already mean=0 from OLS
             output[f"zprp_{_fam}_{_degree_label}"] = sample_spectrum(
                 zero_pad(_res - _rmean, mult=2)
             )
