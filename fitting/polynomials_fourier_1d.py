@@ -17,7 +17,6 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.polynomial.chebyshev
 import pandas as pd
 from matplotlib.ticker import MultipleLocator
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -113,7 +112,7 @@ def sinusoid_design_matrix(xarr, degree):
 def chebyshev_design_matrix(xarr, degree):
     """Returns the Chebyshev polynomial design matrix up to input degree"""
     i1n = np.eye(1 + degree)
-    return np.asarray([numpy.polynomial.chebyshev.chebval(xarr, _row) for _row in i1n]).T
+    return np.asarray([np.polynomial.chebyshev.chebval(xarr, _row) for _row in i1n]).T
 
 
 def features(xarrs=XARRS, fit_degrees=FIT_DEGREES):
