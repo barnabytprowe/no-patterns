@@ -468,8 +468,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     )
 
     offset = 0.
-    ax.plot(
-        np.arange(len(acfs[0])), acfs[0], color="k", ls="--", linewidth=1, label="iid errors")
+    ax.plot(np.arange(len(acfs[0])), acfs[0], color="k", ls="--", linewidth=1, label="iid errors")
     ax.plot(
         1 * offset + np.arange(len(acfs[1])), acfs[1],
         marker="o", color="red", ls="--", linewidth=1.5, label=FIT_DISPLAY["lo"],
@@ -494,6 +493,7 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     ax.axhline(+2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
     ax.set_xlabel(r"Lag $\ell$", size=LABEL_SIZE)
     ax.set_ylabel(r"$\left. r[\ell] ~ \middle/ ~ r[0] \right. $", size=LABEL_SIZE)
+    ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.grid()
     ax.legend()
     fig.tight_layout()
