@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.polynomial.chebyshev
 
-from fitting_polynomials_fourier_1d import chebyshev_design_matrix
+from polynomials_fourier_1d import chebyshev_design_matrix
 
 
 # x axis
@@ -70,7 +70,6 @@ plt.tight_layout()
 
 # Save
 for _ext in OUTFILE_EXTENSIONS:
-
     _outfile = OUTFILE+_ext
     print(f"Saving to {_outfile}")
     plt.savefig(_outfile)
