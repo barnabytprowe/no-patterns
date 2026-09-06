@@ -400,22 +400,18 @@ def plot_periodograms(
                 label=_additional_periodogram_label,
             )
 
-        _plt(
-            np.arange(len(periodograms[0])) / nfull, periodograms[0], color="red", ls="--",
-            linewidth=1.5, label=FIT_DISPLAY["lo"],
-        )
-        _plt(
-            np.arange(len(periodograms[1])) / nfull, periodograms[1], color="k", ls="-",
-            linewidth=1.5, label=FIT_DISPLAY["true"],
-        )
-        _plt(
-            np.arange(len(periodograms[2])) / nfull, periodograms[2], color="blue", ls="-.",
-            linewidth=1.5, label=FIT_DISPLAY["hi"],
-        )
-        _plt(
-            np.arange(len(periodograms[3])) / nfull, periodograms[3], color="purple", ls=":",
-            linewidth=1.5, label=FIT_DISPLAY["vhi"],
-        )
+        for i, (_color, _ls, _degree_label) in enumerate(
+            zip(("red", "k", "blue", "purple"), ("--", "-", "-.", ":"), FIT_DEGREES)
+        ):
+            _plt(
+                np.arange(len(periodograms[i])) / nfull,
+                periodograms[i],
+                color=_color,
+                ls=_ls,
+                linewidth=1.5,
+                label=FIT_DISPLAY[_degree_label],
+            )
+
         if _method == "plot":
             _ax.set_yscale("log")
             _ax.set_yticks(PERIODOGRAM_YTICKS)
@@ -431,7 +427,6 @@ def plot_periodograms(
 
     fig.tight_layout()
     for _suffix in OUTFILE_EXTENSIONS:
-
         _outstem = f"periodograms_{curve_family_display.lower().replace(' ', '_')}"
         if tstmp is not None:
             _outstem += f"_{tstmp}"
