@@ -91,7 +91,7 @@ PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
 ACF_MAX_LAG = 12
 
 # Whether to plt.show() as we go
-PLT_SHOW = False
+PLT_SHOW = True
 
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "polynomials_fourier_1d")
