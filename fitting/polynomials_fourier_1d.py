@@ -289,7 +289,7 @@ def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, sho
             color=DEGREE_COLORS[_fit_degree],
             ls=DEGREE_LINESTYLES[_fit_degree],
             linewidth=(1 if _fit_degree != "vhi" else 1.25),
-            label=DEGREE_DISPLAY["lo"],
+            label=DEGREE_DISPLAY[_fit_degree],
         )
 
     ax.set_xlabel(r"$x$", size=LABEL_SIZE)
