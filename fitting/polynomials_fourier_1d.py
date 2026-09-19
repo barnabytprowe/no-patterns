@@ -82,6 +82,11 @@ DEGREE_DISPLAY = {
 }
 CURVE_FAMILY_DISPLAY = {"cheb": "polynomial", "sinu": "Fourier"}
 
+# Consistent plotting choices per degree
+DEGREE_LINESTYLES = {"lo": "--", "true": "-", "hi": "-.", "vhi": ":"}
+DEGREE_COLORS = {"lo": "red", "true": "k", "hi": "blue", "vhi": "purple"}
+DEGREE_MARKERS = {"lo": "o", "true": "x", "hi": "+", "vhi": "."}
+
 # Periodogram chart settings
 PERIODOGRAM_YTICKS = 10**np.linspace(-32., 4., num=10, dtype=float)
 PERIODOGRAM_YLIM = 10**np.asarray([-32, 4.], dtype=float)
@@ -277,10 +282,16 @@ def plot_regressions(xarr, yarrs, xlim, curve_family_display, tstmp, outdir, sho
         f"{curve_family_display.title()} series regression", size=TITLE_SIZE)
     ax.plot(xarr, yarrs[0], color="k", ls="-", linewidth=2, label="Ideal model")
     ax.plot(xarr, yarrs[1], "k+", markersize=15, label="Data")
-    ax.plot(xarr, yarrs[2], color="red", ls="--", linewidth=1, label=FIT_DISPLAY["lo"])
-    ax.plot(xarr, yarrs[3], color="k", ls="-", linewidth=1, label=FIT_DISPLAY["true"])
-    ax.plot(xarr, yarrs[4], color="blue", ls="-.", linewidth=1, label=FIT_DISPLAY["hi"])
-    ax.plot(xarr, yarrs[5], color="purple", ls=":", linewidth=1.25, label=FIT_DISPLAY["vhi"])
+    for i, _fit_degree in enumerate(FIT_DEGREES):
+        ax.plot(
+            xarr,
+            yarrs[i + 2],
+            color=DEGREE_COLORS[_fit_degree],
+            ls=DEGREE_LINESTYLES[_fit_degree],
+            linewidth=(1 if _fit_degree != "vhi" else 1.25),
+            label=DEGREE_DISPLAY["lo"],
+        )
+
     ax.set_xlabel(r"$x$", size=LABEL_SIZE)
     ax.set_ylabel(r"$y$", size=LABEL_SIZE)
     ax.grid()
@@ -401,16 +412,14 @@ def plot_periodograms(
                 label=_additional_periodogram_label,
             )
 
-        for i, (_color, _ls, _degree_label) in enumerate(
-            zip(("red", "k", "blue", "purple"), ("--", "-", "-.", ":"), FIT_DEGREES)
-        ):
+        for i, _fit_degree in enumerate(FIT_DEGREES):
             _plt(
                 np.arange(len(periodograms[i])) / nfull,
                 periodograms[i],
-                color=_color,
-                ls=_ls,
+                color=DEGREE_COLORS[_fit_degree],
+                ls=DEGREE_LINESTYLES[_fit_degree],
                 linewidth=1.5,
-                label=FIT_DISPLAY[_degree_label],
+                label=DEGREE_DISPLAY[_fit_degree],
             )
 
         if _method == "plot":
@@ -469,23 +478,20 @@ def plot_acfs(acfs, nfull, curve_family_display, tstmp, outdir, show=True):
     )
 
     offset = 0.
+    # Plot iid errors
     ax.plot(np.arange(len(acfs[0])), acfs[0], color="k", ls="--", linewidth=1, label="iid errors")
-    ax.plot(
-        1 * offset + np.arange(len(acfs[1])), acfs[1],
-        marker="o", color="red", ls="--", linewidth=1.5, label=DEGREE_DISPLAY["lo"],
-    )
-    ax.plot(
-        2 * offset + np.arange(len(acfs[2])), acfs[2],
-        marker="x", color="k", ls="-", linewidth=1.5, label=DEGREE_DISPLAY["true"],
-    )
-    ax.plot(
-        3 * offset + np.arange(len(acfs[3])), acfs[3],
-        marker="+", color="blue", ls="-.", linewidth=1.5, label=DEGREE_DISPLAY["hi"],
-    )
-    ax.plot(
-        4 * offset + np.arange(len(acfs[4])), acfs[4],
-        marker=".", color="purple", ls=":", linewidth=1.5, label=DEGREE_DISPLAY["vhi"],
-    )
+
+    # Plot fit residual ACFs by degree
+    for i, _deg in enumerate(FIT_DEGREES):
+        ax.plot(
+            (1 + i) * offset + np.arange(len(acfs[1 + i])),
+            acfs[1 + i],
+            marker=DEGREE_MARKERS[_deg],
+            color=DEGREE_COLORS[_deg],
+            ls=DEGREE_LINESTYLES[_deg],
+            linewidth=1.5,
+            label=DEGREE_DISPLAY[_deg],
+        )
 
     ax.axhline(-2. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
     ax.axhline(-1. / np.sqrt(nfull), ls=":", linewidth=1.2, color="k")
