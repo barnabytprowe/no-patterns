@@ -324,9 +324,10 @@ if __name__ == "__main__":
                 mean_sample_spectra[_family]["vhi"],
             ],
             nfull=len(XARRS[_family]),
-            tstmp=f"n{NRUNS}",
             curve_family_display=CURVE_FAMILY_DISPLAY[_family],
             outdir=PROJDIR,
+            tstmp=f"n{NRUNS}",
+            additional_periodogram={"Observations": mean_ydata_spectra[_family]},
             title_suffix=f": sample mean over {NRUNS} simulations",
             show=False,
         )
