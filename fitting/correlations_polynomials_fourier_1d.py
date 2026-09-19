@@ -21,6 +21,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg
+from matplotlib.ticker import MultipleLocator
 
 import polynomials_fourier_1d
 from polynomials_2d import PLTDIR
@@ -37,6 +38,8 @@ from polynomials_fourier_1d import (
     COEFF_SIGNAL_TO_NOISE,
     DEGREE_DISPLAY,
     CURVE_FAMILY_DISPLAY,
+    DEGREE_LINESTYLES,
+    DEGREE_COLORS,
     LABEL_SIZE,
     TITLE_SIZE,
     OUTFILE_EXTENSIONS,
@@ -240,6 +243,7 @@ if __name__ == "__main__":
         }
         for _family in SUPPORTED_CURVE_FAMILIES
     }
+    # Calculate standard errors?
     # stderr_unbiased_acfs = {
     #     _family: {
     #         _degree_label: unbiased_acfs[_family][_degree_label].std(axis=0) / np.sqrt(NRUNS)
@@ -254,10 +258,14 @@ if __name__ == "__main__":
     #     }
     #     for _family in SUPPORTED_CURVE_FAMILIES
     # }
+    # Chart the mean spectrum of the observations to illustrate the high-pass filter nature of these
+    # regressions
+    mean_ydata_spectra = {}
+    for _family in SUPPORTED_CURVE_FAMILIES:
+        print(f"Calculating mean sample spectrum of observations: {_family}")
+        mean_ydata_spectra[_family] = sample_spectrum(regressions[_family]["ydata"]).mean(axis=0)
 
     # Plot mean acfs, both "unbiased" and circular
-    linestyles = ["--", "-", "-.", ":"]
-    colors = ["red", "k", "blue", "purple"]
     for _circularity, _acfs_dict in (("", mean_unbiased_acfs), (" circular", mean_circular_acfs)):
         for _family in SUPPORTED_CURVE_FAMILIES:
             fig, ax = plt.subplots(figsize=MEAN_ACF_FIGSIZE)
@@ -269,19 +277,20 @@ if __name__ == "__main__":
                 ),
                 size=TITLE_SIZE,
             )
-            for i, _degree_label in enumerate(FIT_DEGREES):
+            for i, _deg in enumerate(FIT_DEGREES):
                 ax.plot(
-                    _acfs_dict[_family][_degree_label] if _circularity == "" else (
-                        symmetric_extend(len(XARRS[_family]), _acfs_dict[_family][_degree_label])
+                    _acfs_dict[_family][_deg] if _circularity == "" else (
+                        symmetric_extend(len(XARRS[_family]), _acfs_dict[_family][_deg])
                     ),
-                    color=colors[i],
+                    color=DEGREE_COLORS[_deg],
                     linewidth=1.5,
-                    ls=linestyles[i],
-                    label=DEGREE_DISPLAY[_degree_label],
+                    ls=DEGREE_LINESTYLES[_deg],
+                    label=DEGREE_DISPLAY[_deg],
                 )
 
             ax.set_xlabel(r"Lag $\ell$", size=LABEL_SIZE)
             ax.set_ylabel(r"$\left. r[\ell] ~ \middle/ ~ r[0] \right. $", size=LABEL_SIZE)
+            ax.xaxis.set_minor_locator(MultipleLocator(1))
             ax.legend()
             ax.grid()
             fig.tight_layout()
