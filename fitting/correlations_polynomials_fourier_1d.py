@@ -275,7 +275,7 @@ if __name__ == "__main__":
             ax.set_title(
                 (
                     f"{CURVE_FAMILY_DISPLAY[_family].title()} series regression "
-                    f"residual{_circularity} autocorrelation functions: sample mean over {NRUNS} "
+                    f"residual{_circularity} autocorrelation functions: mean over {NRUNS} "
                     "simulations"
                 ),
                 size=TITLE_SIZE,
@@ -333,8 +333,8 @@ if __name__ == "__main__":
             outdir=PROJDIR,
             tstmp=f"n{NRUNS}",
             additional_periodogram={"Observations": mean_ydata_spectra[_family]},
-            title_suffix=f": sample mean over {NRUNS} simulations",
-            show=False,
+            title_suffix=f": mean over {NRUNS} simulations",
+            show=PLT_SHOW,
         )
 
     # Plot corresponding correlation matrices
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
         fig, axes = plt.subplots(nrows=4, ncols=2, figsize=MATRIX_FIGSIZE, layout="tight")
         fig.suptitle(
-            f"Autocorrelation matrices from sample mean residual ACFs over {NRUNS} simulations"
+            f"Autocorrelation matrices from mean residual ACFs over {NRUNS} simulations"
         )
         for irow, _degree_label in enumerate(FIT_DEGREES):
             # Plot the symmetric Toeplitz unbiased ACF matrices in the first column
