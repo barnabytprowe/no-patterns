@@ -73,6 +73,9 @@ ZOOM_NDIM = 10
 MEAN_ACF_FIGSIZE = (12, 4)
 MATRIX_FIGSIZE = (8, 12)
 
+# Whether to plt.show() as we go
+PLT_SHOW = True
+
 # Output folder structure: project dir
 PROJDIR = os.path.join(PLTDIR, "correlations_polynomials_fourier_1d")
 os.makedirs(PROJDIR, exist_ok=True)
@@ -294,6 +297,8 @@ if __name__ == "__main__":
             ax.legend()
             ax.grid()
             fig.tight_layout()
+            if PLT_SHOW:
+                plt.show()
             for _suffix in OUTFILE_EXTENSIONS:
                 os.makedirs(
                     os.path.join(PROJDIR, CURVE_FAMILY_DISPLAY[_family].lower()), exist_ok=True
@@ -383,6 +388,9 @@ if __name__ == "__main__":
             ax.tick_params(axis="both", labelsize=10)
             cbar = fig.colorbar(im)
             cbar.ax.tick_params(axis="both", labelsize=10)
+
+        if PLT_SHOW:
+            plt.show()
 
         for _suffix in OUTFILE_EXTENSIONS:
             _outfile = os.path.join(
