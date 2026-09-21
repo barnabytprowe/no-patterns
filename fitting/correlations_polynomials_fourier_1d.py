@@ -246,6 +246,7 @@ if __name__ == "__main__":
         }
         for _family in SUPPORTED_CURVE_FAMILIES
     }
+
     # Calculate standard errors?
     # stderr_unbiased_acfs = {
     #     _family: {
@@ -261,8 +262,9 @@ if __name__ == "__main__":
     #     }
     #     for _family in SUPPORTED_CURVE_FAMILIES
     # }
-    # Chart the mean spectrum of the observations to illustrate the high-pass filter nature of these
-    # regressions
+
+    # Chart the mean spectrum of the observations to help illustrate the high-pass filtering of these
+    # regressions on the dataset
     mean_ydata_spectra = {}
     for _family in SUPPORTED_CURVE_FAMILIES:
         print(f"Calculating mean sample spectrum of observations: {_family}")
@@ -314,7 +316,6 @@ if __name__ == "__main__":
                 )
                 print(f"Saving to {_outfile}")
                 fig.savefig(_outfile)
-            # fig.clear()
 
     # Plot sample spectra
     for _family in SUPPORTED_CURVE_FAMILIES:
@@ -398,5 +399,3 @@ if __name__ == "__main__":
             )
             print(f"Saving to {_outfile}")
             fig.savefig(_outfile)
-
-        # plt.show()
