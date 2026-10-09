@@ -294,7 +294,14 @@ if __name__ == "__main__":
                 )
 
             ax.set_xlabel(r"Lag $\ell$", size=LABEL_SIZE)
-            ax.set_ylabel(r"$\left. r[\ell] ~ \middle/ ~ r[0] \right. $", size=LABEL_SIZE)
+            ax.set_ylabel(
+                (
+                    r"$\left. r_{\rm c}[\ell] ~ \middle/ ~ r_{\rm c}[0] \right. $"
+                    if _circularity == " circular"
+                    else r"$\left. r[\ell] ~ \middle/ ~ r[0] \right. $"
+                ),
+                size=LABEL_SIZE,
+            )
             ax.xaxis.set_minor_locator(MultipleLocator(1))
             ax.legend()
             ax.grid()
