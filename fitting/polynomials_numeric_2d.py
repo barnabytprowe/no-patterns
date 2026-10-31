@@ -37,17 +37,8 @@ from torch.utils.data import DataLoader, TensorDataset
 
 import polynomials_2d
 import further_analysis_polynomials_2d
-from polynomials_2d import (  # all parameters defined in core fitting module
-    x0x1_min,
-    x0x1_max,
-    nx,
-    fit_degree_lo,
-    fit_degree_true,
-    fit_degree_hi,
-    fit_degree_vhi,
-    coeff_signal_to_noise,
-    noise_sigma,
-    CLIM,
+from polynomials_2d import (  # use all parameters defined in core fitting module
+    X0X1_MIN, X0X1_MAX, NX, FIT_DEGREES, NOISE_SIGMA, COEFF_SIGNAL_TO_NOISE, CLIM,
 )
 
 
@@ -59,11 +50,11 @@ PLTDIR = os.path.join(".", "plots")
 PROJDIR = os.path.join(PLTDIR, "polynomials_2d_numeric")
 
 # Which under/overspecifications to run?
-all_specifications = ("lo", "true", "hi", "vhi")
 run_specifications = ("lo", "true", "hi", "vhi")
+assert set(run_specifications).issubset(set(FIT_DEGREES))
 
 # Use existing timestamp?
-tstmp_exists = True
+tstmp_exists = False
 if tstmp_exists:
     # change this to use a referenced pre-run regression example output by fitting/polynomials_2d.py
     tstmp = "2024-05-10T112411.980432"
@@ -100,13 +91,13 @@ if __name__ == "__main__":
 
     # Prepare two independent variables on a grid
     x0, x1 = polynomials_2d.square_grid(
-        min_val=x0x1_min, max_val=x0x1_max, nside=nx, endpoint=True, flatten_order="C")
+        xmin=X0X1_MIN, xmax=X0X1_MAX, nx=NX, endpoint=True, flatten_order="C"
+    )
 
     # Design matrices
     design_matrices = {
-        _spec: polynomials_2d.chebyshev_design_matrix(x0, x1, degree=_deg)
-        for _spec, _deg in zip(
-            all_specifications, (fit_degree_lo, fit_degree_true, fit_degree_hi, fit_degree_vhi))
+        _spec: polynomials_2d.chebyshev_design_matrix(x0, x1, degree=FIT_DEGREES[_deg])
+        for _spec, _deg in zip(run_specifications, FIT_DEGREES)
     }
 
     # Build the true / ideal 2D contour, and the noise-added data, and plot
@@ -120,9 +111,9 @@ if __name__ == "__main__":
     else:
         # current timestamp
         tstmp = pd.Timestamp.now().isoformat().replace(":", "")
-        ctrue = np.random.randn(design_matrices["true"].shape[-1]) * coeff_signal_to_noise
-        ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((nx, nx), order="C")
-        zdata = ztrue + noise_sigma * np.random.randn(*ztrue.shape)
+        ctrue = np.random.randn(design_matrices["true"].shape[-1]) * COEFF_SIGNAL_TO_NOISE
+        ztrue = (np.matmul(design_matrices["true"], ctrue)).reshape((NX, NX), order="C")
+        zdata = ztrue + NOISE_SIGMA * np.random.randn(*ztrue.shape)
 
     outdir = polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
     polynomials_2d.plot_image(
@@ -140,21 +131,22 @@ if __name__ == "__main__":
 
         _design_matrix = design_matrices[_spec]
         _lstsq_coeffs = np.linalg.lstsq(_design_matrix, zflat, rcond=None)[0].T
-        _lstsq_prediction = _design_matrix.dot(_lstsq_coeffs).reshape((nx, nx), order="C")
+        _lstsq_prediction = _design_matrix.dot(_lstsq_coeffs).reshape((NX, NX), order="C")
         _lstsq_loss = ((zdata - _lstsq_prediction)**2).mean()
         output[f"lstsq_pred_{_spec}"] = _lstsq_prediction
         output[f"lstsq_loss_{_spec}"] = _lstsq_loss
 
         # Initialize pytorch elements
         _dataset = TensorDataset(torch.from_numpy(_design_matrix).to(device), ztensor)
-        # Note no mini-batches, which add stochasticity inherently use full gradient descent
+        # Note no mini-batches, which add stochasticity inherently; we use full gradient descent
         _loader = DataLoader(_dataset, batch_size=len(ztensor))
         _model = torch.nn.Linear(_design_matrix.shape[-1], 1, bias=False).double()
         _model.to(device)
 
         # Gradient descent optimization
         _optimizer = [
-            _f(params=_model.parameters(), **_kw) for _f, _kw in gradient_descent_optim.items()][0]
+            _f(params=_model.parameters(), **_kw) for _f, _kw in gradient_descent_optim.items()
+        ][0]
 
         print(f"Running Gradient Descent with {gradient_descent_optim}")
         _model.train()
@@ -179,7 +171,7 @@ if __name__ == "__main__":
                 if np.isclose(_loss0 / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
                     break
 
-        output[f"gd_pred_{_spec}"] = _pred.numpy(force=True).reshape((nx, nx), order="C")
+        output[f"gd_pred_{_spec}"] = _pred.numpy(force=True).reshape((NX, NX), order="C")
         output[f"gd_losses_{_spec}"] = _losses
 
         # L-BFGS optimimization
@@ -213,7 +205,7 @@ if __name__ == "__main__":
             if np.isclose(_loss0 / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
                 break
 
-        output[f"lbfgs_pred_{_spec}"] = _pred.numpy(force=True).reshape((nx, nx), order="C")
+        output[f"lbfgs_pred_{_spec}"] = _pred.numpy(force=True).reshape((NX, NX), order="C")
         output[f"lbfgs_losses_{_spec}"] = _losses
 
     # Calculate and plot residuals
