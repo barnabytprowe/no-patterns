@@ -1,6 +1,6 @@
 """
-plot_chebyshev_polynomials_1d.py
-================================
+plot_chebyshev.py
+=================
 
 Creates a plot illustrating the first few Chebyshev polynomials of the first
 kind for the paper "No patterns in regression residuals."
