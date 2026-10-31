@@ -1,5 +1,5 @@
 """
-no_patterns/fitting/polynomials_numeric_2d.py
+no_patterns/fitting/numeric_polynomials_2d.py
 =============================================
 
 Exploratory script investigating regression of in two dimensions, described in
@@ -23,7 +23,7 @@ the flatness of the loss function close in parameter to space to what must be a
 very narrow spike in the vicinity of the OLS model.
 
 Saves output from each simulated regression into a uniquely timestamped
-subfolder of ./plots/polynomials_numeric_2d/.
+subfolder of ./plots/numeric_polynomials_2d/.
 """
 
 import os
@@ -47,7 +47,7 @@ from polynomials_2d import (  # use all parameters defined in core fitting modul
 
 # Output folder structure
 PLTDIR = os.path.join(".", "plots")
-PROJDIR = os.path.join(PLTDIR, "polynomials_2d_numeric")
+PROJDIR = os.path.join(PLTDIR, "numeric_polynomials_2d")
 
 # Which under/overspecifications to run?
 run_specifications = ("lo", "true", "hi", "vhi")
