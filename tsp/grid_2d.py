@@ -1,6 +1,9 @@
 """
+no_patterns/tsp/grid_2d.py
+==========================
+
 (Approximate) Traveling Salesman Problem (TSP) solutions for two dimensional
-grids
+grids, for the paper "No patterns in regression residuals".
 """
 
 import multiprocessing
@@ -15,7 +18,7 @@ import pandas as pd
 from networkx.algorithms.approximation import greedy_tsp, christofides
 from python_tsp.heuristics import solve_tsp_lin_kernighan, solve_tsp_local_search
 
-import fitting_polynomials_2d
+from ..fitting import polynomials_2d
 
 
 # Number of processes to run simultaneously, and total runs to attempt
@@ -33,11 +36,8 @@ TIMEOUT_2OPT = 500
 CYCLE_LK = 1  # checks for completion every cycle
 TIMEOUT_LK = 10  # timeout after which to give up on possibly stuck LK
 
-# Grid dimensions
-ngrid = 28
-
 # Pickle file output
-output_pickle = f"tsp_grid_2d_{ngrid}x{ngrid}_{NRUNS}_{TIMEOUT_2OPT}.pkl"
+output_pickle = f"tsp_grid_2d_{polynomials_2d.NX}x{polynomials_2d.NX}_{NRUNS}_{TIMEOUT_2OPT}.pkl"
 
 
 # Pool starmap utilities
@@ -112,32 +112,7 @@ def plot_path(xy, path, figsize=(6, 5.5), title=None):
     return ax
 
 
-# Multi processing
-
-def process_lin_kernighan(pk, results_dict, distance_matrix=None, x0=None):
-    """Target function for multiprocessing approximate TSP solutions using the
-    Lin-Kernighan algorithm.
-
-    Stores output of call to python_tsp.heuristics.solve_tsp_lin_kernighan in
-    results_dict[pk].
-
-    Args:
-        pk: process key for result storage
-        results_dict:
-            dict-like as returned by multiprocessing.Manager().dict(), to be
-            used for shared memory storage of solution results
-        distance_matrix: passed to solve_tsp_lin_kernighan
-        x0: start path, if any, passed to solve_tsp_lin_kernighan
-    """
-    if distance_matrix is None:
-        raise ValueError("distance_matrix must be supplied")
-
-    results_dict[pk] = solve_tsp_lin_kernighan(
-        distance_matrix=distance_matrix,
-        x0=x0,
-        verbose=False,
-    )
-
+# Multiprocessing approximate TSP solve functions
 
 def multiprocess_local_search(
     distance_matrix,
@@ -196,6 +171,31 @@ def multiprocess_local_search(
     return {_p: _result for _p, _result in enumerate(results)}
 
 
+def run_lk(pk, results_dict, distance_matrix=None, x0=None):
+    """Target function for multiprocessing approximate TSP solutions using the
+    Lin-Kernighan algorithm.
+
+    Stores output of call to python_tsp.heuristics.solve_tsp_lin_kernighan in
+    results_dict[pk].
+
+    Args:
+        pk: process key for result storage
+        results_dict:
+            dict-like as returned by multiprocessing.Manager().dict(), to be
+            used for shared memory storage of solution results
+        distance_matrix: passed to solve_tsp_lin_kernighan
+        x0: start path, if any, passed to solve_tsp_lin_kernighan
+    """
+    if distance_matrix is None:
+        raise ValueError("distance_matrix must be supplied")
+
+    results_dict[pk] = solve_tsp_lin_kernighan(
+        distance_matrix=distance_matrix,
+        x0=x0,
+        verbose=False,
+    )
+
+
 def multiprocess_lk(distance_matrix, nruns, x0=None, max_processing_time=TIMEOUT_LK, nproc=NPROC):
     """Launch and gather results from multiprocessing of approximate TSP
     solutions using the Lin-Kernighan algorithm.
@@ -230,7 +230,7 @@ def multiprocess_lk(distance_matrix, nruns, x0=None, max_processing_time=TIMEOUT
         for ip in range(nproc):
             print(f"Launching {epoch=}, {run=}, process={ip} for Lin-Kernighan TSP")
             processes[ip] = multiprocessing.Process(
-                target=process_lin_kernighan,
+                target=run_lk,
                 args=(run, results_storage),
                 kwargs={"distance_matrix": distance_matrix, "x0": x0[run]},
             )
@@ -272,12 +272,14 @@ def multiprocess_lk(distance_matrix, nruns, x0=None, max_processing_time=TIMEOUT
 if __name__ == "__main__":
 
     # Initialize complete (but unweighted edge) graph and distance matrix
-    G = nx.complete_graph(ngrid**2)
-    grid_points = [(i, j) for i in range(ngrid) for j in range(ngrid)]
+    G = nx.complete_graph(polynomials_2d.NX**2)
+    grid_points = [(i, j) for i in range(polynomials_2d.NX) for j in range(polynomials_2d.NX)]
     dm = distance_matrix(grid_points)
 
     # Add edges between all node pairs with weight = distance between points
-    print(f"Adding edge distance weights for complete {ngrid}x{ngrid} grid graph")
+    print(
+        f"Adding edge distance weights for complete {polynomials_2d.NX}x{polynomials_2d.NX} graph"
+    )
     t0 = time.time()
     G = add_edges_from_distance_matrix(G, dm)
     print(f"Time taken: {time.time() - t0:.2f}s")
