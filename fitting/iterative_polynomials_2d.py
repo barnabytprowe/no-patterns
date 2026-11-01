@@ -1,6 +1,6 @@
 """
-no_patterns/fitting/numeric_polynomials_2d.py
-=============================================
+no_patterns/fitting/iterative_polynomials_2d.py
+===============================================
 
 Exploratory script investigating regression of in two dimensions, described in
 the paper "No patterns in regression residuals," illustrating underspecified,
@@ -24,7 +24,7 @@ the flatness of the loss function close in parameter to space to what must be a
 very narrow spike in the vicinity of the OLS model.
 
 Saves output from each simulated regression into a uniquely timestamped
-subfolder of ./plots/numeric_polynomials_2d/.
+subfolder of ./plots/iterative_polynomials_2d/.
 """
 
 import os
@@ -48,7 +48,7 @@ from polynomials_2d import (  # use all parameters defined in core fitting modul
 
 # Output folder structure
 PLTDIR = os.path.join(".", "plots")
-PROJDIR = os.path.join(PLTDIR, "numeric_polynomials_2d")
+PROJDIR = os.path.join(PLTDIR, "iterative_polynomials_2d")
 
 # Which under/overspecifications to run?
 run_specifications = ("lo", "true", "hi", "vhi")
@@ -221,28 +221,28 @@ if __name__ == "__main__":
         polynomials_2d.plot_image(
             rlo,
             "Low degree polynomial residuals",
-            filename=os.path.join(outdir, "lo_"+tstmp+".png"),
+            filename=os.path.join(outdir, f"lo_{tstmp}_{optim}.png"),
             clim=CLIM,
         )
         rtrue = zdata - output[f"{_optim}_pred_true"]
         polynomials_2d.plot_image(
             rtrue,
             "Matching degree polynomial residuals",
-            filename=os.path.join(outdir, "matching_"+tstmp+".png"),
+            filename=os.path.join(outdir, f"matching_{tstmp}_{optim}.png"),
             clim=CLIM,
         )
         rhi = zdata - output[f"{_optim}_pred_hi"]
         polynomials_2d.plot_image(
             rhi,
             "High degree polynomial residuals",
-            filename=os.path.join(outdir, "hi_"+tstmp+".png"),
+            filename=os.path.join(outdir, f"hi_{tstmp}_{optim}.png"),
             clim=CLIM,
         )
         rvhi = zdata - output[f"{_optim}_pred_vhi"]
         polynomials_2d.plot_image(
             rvhi,
             "Very high degree polynomial residuals",
-            filename=os.path.join(outdir, "vhi_"+tstmp+".png"),
+            filename=os.path.join(outdir, f"vhi_{tstmp}_{optim}.png"),
             clim=CLIM,
         )
         output[f"{_optim}_r_lo"] = rlo
