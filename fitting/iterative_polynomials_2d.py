@@ -78,6 +78,7 @@ lbfgs_optim = {
         "tolerance_change": 1e-13,
     }
 }
+# General early exit criterion - if we get within this rtol of the OLS solution, good enough
 early_exit_rtol = 1e-13
 
 # use CUDA graphics card if available

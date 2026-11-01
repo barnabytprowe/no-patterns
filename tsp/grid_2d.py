@@ -317,7 +317,8 @@ if __name__ == "__main__":
 
     # Refine with Lin-Kernighan
     results_lk = multiprocess_lk(
-        distance_matrix=dm, nruns=NRUNS, x0=p2opt, max_processing_time=TIMEOUT_LK, nproc=NPROC)
+        distance_matrix=dm, nruns=NRUNS, x0=p2opt, max_processing_time=TIMEOUT_LK, nproc=NPROC
+    )
     plk, total_weights_lk = zip(*results_lk.values())
     odict["results_lk"] = results_lk
     odict["plk"] = plk
