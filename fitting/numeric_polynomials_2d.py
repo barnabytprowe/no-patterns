@@ -8,13 +8,14 @@ correctly specified, and overspecified regression of randomly-generated
 polynomial surfaces on a regular 2D grid.
 
 Rather than solving for OLS regression via Singular Value Decomposition, this
-script uses numeric, gradient descent-based optimization schemes provided by
+script uses iterative, gradient descent-based optimization schemes provided by
 pytorch (e.g. Adam batch gradient descent, L-BFGS) rather than solving for the
 exact linear algebra solution.  Mini-batches are not used, since we are
 interested in establishing whether or not non-stochastic gradient descent has
 difficulty finding OLS model solutions, and the additional stochasticity of
-randomly-selected minibatches must make it extremely hard for the OLS model
-to be found (one of the reasons they are used in practice).
+randomly-selected mini-batches must make it much harder for the OLS model to be
+approached in this way (which given its pathologies, may be one of the reasons
+mini-batches are so useful in practice!)
 
 We find that gradient descent does indeed find it hard to locate the OLS model
 in the overspecified regression examples, although Adam seems to get closest,
