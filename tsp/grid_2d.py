@@ -18,8 +18,9 @@ import pandas as pd
 from networkx.algorithms.approximation import greedy_tsp, christofides
 from python_tsp.heuristics import solve_tsp_lin_kernighan, solve_tsp_local_search
 
-from ..fitting import polynomials_2d
 
+# Grid size - should match NX in ../fitting/polynomials_2d.py
+GRIDNX = 28
 
 # Number of processes to run simultaneously, and total runs to attempt
 NPROC = 6
@@ -37,7 +38,7 @@ CYCLE_LK = 1  # checks for completion every cycle
 TIMEOUT_LK = 10  # timeout after which to give up on possibly stuck LK
 
 # Pickle file output
-output_pickle = f"tsp_grid_2d_{polynomials_2d.NX}x{polynomials_2d.NX}_{NRUNS}_{TIMEOUT_2OPT}.pkl"
+output_pickle = f"tsp_grid_2d_{GRIDNX}x{GRIDNX}_{NRUNS}_{TIMEOUT_2OPT}.pkl"
 
 
 # Pool starmap utilities
@@ -272,14 +273,12 @@ def multiprocess_lk(distance_matrix, nruns, x0=None, max_processing_time=TIMEOUT
 if __name__ == "__main__":
 
     # Initialize complete (but unweighted edge) graph and distance matrix
-    G = nx.complete_graph(polynomials_2d.NX**2)
-    grid_points = [(i, j) for i in range(polynomials_2d.NX) for j in range(polynomials_2d.NX)]
+    G = nx.complete_graph(GRIDNX**2)
+    grid_points = [(i, j) for i in range(GRIDNX) for j in range(GRIDNX)]
     dm = distance_matrix(grid_points)
 
     # Add edges between all node pairs with weight = distance between points
-    print(
-        f"Adding edge distance weights for complete {polynomials_2d.NX}x{polynomials_2d.NX} graph"
-    )
+    print(f"Adding edge distance weights for complete {GRIDNX}x{GRIDNX} graph")
     t0 = time.time()
     G = add_edges_from_distance_matrix(G, dm)
     print(f"Time taken: {time.time() - t0:.2f}s")
