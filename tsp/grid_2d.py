@@ -23,8 +23,8 @@ from python_tsp.heuristics import solve_tsp_lin_kernighan, solve_tsp_local_searc
 GRIDNX = 28
 
 # Number of processes to run simultaneously, and total runs to attempt
-NPROC = 6
-NRUNS = 256
+NPROC = 8
+NRUNS = 64
 
 # Number of top (i.e. shortest path) runs to plot, set 0 to disable all plotting
 PLOT_TOP_N = 5
