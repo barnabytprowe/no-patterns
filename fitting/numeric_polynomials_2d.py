@@ -65,7 +65,9 @@ if tstmp_exists:
 n_epochs = int(1e6)
 iter_stride = 1000
 loss_function = torch.nn.MSELoss(reduction="mean")
+# Gradient descent optimizer constructor and init settings
 gradient_descent_optim = {torch.optim.Adam: {"lr": 0.001, "betas": (0.99, 0.999), "eps": 1e-8}}
+# LBFGS optimizer constructor and init settings
 lbfgs_optim = {
     torch.optim.LBFGS: {
         "lr": 1,
@@ -116,10 +118,14 @@ if __name__ == "__main__":
         zdata = ztrue + NOISE_SIGMA * np.random.randn(*ztrue.shape)
 
     outdir = polynomials_2d.build_output_folder_structure(tstmp, project_dir=PROJDIR)
+
+    # Plot what we're working with
     polynomials_2d.plot_image(
-        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True)
+        ztrue, "Ideal model", filename=os.path.join(outdir, "ideal_"+tstmp+".png"), show=True
+    )
     polynomials_2d.plot_image(
-        zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"), show=True)
+        zdata, "Data", filename=os.path.join(outdir, "data_"+tstmp+".png"), show=True
+    )
     output["ctrue"] = ctrue
     output["ztrue"] = ztrue
     output["zdata"] = zdata
@@ -146,7 +152,7 @@ if __name__ == "__main__":
         # Gradient descent optimization
         _optimizer = [
             _f(params=_model.parameters(), **_kw) for _f, _kw in gradient_descent_optim.items()
-        ][0]
+        ][0]  # After some exploration, now use only first (constructor, init kwargs) entry in dict
 
         print(f"Running Gradient Descent with {gradient_descent_optim}")
         _model.train()
