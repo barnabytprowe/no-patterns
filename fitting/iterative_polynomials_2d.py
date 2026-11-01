@@ -170,7 +170,7 @@ if __name__ == "__main__":
                 _loss.backward()
                 _optimizer.step()
 
-            if (i == 0) or ((1 + i) % iter_stride == 0):  # report
+            if (1 + i) % iter_stride == 0:  # report
                 print(
                     f"GD/{tstmp}/{_spec}: epoch: {1 + i:d}/{n_epochs:d}, loss: {_loss:>7f}, "
                     f"dloss: {min(_loss - _loss0, 0):>7e}, ideal: {_lstsq_loss:>7f}"
@@ -209,7 +209,6 @@ if __name__ == "__main__":
                 )
                 _loss0 = _loss.item()
 
-            print(_loss0 / _lstsq_loss - 1.)
             if np.isclose(_loss0 / _lstsq_loss, 1., atol=0, rtol=early_exit_rtol):
                 break
 
@@ -217,33 +216,34 @@ if __name__ == "__main__":
         output[f"lbfgs_losses_{_spec}"] = _losses
 
     # Calculate and plot residuals
+    _display_method = {"gd": "Adam", "lbfgs": "L-BFGS"}
     for _optim in ("gd", "lbfgs"):
         rlo = zdata - output[f"{_optim}_pred_lo"]
         polynomials_2d.plot_image(
             rlo,
-            "Low degree polynomial residuals",
-            filename=os.path.join(outdir, f"lo_{tstmp}_{optim}.png"),
+            f"Low degree polynomial residuals: {_display_method[_optim]}",
+            filename=os.path.join(outdir, f"lo_{tstmp}_{_optim}.png"),
             clim=CLIM,
         )
         rtrue = zdata - output[f"{_optim}_pred_true"]
         polynomials_2d.plot_image(
             rtrue,
-            "Matching degree polynomial residuals",
-            filename=os.path.join(outdir, f"matching_{tstmp}_{optim}.png"),
+            f"Matching degree polynomial residuals: {_display_method[_optim]}",
+            filename=os.path.join(outdir, f"matching_{tstmp}_{_optim}.png"),
             clim=CLIM,
         )
         rhi = zdata - output[f"{_optim}_pred_hi"]
         polynomials_2d.plot_image(
             rhi,
-            "High degree polynomial residuals",
-            filename=os.path.join(outdir, f"hi_{tstmp}_{optim}.png"),
+            f"High degree polynomial residuals: {_display_method[_optim]}",
+            filename=os.path.join(outdir, f"hi_{tstmp}_{_optim}.png"),
             clim=CLIM,
         )
         rvhi = zdata - output[f"{_optim}_pred_vhi"]
         polynomials_2d.plot_image(
             rvhi,
-            "Very high degree polynomial residuals",
-            filename=os.path.join(outdir, f"vhi_{tstmp}_{optim}.png"),
+            f"Very high degree polynomial residuals: {_display_method[_optim]}",
+            filename=os.path.join(outdir, f"vhi_{tstmp}_{_optim}.png"),
             clim=CLIM,
         )
         output[f"{_optim}_r_lo"] = rlo
