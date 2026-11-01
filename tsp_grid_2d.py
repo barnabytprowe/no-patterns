@@ -64,7 +64,8 @@ def distance_matrix(xy):
         symmetric matrix of euclidean distances between each pair of points.
     """
     return np.sqrt(
-        ((np.atleast_2d(xy)[:, :, None] - np.atleast_2d(xy)[:, :, None].T)**2).sum(axis=1))
+        ((np.atleast_2d(xy)[:, :, None] - np.atleast_2d(xy)[:, :, None].T)**2).sum(axis=1)
+    )
 
 
 def add_edges_from_distance_matrix(graph, distance_matrix):
